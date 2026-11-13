@@ -15,7 +15,7 @@ const people = (n, rest) => `${n} ${n === 1 ? 'person' : 'people'}${rest}`
 
 // Star and Follow both need a free account. Tapping either one while logged out asks for it,
 // then finishes the action after they log in or confirm their email.
-function SupportButtons({ h, code, onChange }) {
+function SupportButtons({ h, code, onChange, onReload }) {
   const session = useSession()
   const [params, setParams] = useSearchParams()
   const [ask, setAsk] = useState(null) // null | 'star' | 'follow'
@@ -25,9 +25,11 @@ function SupportButtons({ h, code, onChange }) {
 
   async function run(action) {
     setBusy(true); setErr(null)
-    const { data, error } = await supabase.rpc(action === 'star' ? 'toggle_star' : 'toggle_follow', { p_code: code })
+    const fn = { star: 'toggle_star', follow: 'toggle_follow', sponsor: 'toggle_sponsor' }[action]
+    const { data, error } = await supabase.rpc(fn, { p_code: code })
     setBusy(false)
     if (error) return setErr(error.message)
+    if (action === 'sponsor') return onReload()
     onChange(action === 'star' ? { starred_by_me: data.starred, stars: data.stars } : { following: data.following, followers: data.followers })
   }
   useEffect(() => {
@@ -47,7 +49,9 @@ function SupportButtons({ h, code, onChange }) {
       <div className="flex flex-wrap gap-2">
         <button disabled={busy} onClick={() => tap('star')} className={h.starred_by_me ? 'btn-black' : 'btn-orange'}>{h.starred_by_me ? '⭐ Starred' : `⭐ Star ${h.first_name}`}</button>
         <button disabled={busy} onClick={() => tap('follow')} className={h.following ? 'btn-black' : 'btn-outline'}>{h.following ? '✓ Following' : `Follow ${h.first_name}`}</button>
+        {h.can_sponsor && <button disabled={busy} onClick={() => run('sponsor')} className={h.sponsoring ? 'btn-black' : 'btn-outline'}>{h.sponsoring ? '✓ Sponsoring' : `Sponsor ${h.first_name}`}</button>}
       </div>
+      {h.can_sponsor && !h.sponsoring && <p className="muted text-xs">Sponsoring is free. It shows "Supported by" with your business name on {h.first_name}'s page.</p>}
       <p className="text-sm font-bold">{people(h.stars, ' rooting for')} {h.first_name} · {people(h.followers, ' following')}</p>
       {err && <Notice kind="error">{err}</Notice>}
       {ask && !session && (
@@ -68,9 +72,9 @@ function Updates({ list, name }) {
     <div className="mt-5 space-y-3 border-t border-neutral-200 pt-4 dark:border-neutral-700">
       <p className="text-lg font-extrabold">Updates from {name}</p>
       {list.map((u) => (
-        <div key={u.id}>
-          <p className="muted text-xs">{ago(u.created_at)}</p>
-          <p className="whitespace-pre-line">{u.body}</p>
+        <div key={u.id} className={u.kind === 'milestone' ? 'rounded-xl bg-orange/15 p-3' : ''}>
+          <p className="muted text-xs">{u.kind === 'milestone' ? 'Milestone · ' : ''}{ago(u.created_at)}</p>
+          <p className={`whitespace-pre-line ${u.kind === 'milestone' ? 'font-extrabold' : ''}`}>{u.body}</p>
           {u.photo_url && <img src={u.photo_url} alt="" className="mt-2 max-h-72 rounded-xl object-cover" />}
         </div>
       ))}
@@ -98,7 +102,8 @@ export function ProfileCard({ code }) {
         </div>
       </div>
       {h.story && <p className="mt-4 whitespace-pre-line text-lg leading-relaxed">{h.story}</p>}
-      <SupportButtons h={h} code={code} onChange={(r) => setH({ ...h, ...r })} />
+      {h.sponsors?.length > 0 && <p className="mt-4 text-sm"><span className="font-bold">Supported by:</span> {h.sponsors.map((x) => x.name).join(', ')}</p>}
+      <SupportButtons h={h} code={code} onChange={(r) => setH({ ...h, ...r })} onReload={load} />
       <Updates list={h.updates} name={h.first_name} />
     </div>
   )
@@ -135,8 +140,8 @@ export function MyStars() {
         <h2 className="h2">Updates</h2>
         {d.feed.length === 0 ? <p className="muted">No updates yet. Follow a holder to see their updates here.</p> : d.feed.map((u) => (
           <Link key={u.id} to={`/p/${u.code}`} className="card block hover:border-orange">
-            <p className="font-extrabold">{u.first_name} <span className="muted text-xs font-normal">· {ago(u.created_at)}</span></p>
-            <p className="mt-1 whitespace-pre-line">{u.body}</p>
+            <p className="font-extrabold">{u.first_name} <span className="muted text-xs font-normal">· {u.kind === 'milestone' ? 'Milestone · ' : ''}{ago(u.created_at)}</span></p>
+            <p className={`mt-1 whitespace-pre-line ${u.kind === 'milestone' ? 'font-extrabold text-orange' : ''}`}>{u.body}</p>
             {u.photo_url && <img src={u.photo_url} alt="" className="mt-2 max-h-60 rounded-xl object-cover" />}
           </Link>
         ))}

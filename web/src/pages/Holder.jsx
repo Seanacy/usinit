@@ -87,6 +87,27 @@ function Stars({ code }) {
   return <p className="mt-1 text-sm font-bold">⭐ {n.s} rooting for you · {n.f} following you</p>
 }
 
+function MilestonesAndSponsors({ code }) {
+  const [p, setP] = useState(null)
+  const load = () => supabase.rpc('get_public_holder', { p_code: code }).then(({ data }) => setP(data))
+  useEffect(() => { if (code) load() }, [code]) // eslint-disable-line
+  if (!p) return null
+  async function toggle(e) { await supabase.rpc('set_share_milestones', { p_on: e.target.checked }); load() }
+  async function remove(sp) { if (confirm(`Remove ${sp.name} from your page?`)) { await supabase.rpc('holder_remove_sponsor', { p_adv: sp.id }); load() } }
+  return (
+    <div className="space-y-2 rounded-xl bg-neutral-100 p-3 dark:bg-neutral-800">
+      <label className="flex items-start gap-3"><input type="checkbox" className="mt-1 h-5 w-5 accent-[#FF6A00]" checked={!!p.share_milestones} onChange={toggle} />
+        <span>Share my milestones with followers <span className="muted block text-sm">Like "🎉 {p.first_name} just hit 100 scans!" or your first payout. Never how much money.</span></span></label>
+      <div>
+        <p className="font-bold">Businesses supporting you</p>
+        {p.sponsors.length === 0 ? <p className="muted text-sm">None yet. Local businesses can choose to show "Supported by" on your page.</p> : p.sponsors.map((sp) => (
+          <div key={sp.id} className="flex items-center justify-between gap-2 py-1"><span>{sp.name}</span><button className="text-sm font-bold underline" onClick={() => remove(sp)}>Remove</button></div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function PostUpdates({ holder, session }) {
   const [rows, setRows] = useState(null)
   const [body, setBody] = useState('')
@@ -114,6 +135,7 @@ function PostUpdates({ holder, session }) {
     <div className="card space-y-3">
       <h2 className="h2">Post an update</h2>
       <p className="muted text-sm">People who follow you see your updates. Share only what you're comfortable sharing. Never post where you're staying.</p>
+      <MilestonesAndSponsors code={holder.holder_code} />
       <form onSubmit={post} className="space-y-2">
         <textarea className="input min-h-[90px]" maxLength={500} value={body} onChange={(e) => setBody(e.target.value)} placeholder="Got my ID today. Starting a job Monday…" />
         <div className="flex flex-wrap items-center gap-3">
@@ -127,7 +149,7 @@ function PostUpdates({ holder, session }) {
       </form>
       {rows?.map((u) => (
         <div key={u.id} className="rounded-xl border border-neutral-200 p-3 dark:border-neutral-700">
-          <p className="muted text-xs">{new Date(u.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}{u.hidden ? ' · hidden by Us In It' : ''}</p>
+          <p className="muted text-xs">{u.kind === 'milestone' ? 'Milestone · ' : ''}{new Date(u.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}{u.hidden ? ' · hidden by Us In It' : ''}</p>
           <p className="whitespace-pre-line">{u.body}</p>
           {u.photo_url && <img src={u.photo_url} alt="" className="mt-2 max-h-48 rounded-lg object-cover" />}
           <button className="mt-2 text-sm font-bold underline" onClick={() => del(u)}>Delete</button>
