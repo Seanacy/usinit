@@ -57,6 +57,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/admin" element={<Suspense fallback={<Spinner />}><Admin /></Suspense>} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/account" element={<Login />} />
           <Route path="/reset" element={<Reset />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/privacy" element={<Privacy />} />

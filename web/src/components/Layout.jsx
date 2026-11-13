@@ -49,6 +49,7 @@ export default function Layout() {
             <NavLink to="/advertise" className={link}>Advertise</NavLink>
             <NavLink to="/holder" className={link}>Holders</NavLink>
             <NavLink to="/fund" className={link}>Community Fund</NavLink>
+            {session && <NavLink to="/account" className={link}>My account</NavLink>}
             {session && <button onClick={() => supabase.auth.signOut()} className="px-3 py-2 font-bold text-neutral-300 hover:text-white">Log out</button>}
             {session === null && <NavLink to="/login" className={link}>Log in</NavLink>}
             {session === null && <Link to="/signup" className="ml-1 rounded-lg bg-orange px-3 py-2 font-bold text-ink">Sign up</Link>}
@@ -64,6 +65,7 @@ export default function Layout() {
             <NavLink to="/advertise" className={link}>Advertise with us</NavLink>
             <NavLink to="/holder" className={link}>Holders: sign up or log in</NavLink>
             <NavLink to="/fund" className={link}>Community Fund</NavLink>
+            {session && <NavLink to="/account" className={link}>My account</NavLink>}
             {session && <button onClick={() => supabase.auth.signOut()} className="block px-3 py-2 font-bold text-neutral-300">Log out</button>}
             {session === null && <NavLink to="/login" className={link}>Log in</NavLink>}
             {session === null && <NavLink to="/signup" className={link}>Sign up</NavLink>}
