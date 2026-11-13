@@ -198,6 +198,11 @@ export default function Scan() {
             <div>
               <button className="mb-3 font-bold underline" onClick={() => setPanel(null)}>← Back</button>
               <ProfileCard code={code} />
+              <div className="mt-4 space-y-3">
+                <button className="btn-orange w-full py-4 text-lg" onClick={() => { tap('tip'); setPanel('tip') }}>Tip {name}</button>
+                <button className="btn-outline w-full py-4 text-lg" onClick={() => { tap('support'); setPanel('support') }}>Support Us In It</button>
+                <button className="w-full py-3 font-bold text-neutral-500" onClick={() => { tap('done'); setStep('thanks') }}>Done</button>
+              </div>
             </div>
           ) : panel === 'support' ? (
             <Support embedded onBack={() => setPanel(null)} />

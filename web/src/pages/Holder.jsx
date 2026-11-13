@@ -25,6 +25,7 @@ function ProfileForm({ session, existing, onSaved }) {
   async function save(e) {
     e.preventDefault(); setErr(null)
     if (!f.first_name.trim()) return setErr('Add your first name.')
+    if (f.story.trim().length < 40) return setErr('Write your story first. Just a few sentences, in your own words. People who scan your code read it.')
     if (!agree) return setErr('Please read and accept the Holder Agreement.')
     setBusy(true)
     const row = { ...f, first_name: f.first_name.trim() }
@@ -45,7 +46,7 @@ function ProfileForm({ session, existing, onSaved }) {
         <input id="fn" className="input" maxLength={40} value={f.first_name} onChange={set('first_name')} placeholder="Marcus" />
       </div>
       <div>
-        <p className="label">Photo (optional)</p>
+        <p className="label">Photo (optional, but people give more when they can see you)</p>
         <div className="flex items-center gap-3">
           {f.photo_url && <img src={f.photo_url} alt="" className="h-16 w-16 rounded-full object-cover" />}
           <label className="btn-outline cursor-pointer">
@@ -55,8 +56,10 @@ function ProfileForm({ session, existing, onSaved }) {
         </div>
       </div>
       <div>
-        <label className="label" htmlFor="story">Your story, in your own words</label>
-        <textarea id="story" className="input min-h-[140px]" maxLength={1000} value={f.story} onChange={set('story')} placeholder="Share what you want people to know." />
+        <label className="label" htmlFor="story">Your story, in your own words (required)</label>
+        <p className="muted mb-2 text-sm">People read this when they tap "Meet" after scanning your code. A few sentences is enough. Ideas: What's one thing you want people to know about you? What are you working toward? What do you like to do? Share only what you're comfortable sharing.</p>
+        <textarea id="story" className="input min-h-[140px]" maxLength={1000} value={f.story} onChange={set('story')} placeholder="I'm Marcus. I grew up in north Minneapolis and I'm saving for a deposit on an apartment…" />
+        <p className="muted mt-1 text-right text-xs">{f.story.trim().length < 40 ? `${40 - f.story.trim().length} more letters needed` : `${f.story.length} / 1000`}</p>
       </div>
       <div>
         <label className="label" htmlFor="area">General area (never an exact corner)</label>
