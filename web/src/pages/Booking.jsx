@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { SITE_URL, money, supabase } from '../lib/supabase'
 import { Notice, Spinner } from '../components/Layout'
-import { useQR } from '../components/Printables'
+import { BookingSign, useQR } from '../components/Printables'
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const TZ = 'America/Chicago'
@@ -21,7 +21,7 @@ function Copy({ text }) {
 // ================= Business side =================
 function PageForm({ adv, page, onSaved }) {
   const [f, setF] = useState({ title: page?.title || adv.business_name || '', slug: page?.slug || slugify(adv.business_name || ''), about: page?.about || '', area: page?.area || '',
-    holder_cut: page ? dollars(page.holder_cut_cents) : '5', holders_can_share: page?.holders_can_share ?? true, active: page?.active ?? true })
+    holder_cut: page ? dollars(page.holder_cut_cents) : '5', holders_can_share: page?.holders_can_share ?? true, businesses_can_share: page?.businesses_can_share ?? true, active: page?.active ?? true })
   const [err, setErr] = useState(null)
   const set = (k) => (e) => setF({ ...f, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value })
   async function save(e) {
@@ -29,7 +29,7 @@ function PageForm({ adv, page, onSaved }) {
     const slug = slugify(f.slug)
     if (!f.title.trim()) return setErr('Add a title.')
     if (slug.length < 3) return setErr('The page link needs at least 3 letters or numbers.')
-    const row = { title: f.title.trim(), slug, about: f.about.trim() || null, area: f.area.trim() || null, holder_cut_cents: Math.round(Number(f.holder_cut || 0) * 100), holders_can_share: f.holders_can_share, active: f.active }
+    const row = { title: f.title.trim(), slug, about: f.about.trim() || null, area: f.area.trim() || null, holder_cut_cents: Math.round(Number(f.holder_cut || 0) * 100), holders_can_share: f.holders_can_share, businesses_can_share: f.businesses_can_share, active: f.active }
     const { error } = page ? await supabase.from('booking_pages').update(row).eq('id', page.id) : await supabase.from('booking_pages').insert({ ...row, advertiser_id: adv.id })
     if (error) return setErr(error.message.includes('slug') || error.code === '23505' ? 'That page link is taken. Try another.' : error.message)
     onSaved()
@@ -42,9 +42,10 @@ function PageForm({ adv, page, onSaved }) {
       <div><label className="label">About (optional)</label><textarea className="input min-h-[80px]" maxLength={600} value={f.about} onChange={set('about')} placeholder="What you do and anything clients should know." /></div>
       <div><label className="label">Where (optional)</label><input className="input" maxLength={120} value={f.area} onChange={set('area')} placeholder="Uptown, Minneapolis (your address goes in the confirmation)" /></div>
       <label className="flex items-start gap-3"><input type="checkbox" className="mt-1 h-5 w-5 accent-[#FF6A00]" checked={f.holders_can_share} onChange={set('holders_can_share')} /><span>Let Us In It holders share my page and get paid for bookings they send</span></label>
-      {f.holders_can_share && (
-        <div><label className="label">Holder's cut per booking ($)</label><input className="input w-32" inputMode="decimal" value={f.holder_cut} onChange={(e) => setF({ ...f, holder_cut: e.target.value.replace(/[^0-9.]/g, '') })} />
-          <p className="muted mt-1 text-xs">Paid to the holder from the deposit as soon as the customer pays it. Never more than the deposit. You keep the rest.</p></div>
+      <label className="flex items-start gap-3"><input type="checkbox" className="mt-1 h-5 w-5 accent-[#FF6A00]" checked={f.businesses_can_share} onChange={set('businesses_can_share')} /><span>Let other businesses carry my code (The Plug) and get paid for bookings they send</span></label>
+      {(f.holders_can_share || f.businesses_can_share) && (
+        <div><label className="label">Cut per booking for whoever sends you a client ($)</label><input className="input w-32" inputMode="decimal" value={f.holder_cut} onChange={(e) => setF({ ...f, holder_cut: e.target.value.replace(/[^0-9.]/g, '') })} />
+          <p className="muted mt-1 text-xs">Paid to the holder or business that sent the client, from the deposit, as soon as the customer pays it. Never more than the deposit. You keep the rest.</p></div>
       )}
       {page && <label className="flex items-start gap-3"><input type="checkbox" className="mt-1 h-5 w-5 accent-[#FF6A00]" checked={f.active} onChange={set('active')} /><span>Page is open for bookings</span></label>}
       {err && <Notice kind="error">{err}</Notice>}
@@ -156,7 +157,7 @@ function BookingsList({ page }) {
           <p className="font-bold">{fmtWhen(b.starts_at)} · {b.service_name} <span className="pill ml-1 bg-neutral-200 text-neutral-800">{b.status === 'requested' ? 'new request' : b.status.replace('_', '-')}</span></p>
           <p className="text-sm">{b.customer_name}{b.customer_phone ? ` · ${b.customer_phone}` : ''}{b.customer_email ? ` · ${b.customer_email}` : ''}</p>
           {b.note && <p className="muted text-sm">Note: {b.note}</p>}
-          <p className="muted text-sm">Deposit {money(b.deposit_cents)} · {b.deposit_status === 'paid' ? 'paid' : 'not collected yet'}{b.via_label ? ` · sent by holder ${b.via_label} (their cut ${money(b.holder_cut_cents)})` : ''}</p>
+          <p className="muted text-sm">Deposit {money(b.deposit_cents)} · {b.deposit_status === 'paid' ? 'paid' : 'not collected yet'}{b.via_label ? ` · sent by ${b.via_advertiser_id ? 'business' : 'holder'} ${b.via_label} (their cut ${money(b.holder_cut_cents)})` : ''}</p>
           <div className="flex flex-wrap gap-2 pt-1">
             {b.status === 'requested' && <>{btn(b, 'confirmed', 'Confirm', 'btn-orange')}{btn(b, 'declined', 'Decline')}</>}
             {b.status === 'confirmed' && <>{btn(b, 'completed', 'Done', 'btn-black')}{btn(b, 'no_show', 'No-show')}{btn(b, 'canceled', 'Cancel')}</>}
@@ -190,12 +191,12 @@ export function BookingManager({ adv }) {
             <div className="min-w-0 flex-1">
               <p className="text-lg font-extrabold">{page.title} {page.active ? '' : <span className="pill ml-1 bg-neutral-200 text-neutral-800">closed</span>}</p>
               <a href={url} target="_blank" rel="noreferrer" className="break-all text-sm font-bold underline">{url}</a>
-              <p className="muted text-sm">{page.holders_can_share ? `Holders can share it · their cut ${money(page.holder_cut_cents)} per booking` : 'Holders can\'t share it'}</p>
+              <p className="muted text-sm">{[page.holders_can_share && 'holders', page.businesses_can_share && 'other businesses'].filter(Boolean).join(' and ') || 'Nobody'} can share it{(page.holders_can_share || page.businesses_can_share) ? ` · ${money(page.holder_cut_cents)} per booking` : ''}</p>
               <div className="mt-2 flex flex-wrap gap-2"><Copy text={url} /><button className="btn-black py-2" onClick={() => setEditing(true)}>Edit page</button></div>
             </div>
           </div>
           {adv.status !== 'approved' && <Notice kind="error">Your page goes live once Us In It approves your business account. You can set it up now.</Notice>}
-          <Notice>Deposits turn on when Us In It payments open. Until then, bookings come in as requests, and holders' cuts are tracked so they're paid once deposits start.</Notice>
+          <Notice>Deposits turn on when Us In It payments open. Until then, bookings come in as requests, and the sharer's cut is tracked so they're paid once deposits start.</Notice>
           <Services page={page} />
           <Hours page={page} />
           <BookingsList page={page} />
@@ -229,6 +230,38 @@ export function HolderShares({ code }) {
   )
 }
 
+// ================= Business side: carry other businesses' codes (The Plug) =================
+export function BusinessShares() {
+  const [d, setD] = useState(null)
+  const [printing, setPrinting] = useState(null)
+  useEffect(() => { supabase.rpc('business_booking_shares').then(({ data }) => setD(data || null)) }, [])
+  if (!d || !d.code) return null
+  if (printing) return (
+    <div>
+      <button className="no-print mb-4 font-bold underline" onClick={() => setPrinting(null)}>← Back</button>
+      <BookingSign url={bookingUrl(printing.slug, d.code)} title={printing.title} />
+    </div>
+  )
+  return (
+    <div className="card space-y-3">
+      <h2 className="h2">The Plug: carry other businesses' codes</h2>
+      <p className="muted text-sm">Post another local business's code at your place (like a nail tech's code at your booth). When someone books through it, you earn their cut from the deposit. Deposits turn on soon; every booking you send is counted now. Your share code: <b>{d.code}</b></p>
+      {d.pages.length === 0 && <p className="muted text-sm">No other businesses are open for sharing yet.</p>}
+      {d.pages.map((r) => {
+        const link = bookingUrl(r.slug, d.code)
+        return (
+          <div key={r.slug} className="space-y-1 rounded-xl border border-neutral-200 p-3 dark:border-neutral-700">
+            <p className="font-bold">{r.title}{r.area ? <span className="muted text-sm font-normal"> · {r.area}</span> : null}</p>
+            <p className="text-sm">You earn {money(r.cut_cents)} per booking · {r.referred} booking{r.referred === 1 ? '' : 's'} sent · {money(r.earned_cents)} earned</p>
+            <p className="break-all text-xs">{link}</p>
+            <div className="flex flex-wrap gap-2"><Copy text={link} /><button className="btn-black py-2" onClick={() => setPrinting(r)}>Print their code</button></div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 // ================= Public booking page: /b/:slug =================
 function nextDays(n) {
   const out = []
@@ -251,7 +284,9 @@ export default function BookingPage() {
   const [err, setErr] = useState(null)
   const [busy, setBusy] = useState(false)
   const [done, setDone] = useState(null)
+  const [viaKind, setViaKind] = useState(null)
   useEffect(() => { supabase.rpc('get_booking_page', { p_slug: slug }).then(({ data }) => setPage(data || null)) }, [slug])
+  useEffect(() => { if (via) supabase.rpc('booking_via_kind', { p_via: via }).then(({ data }) => setViaKind(data || null)) }, [via])
   const loadSlots = () => {
     if (!svc || !day) return
     setSlots(null); setTime(null)
@@ -331,13 +366,13 @@ export default function BookingPage() {
           <input className="input" type="tel" placeholder="Phone" value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} />
           <input className="input" maxLength={300} placeholder="Note (optional)" value={f.note} onChange={(e) => setF({ ...f, note: e.target.value })} />
           {svc.deposit_cents > 0 && (
-            <Notice>Deposit: {money(svc.deposit_cents)}. {via ? 'Part of your deposit can\'t be refunded, because the person who shared this page with you is paid as soon as you pay it.' : 'Ask the business about their refund rules.'} Online deposits are coming soon; for now the business will reach out to collect it.</Notice>
+            <Notice>Deposit: {money(svc.deposit_cents)}. {viaKind ? `Part of your deposit can't be refunded, because the ${viaKind === 'business' ? 'business' : 'person'} who shared this page with you is paid as soon as you pay it.` : 'Ask the business about their refund rules.'} Online deposits are coming soon; for now the business will reach out to collect it.</Notice>
           )}
           {err && <Notice kind="error">{err}</Notice>}
           <button className="btn-orange w-full" disabled={busy}>{busy ? 'Sending…' : `Request ${new Date(time).toLocaleString('en-US', { timeZone: TZ, weekday: 'short', hour: 'numeric', minute: '2-digit' })}`}</button>
         </form>
       )}
-      <p className="muted pt-4 text-center text-xs">Booking through Us In It{via ? ', shared by an Us In It holder' : ''}.</p>
+      <p className="muted pt-4 text-center text-xs">Booking through Us In It{viaKind === 'holder' ? ', shared by an Us In It holder' : viaKind === 'business' ? ', shared by a local business' : ''}.</p>
     </div>
   )
 }

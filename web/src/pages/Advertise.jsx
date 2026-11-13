@@ -4,7 +4,7 @@ import { money, startCheckout, supabase, useSession, useStats } from '../lib/sup
 import AuthBox from '../components/AuthBox'
 import ZoneManager from '../components/ZoneManager'
 import PlugPanel from './Plug'
-import { BookingManager } from './Booking'
+import { BookingManager, BusinessShares } from './Booking'
 import { describeRadius } from '../components/MapPicker'
 import { Notice, Spinner } from '../components/Layout'
 
@@ -239,6 +239,7 @@ export default function Advertise() {
               </div>
               <AddFunds stats={stats} />
               <BookingManager adv={adv} />
+              <BusinessShares />
               <PlugPanel adv={adv} ads={ads} reloadAds={load} />
               <div className="card flex flex-wrap items-center justify-between gap-2">
                 <span><b>Your zones:</b> {zoneCount}<span className="muted block text-sm">The areas where your ads show, with live scan counts.</span></span>
