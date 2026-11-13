@@ -323,7 +323,7 @@ function Scans() {
       <div className="card overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead><tr className="muted"><th className="py-1">When</th><th>Status</th><th>Paid by</th><th>Holder got</th></tr></thead>
-          <tbody>{rows.slice(0, 200).map((s) => <tr key={s.id} className="border-t border-neutral-200 dark:border-neutral-700"><td className="py-1">{when(s.created_at)}</td><td>{s.status}</td><td>{s.paid_by}</td><td>{money(s.holder_cents)}</td></tr>)}</tbody>
+          <tbody>{rows.slice(0, 200).map((s) => <tr key={s.id} className="border-t border-neutral-200 dark:border-neutral-700"><td className="py-1">{when(s.created_at)}</td><td>{s.status === 'OZA' ? 'OZA (Outside Zone Area)' : s.status}</td><td>{s.paid_by}</td><td>{money(s.holder_cents)}</td></tr>)}</tbody>
         </table>
       </div>
     </div>
