@@ -4,6 +4,7 @@ import { money, supabase, uploadPhoto, useSession } from '../lib/supabase'
 import AuthBox from '../components/AuthBox'
 import { Notice, Spinner } from '../components/Layout'
 import Printables, { scanUrl, useQR } from '../components/Printables'
+import { HolderShares } from './Booking'
 
 function ProfileForm({ session, existing, onSaved }) {
   const [f, setF] = useState({
@@ -125,6 +126,7 @@ function Dashboard({ d, session, reload }) {
         <p className="font-bold">{d.count_today} scans today · goal {d.goal}</p>
         <div className="mt-2 h-3 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-700"><div className="h-3 bg-orange" style={{ width: `${pct}%` }} /></div>
       </div>
+      <HolderShares code={h.holder_code} />
       <div className="card">
         <h2 className="h2">Cash out</h2>
         <p className="muted mt-1">Instant cash-out to a debit card is coming soon. For now, ask Us In It or your partner organization to pay out your balance (minimum {money(d.min_payout_cents)}).</p>

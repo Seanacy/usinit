@@ -7,6 +7,7 @@ import Home from './pages/Home'
 import Scan from './pages/Scan'
 import Profile, { MyStars } from './pages/Profile'
 import { PlugScan } from './pages/Plug'
+import BookingPage from './pages/Booking'
 import Support from './pages/Support'
 import Fund from './pages/Fund'
 import Thanks from './pages/Thanks'
@@ -51,6 +52,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/s/:code" element={<Scan />} />
           <Route path="/p/:code" element={<Profile />} />
           <Route path="/n/:code" element={<PlugScan />} />
+          <Route path="/b/:slug" element={<BookingPage />} />
           <Route path="/support" element={<Support />} />
           <Route path="/fund" element={<Fund />} />
           <Route path="/thanks" element={<Thanks />} />
