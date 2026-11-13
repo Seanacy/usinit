@@ -41,7 +41,7 @@ export default function Layout() {
   const [home, setHome] = useState(null)
   useEffect(() => { if (!session) { setHome(null); return } homeFor(session.user).then(setHome).catch(() => setHome(null)) }, [session?.user?.id]) // eslint-disable-line
   const [open, setOpen] = useState(false)
-  const link = ({ isActive }) => `block rounded-lg px-3 py-2 font-bold ${isActive ? 'text-orange' : 'text-white hover:text-orange'}`
+  const link = ({ isActive }) => `block rounded-lg px-3 py-2 font-bold ${isActive ? 'bg-orange text-ink' : 'text-white hover:text-orange'}`
   return (
     <div className="flex min-h-screen flex-col">
       <header className="no-print sticky top-0 z-40 bg-ink">
@@ -52,7 +52,7 @@ export default function Layout() {
             {home !== '/advertise' && <NavLink to="/advertise" className={link}>Advertise</NavLink>}
             {home !== '/holder' && <NavLink to="/holder" className={link}>Holders</NavLink>}
             <NavLink to="/fund" className={link}>Community Fund</NavLink>
-            {session && <NavLink to="/account" className={link}>My account</NavLink>}
+            {session && <NavLink to={home || '/account'} className={link}>My account</NavLink>}
             {session && <button onClick={() => supabase.auth.signOut()} className="px-3 py-2 font-bold text-neutral-300 hover:text-white">Log out</button>}
             {session === null && <NavLink to="/login" className={link}>Log in</NavLink>}
             {session === null && <Link to="/signup" className="ml-1 rounded-lg bg-orange px-3 py-2 font-bold text-ink">Sign up</Link>}
@@ -68,7 +68,7 @@ export default function Layout() {
             {home !== '/advertise' && <NavLink to="/advertise" className={link}>Advertise with us</NavLink>}
             {home !== '/holder' && <NavLink to="/holder" className={link}>Holders: sign up or log in</NavLink>}
             <NavLink to="/fund" className={link}>Community Fund</NavLink>
-            {session && <NavLink to="/account" className={link}>My account</NavLink>}
+            {session && <NavLink to={home || '/account'} className={link}>My account</NavLink>}
             {session && <button onClick={() => supabase.auth.signOut()} className="block px-3 py-2 font-bold text-neutral-300">Log out</button>}
             {session === null && <NavLink to="/login" className={link}>Log in</NavLink>}
             {session === null && <NavLink to="/signup" className={link}>Sign up</NavLink>}
