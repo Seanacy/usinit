@@ -178,7 +178,7 @@ export default function Scan() {
           {!res.verified && (
             <div className="mb-3"><Notice>{res.status === 'UNVERIFIED_NO_LOCATION'
               ? `Location was off, so this scan didn't pay ${name}. You can still help below.`
-              : res.status === 'OZA' ? `This spot isn't in an Us In It area yet, so this scan didn't pay ${name}. You can still help below.` : ''}</Notice></div>
+ : ''}</Notice></div>
           )}
           <ContentCard content={res.content} scanId={res.scan_id} />
           <button className="btn-black mt-4 w-full" disabled={wait > 0} onClick={() => setStep('next')}>{wait > 0 ? `Continue in ${wait}` : 'Continue'}</button>
@@ -194,7 +194,6 @@ export default function Scan() {
                 : res.status === 'DUPLICATE_DEVICE' ? `You already scanned ${name} today. Thank you! You can still help ${name} directly.`
                 : res.status === 'HOLDER_DAILY_CAP' ? `${name} hit their max scan earnings for today. You can still help ${name} directly.`
                 : res.status === 'UNVERIFIED_NO_LOCATION' ? `Location was off, so this scan didn't pay ${name}. You can still help ${name} directly.`
-                : res.status === 'OZA' ? `This spot isn't in an Us In It area yet. You can still help ${name} directly.`
                 : res.ads_nearby ? `Paid messages are running nearby, but not right here. You can still help ${name} directly.`
                 : `No paid messages are running right now, but you can still help ${name} directly.`}
             </p>
