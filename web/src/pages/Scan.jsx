@@ -18,7 +18,7 @@ function getLocation() {
   })
 }
 
-function ContentCard({ content, scanId }) {
+export function ContentCard({ content, scanId }) {
   if (!content) return null
   const click = () => scanId && supabase.rpc('record_click', { p_scan: scanId })
   if (content.type === 'house' && content.kind === 'positive') {
@@ -36,6 +36,7 @@ function ContentCard({ content, scanId }) {
     <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white text-ink dark:border-neutral-700 dark:bg-neutral-900 dark:text-white">
       {isPolitical && <div className="bg-ink px-4 py-1 text-xs font-bold tracking-wide text-white">PAID POLITICAL AD</div>}
       {content.type === 'house' && <div className="bg-ink px-4 py-1 text-xs font-bold tracking-wide text-orange">FROM US IN IT</div>}
+      {content.ad_type === 'outreach' && <div className="bg-ink px-4 py-1 text-xs font-bold tracking-wide text-orange">FROM {String(content.from || '').toUpperCase()}{content.shared_by ? ` · SHARED BY ${String(content.shared_by).toUpperCase()}` : ''}</div>}
       {content.image_url && <img src={content.image_url} alt="" className="max-h-72 w-full object-cover" />}
       <div className="p-5">
         <p className="text-2xl font-extrabold leading-snug">{content.headline}</p>

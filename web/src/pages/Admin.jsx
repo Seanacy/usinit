@@ -6,7 +6,7 @@ import ZoneManager from '../components/ZoneManager'
 import Printables from '../components/Printables'
 import { Notice, Spinner } from '../components/Layout'
 
-const TABS = ['Overview', 'Holders', 'Zones', 'Ads', 'Fund', 'House messages', 'Openers', 'Payouts', 'Scans', 'Supporters', 'Settings']
+const TABS = ['Overview', 'Holders', 'Zones', 'Ads', 'Nonprofits', 'Fund', 'House messages', 'Openers', 'Payouts', 'Scans', 'Supporters', 'Settings']
 const when = (t) => new Date(t).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
 
 function useTable(table, order = 'created_at', deps = []) {
@@ -103,6 +103,57 @@ function Holders() {
 }
 
 function Zones() { return <ZoneManager isAdmin /> }
+
+function Nonprofits() {
+  const [o, setO] = useState(null)
+  const [err, setErr] = useState(null)
+  const load = () => supabase.rpc('admin_plug_overview').then(({ data }) => setO(data))
+  useEffect(() => { load() }, [])
+  async function run(fn, args) { setErr(null); const { error } = await supabase.rpc(fn, args); if (error) setErr(error.message); load() }
+  if (!o) return <Spinner />
+  return (
+    <div className="space-y-6">
+      <p className="muted">The Plug for Nonprofits: verified nonprofits carry each other's messages. Each scan costs the sender $0.05 (host $0.04, Us In It $0.01). Approve outreach messages in the Ads tab.</p>
+      {err && <Notice kind="error">{err}</Notice>}
+      <div className="space-y-3">
+        <h2 className="h2">Nonprofit applications</h2>
+        {o.applications.length === 0 && <p className="muted">None yet.</p>}
+        {o.applications.map((a) => (
+          <div key={a.id} className="card space-y-1">
+            <p className="font-bold">{a.name}{a.kind ? ` · ${a.kind}` : ''} <span className="pill ml-2 bg-neutral-200 text-neutral-800">{a.status}</span></p>
+            <p className="text-sm">Contact: {a.contact || '—'} · EIN: {a.ein || '—'}</p>
+            {a.proof && <a href={a.proof} target="_blank" rel="noopener noreferrer" className="text-sm font-bold underline">Open their proof link</a>}
+            <p className="muted text-xs">Check the EIN on the IRS Tax Exempt Organization Search or the Minnesota Secretary of State before approving.</p>
+            <div className="flex gap-2 pt-1">
+              {a.status !== 'approved' && <button className="btn-orange py-2" onClick={() => run('admin_set_nonprofit', { p_adv: a.id, p_ok: true })}>Approve</button>}
+              {a.status !== 'rejected' && <button className="btn-outline py-2" onClick={() => run('admin_set_nonprofit', { p_adv: a.id, p_ok: false })}>{a.status === 'approved' ? 'Remove approval' : 'Reject'}</button>}
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="space-y-3">
+        <h2 className="h2">Host cash-out requests</h2>
+        {o.cashouts.length === 0 && <p className="muted">None yet.</p>}
+        {o.cashouts.map((c) => (
+          <div key={c.id} className="card flex flex-wrap items-center justify-between gap-2">
+            <span><b>{c.host}</b> · {money(c.amount_cents)} · {when(c.created_at)} · {c.status}</span>
+            {c.status === 'pending' && <span className="flex gap-2">
+              <button className="btn-orange py-2" onClick={() => { const m = prompt('How did you pay them? (check, Cash App, bank transfer…)'); if (m) run('admin_plug_cashout', { p_req: c.id, p_paid: true, p_method: m }) }}>Mark paid</button>
+              <button className="btn-outline py-2" onClick={() => run('admin_plug_cashout', { p_req: c.id, p_paid: false })}>Reject</button>
+            </span>}
+          </div>
+        ))}
+      </div>
+      <div className="space-y-3">
+        <h2 className="h2">Messages being carried</h2>
+        {o.hostings.length === 0 && <p className="muted">None yet.</p>}
+        {o.hostings.map((h) => (
+          <div key={h.id} className="card text-sm"><b>{h.from}</b> carried by <b>{h.host}</b> · {h.status}{h.code ? ` · code ${h.code}` : ''} · {h.scans} scans</div>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 function Ads() {
   const [ads, loadAds] = useTable('ads')
@@ -400,7 +451,7 @@ export default function Admin() {
       </div>
     </div>
   )
-  const C = { Overview, Holders, Zones, Ads, Fund, 'House messages': HouseMessages, Openers, Payouts, Scans, Supporters, Settings }[tab]
+  const C = { Overview, Holders, Zones, Ads, Nonprofits, Fund, 'House messages': HouseMessages, Openers, Payouts, Scans, Supporters, Settings }[tab]
   return (
     <div className="mx-auto max-w-5xl px-4 py-6">
       <div className="no-print mb-5 flex gap-2 overflow-x-auto pb-1">

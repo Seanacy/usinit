@@ -105,6 +105,7 @@ export function AdvertiserAgreement() {
       <li>Political ads must include the committee name and address, which we show as the Minnesota disclaimer: "Prepared and paid for by the [committee], [address]." Every political ad is verified before it runs, and every candidate or side pays the same price.</li>
       <li>Unused balance can be refunded on request, minus card processing fees already paid.</li>
       <li>Holders are not responsible for, and do not endorse, the ads shown when their code is scanned.</li>
+      <li><b>The Plug for Nonprofits:</b> verified nonprofits (EIN or 501(c)(3) proof, approved by Us In It) can ask other verified nonprofits to carry their outreach message. The host chooses yes or no for every message. Each scan of a host's code costs the sender $0.05 from its prepaid balance: $0.04 to the host and $0.01 to Us In It. One paid scan per phone per code per day. This rate is only for nonprofits carrying each other's messages, never for street holder scans. Pay for messages from your own budget, not from grant money set aside for holders. Hosts cash out once they reach $50, or can give their earnings to the Community Fund. Public health and harm reduction services are allowed with approval; selling drugs is never allowed.</li>
     </Page>
   )
 }

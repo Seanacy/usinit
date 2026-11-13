@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { money, startCheckout, supabase, useSession, useStats } from '../lib/supabase'
 import AuthBox from '../components/AuthBox'
 import ZoneManager from '../components/ZoneManager'
+import PlugPanel from './Plug'
 import { describeRadius } from '../components/MapPicker'
 import { Notice, Spinner } from '../components/Layout'
 
@@ -207,7 +208,7 @@ export default function Advertise() {
           : (adv === null || editingBiz) ? (
             <form onSubmit={createAdv} className="card space-y-3">
               <h2 className="h2">{adv ? 'Edit business info' : 'Your business'}</h2>
-              <input className="input" placeholder="Business name" value={biz.business_name} onChange={(e) => setBiz({ ...biz, business_name: e.target.value })} />
+              <input className="input" placeholder="Business or nonprofit name" value={biz.business_name} onChange={(e) => setBiz({ ...biz, business_name: e.target.value })} />
               <input className="input" placeholder="Your name" value={biz.contact_name} onChange={(e) => setBiz({ ...biz, contact_name: e.target.value })} />
               <input className="input" placeholder="Phone (optional)" value={biz.phone} onChange={(e) => setBiz({ ...biz, phone: e.target.value })} />
               {!adv && <p className="muted text-sm">By continuing you agree to the Advertiser Agreement. Not allowed: payday loans, gambling, alcohol, cannabis, vape, adult content.</p>}
@@ -229,19 +230,21 @@ export default function Advertise() {
               {adv.status === 'pending' && <Notice>Your business account is waiting for approval. You can add funds and create ads now. They start running once approved.</Notice>}
               <div className="grid grid-cols-2 gap-3">
                 <div className="card"><p className="muted text-sm">Ad balance</p><p className="text-3xl font-extrabold">{money(adv.balance_cents)}</p><p className="muted text-xs">≈ {Math.floor(adv.balance_cents / price)} scans</p></div>
-                <div className="card"><p className="muted text-sm">Total scans</p><p className="text-3xl font-extrabold">{ads.reduce((a, x) => a + x.views, 0)}</p><p className="muted text-xs">{ads.reduce((a, x) => a + x.clicks, 0)} button taps</p></div>
+                <div className="card"><p className="muted text-sm">Total scans</p><p className="text-3xl font-extrabold">{ads.reduce((a, x) => a + x.views, 0)}</p><p className="muted text-xs">{ads.reduce((a, x) => a + x.clicks, 0)} button taps (ads + outreach)</p></div>
               </div>
               <div className="card flex items-center justify-between gap-2">
                 <span><b>{adv.business_name}</b>{adv.contact_name ? ` · ${adv.contact_name}` : ''}{adv.phone ? ` · ${adv.phone}` : ''}</span>
                 <button className="btn-black py-2" onClick={startBizEdit}>Edit</button>
               </div>
               <AddFunds stats={stats} />
+              <PlugPanel adv={adv} ads={ads} reloadAds={load} />
               <div className="card flex flex-wrap items-center justify-between gap-2">
                 <span><b>Your zones:</b> {zoneCount}<span className="muted block text-sm">The areas where your ads show, with live scan counts.</span></span>
                 <button className="btn-black py-2" onClick={() => setManagingZones(true)}>{zoneCount ? 'Add or edit zones' : 'Draw your first zone'}</button>
               </div>
               <button className="btn-black w-full" onClick={() => (zoneCount ? setCreating(true) : setManagingZones(true))}>{zoneCount ? 'Create a new ad' : 'Create a new ad (draw a zone first)'}</button>
-              {ads.map((a) => (
+              <h2 className="h2 pt-2">Your ads</h2>
+              {ads.filter((a) => a.ad_type !== 'outreach').map((a) => (
                 <div key={a.id} className="card">
                   <div className="flex items-start justify-between gap-2">
                     <div>
