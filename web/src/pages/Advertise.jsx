@@ -8,10 +8,23 @@ import { Notice, Spinner } from '../components/Layout'
 const MILES = [1, 3, 5, 10]
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
-function AdForm({ advertiser, onDone }) {
-  const [f, setF] = useState({ ad_type: 'standard', headline: '', body: '', image_url: '', button_text: 'Learn more', button_url: '', miles: 1, days: [0, 1, 2, 3, 4, 5, 6], start_hour: 7, end_hour: 21, daily_budget: 10,
-    event_name: '', event_start: '', event_end: '', event_address: '', ticket_url: '', political_committee: '', political_address: '', political_registration: '' })
-  const [point, setPoint] = useState(null)
+const toLocalInput = (iso) => {
+  if (!iso) return ''
+  const d = new Date(iso)
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
+}
+
+function AdForm({ advertiser, existing, onDone }) {
+  const e0 = existing || {}
+  const [f, setF] = useState({
+    ad_type: e0.ad_type || 'standard', headline: e0.headline || '', body: e0.body || '', image_url: e0.image_url || '',
+    button_text: e0.button_text ?? 'Learn more', button_url: e0.button_url || '',
+    miles: existing ? (MILES.find((m) => Math.abs(m * 1609.34 - e0.radius_m) < 50) || Math.round(e0.radius_m / 1609.34) || 1) : 1,
+    days: e0.days || [0, 1, 2, 3, 4, 5, 6], start_hour: e0.start_hour ?? 7, end_hour: e0.end_hour ?? 21,
+    daily_budget: existing ? e0.daily_budget_cents / 100 : 10,
+    event_name: e0.event_name || '', event_start: toLocalInput(e0.event_start), event_end: toLocalInput(e0.event_end), event_address: e0.event_address || '', ticket_url: e0.ticket_url || '',
+    political_committee: e0.political_committee || '', political_address: e0.political_address || '', political_registration: e0.political_registration || '' })
+  const [point, setPoint] = useState(existing ? { lat: e0.lat, lng: e0.lng } : null)
   const [zones, setZones] = useState([])
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState(null)
@@ -34,7 +47,9 @@ function AdForm({ advertiser, onDone }) {
     }
     if (f.ad_type === 'event') Object.assign(row, { event_name: f.event_name, event_start: new Date(f.event_start).toISOString(), event_end: new Date(f.event_end).toISOString(), event_address: f.event_address || null, ticket_url: f.ticket_url || null })
     if (f.ad_type === 'political') Object.assign(row, { political_committee: f.political_committee, political_address: f.political_address, political_registration: f.political_registration || null })
-    const { error } = await supabase.from('ads').insert(row)
+    const { error } = existing
+      ? await supabase.from('ads').update((({ advertiser_id, ...rest }) => rest)(row)).eq('id', existing.id)
+      : await supabase.from('ads').insert(row)
     setBusy(false)
     if (error) return setErr(error.message)
     onDone()
@@ -42,7 +57,8 @@ function AdForm({ advertiser, onDone }) {
 
   return (
     <form onSubmit={save} className="card space-y-4">
-      <h2 className="h2">New ad</h2>
+      <h2 className="h2">{existing ? 'Edit ad' : 'New ad'}</h2>
+      {existing && <Notice>Changing the words, picture, or link sends the ad back for a quick approval. Changing the area, days, hours, or daily max does not.</Notice>}
       <div className="grid grid-cols-3 gap-2">
         {[['standard', 'Business'], ['event', 'Event'], ['political', 'Political']].map(([k, l]) => (
           <button type="button" key={k} onClick={() => setF({ ...f, ad_type: k })} className={f.ad_type === k ? 'btn-black' : 'btn-outline'}>{l}</button>
@@ -100,7 +116,7 @@ function AdForm({ advertiser, onDone }) {
       {err && <Notice kind="error">{err}</Notice>}
       <div className="grid grid-cols-2 gap-2">
         <button type="button" className="btn-outline" onClick={onDone}>Cancel</button>
-        <button className="btn-orange" disabled={busy}>{busy ? 'Saving…' : 'Send for approval'}</button>
+        <button className="btn-orange" disabled={busy}>{busy ? 'Saving…' : existing ? 'Save changes' : 'Send for approval'}</button>
       </div>
     </form>
   )
@@ -140,6 +156,8 @@ export default function Advertise() {
   const [adv, setAdv] = useState(undefined)
   const [ads, setAds] = useState([])
   const [creating, setCreating] = useState(false)
+  const [editingAd, setEditingAd] = useState(null)
+  const [editingBiz, setEditingBiz] = useState(false)
   const [biz, setBiz] = useState({ business_name: '', contact_name: '', phone: '' })
   const [err, setErr] = useState(null)
   const price = stats?.price_per_scan_cents || 50
@@ -154,10 +172,13 @@ export default function Advertise() {
   async function createAdv(e) {
     e.preventDefault(); setErr(null)
     if (!biz.business_name.trim()) return setErr('Add your business name.')
-    const { error } = await supabase.from('advertisers').insert({ ...biz, user_id: session.user.id })
+    const { error } = adv
+      ? await supabase.from('advertisers').update(biz).eq('id', adv.id)
+      : await supabase.from('advertisers').insert({ ...biz, user_id: session.user.id })
     if (error) return setErr(error.message)
-    load()
+    setEditingBiz(false); load()
   }
+  function startBizEdit() { setBiz({ business_name: adv.business_name || '', contact_name: adv.contact_name || '', phone: adv.phone || '' }); setErr(null); setEditingBiz(true) }
   async function setStatus(ad, status) { await supabase.from('ads').update({ status }).eq('id', ad.id); load() }
 
   return (
@@ -167,23 +188,30 @@ export default function Advertise() {
       <div className="mt-6">
         {session === undefined ? <Spinner /> : !session ? <AuthBox title="Business account" intro="Create an account to set up your ads." redirectPath="/advertise" />
           : adv === undefined ? <Spinner />
-          : adv === null ? (
+          : (adv === null || editingBiz) ? (
             <form onSubmit={createAdv} className="card space-y-3">
-              <h2 className="h2">Your business</h2>
+              <h2 className="h2">{adv ? 'Edit business info' : 'Your business'}</h2>
               <input className="input" placeholder="Business name" value={biz.business_name} onChange={(e) => setBiz({ ...biz, business_name: e.target.value })} />
               <input className="input" placeholder="Your name" value={biz.contact_name} onChange={(e) => setBiz({ ...biz, contact_name: e.target.value })} />
               <input className="input" placeholder="Phone (optional)" value={biz.phone} onChange={(e) => setBiz({ ...biz, phone: e.target.value })} />
-              <p className="muted text-sm">By continuing you agree to the Advertiser Agreement. Not allowed: payday loans, gambling, alcohol, cannabis, vape, adult content.</p>
+              {!adv && <p className="muted text-sm">By continuing you agree to the Advertiser Agreement. Not allowed: payday loans, gambling, alcohol, cannabis, vape, adult content.</p>}
               {err && <Notice kind="error">{err}</Notice>}
-              <button className="btn-orange w-full">Create business account</button>
+              <div className="flex gap-2">
+                {adv && <button type="button" className="btn-outline flex-1" onClick={() => setEditingBiz(false)}>Cancel</button>}
+                <button className="btn-orange flex-1">{adv ? 'Save changes' : 'Create business account'}</button>
+              </div>
             </form>
-          ) : creating ? <AdForm advertiser={adv} onDone={() => { setCreating(false); load() }} /> : (
+          ) : (creating || editingAd) ? <AdForm advertiser={adv} existing={editingAd} onDone={() => { setCreating(false); setEditingAd(null); load() }} /> : (
             <div className="space-y-4">
               {params.get('paid') && <Notice kind="ok">Payment received. Your balance updates in a few seconds. Refresh if you don't see it.</Notice>}
               {adv.status === 'pending' && <Notice>Your business account is waiting for approval. You can add funds and create ads now. They start running once approved.</Notice>}
               <div className="grid grid-cols-2 gap-3">
                 <div className="card"><p className="muted text-sm">Ad balance</p><p className="text-3xl font-extrabold">{money(adv.balance_cents)}</p><p className="muted text-xs">≈ {Math.floor(adv.balance_cents / price)} scans</p></div>
                 <div className="card"><p className="muted text-sm">Total scans</p><p className="text-3xl font-extrabold">{ads.reduce((a, x) => a + x.views, 0)}</p><p className="muted text-xs">{ads.reduce((a, x) => a + x.clicks, 0)} button taps</p></div>
+              </div>
+              <div className="card flex items-center justify-between gap-2">
+                <span><b>{adv.business_name}</b>{adv.contact_name ? ` · ${adv.contact_name}` : ''}{adv.phone ? ` · ${adv.phone}` : ''}</span>
+                <button className="btn-black py-2" onClick={startBizEdit}>Edit</button>
               </div>
               <AddFunds stats={stats} />
               <button className="btn-black w-full" onClick={() => setCreating(true)}>Create a new ad</button>
@@ -196,8 +224,11 @@ export default function Advertise() {
                     </div>
                     <span className={`pill ${a.status === 'active' ? 'bg-green-100 text-green-800' : a.status === 'pending' ? 'bg-orange/20 text-ink dark:text-white' : 'bg-neutral-200 text-neutral-700'}`}>{a.status === 'pending' ? 'waiting for approval' : a.status}</span>
                   </div>
-                  {a.status === 'active' && <button className="btn-outline mt-3" onClick={() => setStatus(a, 'paused')}>Pause</button>}
-                  {a.status === 'paused' && a.approved && <button className="btn-orange mt-3" onClick={() => setStatus(a, 'active')}>Resume</button>}
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button className="btn-black py-2" onClick={() => setEditingAd(a)}>Edit</button>
+                    {a.status === 'active' && <button className="btn-outline py-2" onClick={() => setStatus(a, 'paused')}>Pause</button>}
+                    {a.status === 'paused' && a.approved && <button className="btn-orange py-2" onClick={() => setStatus(a, 'active')}>Resume</button>}
+                  </div>
                 </div>
               ))}
             </div>

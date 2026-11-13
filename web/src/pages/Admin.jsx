@@ -39,15 +39,43 @@ function Overview() {
   )
 }
 
+function HolderEdit({ h, onDone }) {
+  const [f, setF] = useState({ first_name: h.first_name || '', story: h.story || '', general_area: h.general_area || '', photo_url: h.photo_url || '', daily_goal: h.daily_goal ?? '', listed_in_directory: h.listed_in_directory, allow_champions: h.allow_champions })
+  const [err, setErr] = useState(null)
+  const set = (k) => (e) => setF({ ...f, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value })
+  async function save() {
+    setErr(null)
+    if (!f.first_name.trim()) return setErr('First name is required.')
+    const { error } = await supabase.from('holders').update({ ...f, first_name: f.first_name.trim(), photo_url: f.photo_url || null, daily_goal: f.daily_goal === '' ? null : Number(f.daily_goal) }).eq('id', h.id)
+    if (error) return setErr(error.message)
+    onDone()
+  }
+  return (
+    <div className="card space-y-3">
+      <h2 className="h2">Edit {h.first_name}{h.holder_code ? ` #${h.holder_code}` : ''}</h2>
+      <label className="block text-sm font-bold">First name<input className="input" maxLength={40} value={f.first_name} onChange={set('first_name')} /></label>
+      <label className="block text-sm font-bold">Story<textarea className="input min-h-[120px]" maxLength={1000} value={f.story} onChange={set('story')} /></label>
+      <label className="block text-sm font-bold">General area<input className="input" maxLength={80} value={f.general_area} onChange={set('general_area')} /></label>
+      <label className="block text-sm font-bold">Daily scan goal (blank = default)<input className="input" inputMode="numeric" value={f.daily_goal} onChange={set('daily_goal')} /></label>
+      {f.photo_url && <div className="flex items-center gap-3"><img src={f.photo_url} alt="" className="h-16 w-16 rounded-full object-cover" /><button className="btn-outline py-2" onClick={() => setF({ ...f, photo_url: '' })}>Remove photo</button></div>}
+      <label className="flex items-center gap-3"><input type="checkbox" className="h-5 w-5 accent-[#FF6A00]" checked={f.listed_in_directory} onChange={set('listed_in_directory')} />Listed in public directory</label>
+      <label className="flex items-center gap-3"><input type="checkbox" className="h-5 w-5 accent-[#FF6A00]" checked={f.allow_champions} onChange={set('allow_champions')} />Allows Champions</label>
+      {err && <Notice kind="error">{err}</Notice>}
+      <div className="flex gap-2"><button className="btn-outline flex-1" onClick={onDone}>Cancel</button><button className="btn-orange flex-1" onClick={save}>Save changes</button></div>
+    </div>
+  )
+}
+
 function Holders() {
   const [rows, load] = useTable('holders')
   const [printing, setPrinting] = useState(null)
+  const [editing, setEditing] = useState(null)
   const [msg, setMsg] = useState(null)
   if (printing) return <div><button className="no-print mb-3 font-bold underline" onClick={() => setPrinting(null)}>← Back</button><Printables holder={printing} /></div>
+  if (editing) return <HolderEdit h={editing} onDone={() => { setEditing(null); load() }} />
   if (!rows) return <Spinner />
   async function approve(h) { const { data, error } = await supabase.rpc('approve_holder', { p_holder: h.id }); setMsg(error ? { k: 'error', t: error.message } : { k: 'ok', t: `${h.first_name} approved as #${data}` }); load() }
   async function setStatus(h, status) { await supabase.from('holders').update({ status }).eq('id', h.id); load() }
-  async function setGoal(h) { const g = prompt(`Daily scan goal for ${h.first_name} (blank = default)`, h.daily_goal ?? ''); if (g === null) return; await supabase.from('holders').update({ daily_goal: g ? Number(g) : null }).eq('id', h.id); load() }
   return (
     <div className="space-y-3">
       {msg && <Notice kind={msg.k}>{msg.t}</Notice>}
@@ -63,8 +91,9 @@ function Holders() {
           <div className="flex flex-wrap gap-2">
             {h.status !== 'active' && <button className="btn-orange py-2" onClick={() => approve(h)}>Approve</button>}
             {h.status === 'active' && <button className="btn-outline py-2" onClick={() => setPrinting(h)}>Print</button>}
-            {h.status === 'active' && <button className="btn-outline py-2" onClick={() => setGoal(h)}>Goal</button>}
-            {h.status !== 'deactivated' && <button className="btn-outline py-2" onClick={() => setStatus(h, 'deactivated')}>Turn off</button>}
+            <button className="btn-black py-2" onClick={() => setEditing(h)}>Edit</button>
+            {h.status !== 'deactivated' ? <button className="btn-outline py-2" onClick={() => setStatus(h, 'deactivated')}>Turn off</button>
+              : h.holder_code && <button className="btn-outline py-2" onClick={() => setStatus(h, 'active')}>Turn back on</button>}
           </div>
         </div>
       ))}
@@ -211,8 +240,14 @@ function Fund() {
     if (error) return setErr(error.message)
     setAmt(''); setNote(''); load()
   }
+  async function undo(r) {
+    if (!confirm(`Undo the ${money(r.amount_cents)} deposit? This adds a correcting entry so your records stay complete.`)) return
+    const { error } = await supabase.rpc('admin_undo_fund_deposit', { p_tx: r.id })
+    setErr(error?.message || null); load()
+  }
   return (
     <div className="space-y-4">
+      <p className="muted">Money records can't be edited, so your books always add up. Use Undo to reverse a deposit you added by mistake.</p>
       <div className="card"><p className="muted text-sm">Balance</p><p className="text-3xl font-extrabold">{money(bal)}</p></div>
       <div className="card space-y-2">
         <p className="font-bold">Record money you added (example: your $500 launch deposit). Use a minus sign to correct a mistake.</p>
@@ -224,7 +259,13 @@ function Fund() {
         {err && <Notice kind="error">{err}</Notice>}
       </div>
       <div className="card"><ul className="divide-y divide-neutral-200 text-sm dark:divide-neutral-700">
-        {(rows || []).slice(0, 100).map((r) => <li key={r.id} className="flex justify-between py-2"><span>{r.source}{r.donor_name ? ` · ${r.donor_name}` : ''}{r.note ? ` · ${r.note}` : ''} · {when(r.created_at)}</span><b>{money(r.amount_cents)}</b></li>)}
+        {(rows || []).slice(0, 100).map((r) => (
+          <li key={r.id} className="flex items-center justify-between gap-2 py-2">
+            <span>{r.source}{r.donor_name ? ` · ${r.donor_name}` : ''}{r.note ? ` · ${r.note}` : ''} · {when(r.created_at)}{r.undone ? ' · undone' : ''}</span>
+            <span className="flex items-center gap-2"><b>{money(r.amount_cents)}</b>
+              {r.source === 'admin_deposit' && !r.undone && <button className="btn-outline px-3 py-1 text-sm" onClick={() => undo(r)}>Undo</button>}</span>
+          </li>
+        ))}
       </ul></div>
     </div>
   )
@@ -234,20 +275,32 @@ function HouseMessages() {
   const [rows, load] = useTable('house_messages')
   const blank = { kind: 'positive', headline: '', body: '', image_url: '', button_text: '', button_url: '', weight: 1 }
   const [f, setF] = useState(blank)
+  const [editing, setEditing] = useState(null)
   const [err, setErr] = useState(null)
-  async function add() {
+  function startEdit(m) {
+    setEditing(m); setErr(null)
+    setF({ kind: m.kind, headline: m.headline || '', body: m.body || '', image_url: m.image_url || '', button_text: m.button_text || '', button_url: m.button_url || '', weight: m.weight })
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+  function cancel() { setEditing(null); setF(blank); setErr(null) }
+  async function save() {
     setErr(null)
     if (!f.body.trim()) return setErr('Add the message text.')
-    const { error } = await supabase.from('house_messages').insert({ ...f, headline: f.headline || null, image_url: f.image_url || null, button_text: f.button_text || null, button_url: f.button_url || null, weight: Number(f.weight) || 1 })
+    if (f.button_url && !/^https?:\/\//i.test(f.button_url)) return setErr('The button link must start with https://')
+    const row = { ...f, headline: f.headline || null, image_url: f.image_url || null, button_text: f.button_text || null, button_url: f.button_url || null, weight: Number(f.weight) || 1 }
+    const { error } = editing
+      ? await supabase.from('house_messages').update(row).eq('id', editing.id)
+      : await supabase.from('house_messages').insert(row)
     if (error) return setErr(error.message)
-    setF(blank); load()
+    cancel(); load()
   }
   async function toggle(m) { await supabase.from('house_messages').update({ active: !m.active }).eq('id', m.id); load() }
-  async function del(m) { if (confirm('Delete this message?')) { await supabase.from('house_messages').delete().eq('id', m.id); load() } }
+  async function del(m) { if (confirm('Delete this message?')) { await supabase.from('house_messages').delete().eq('id', m.id); if (editing?.id === m.id) cancel(); load() } }
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value })
   return (
     <div className="space-y-4">
       <p className="muted">These show when the Community Fund pays for a scan. Positive messages also show to people whose scan didn't count.</p>
+      {editing && <Notice>Editing a saved message. Make your changes, then click Save changes.</Notice>}
       <div className="card space-y-2">
         <div className="grid grid-cols-2 gap-2">
           <button className={f.kind === 'positive' ? 'btn-black' : 'btn-outline'} onClick={() => setF({ ...f, kind: 'positive' })}>Positive message</button>
@@ -261,14 +314,17 @@ function HouseMessages() {
         </>}
         <label className="text-sm font-bold">How often (weight)<input className="input" type="number" min="1" value={f.weight} onChange={set('weight')} /></label>
         {err && <Notice kind="error">{err}</Notice>}
-        <button className="btn-orange w-full" onClick={add}>Add message</button>
+        <div className="flex gap-2">
+          {editing && <button className="btn-outline flex-1" onClick={cancel}>Cancel</button>}
+          <button className="btn-orange flex-1" onClick={save}>{editing ? 'Save changes' : 'Add message'}</button>
+        </div>
       </div>
       {(rows || []).map((m) => (
-        <div key={m.id} className="card">
+        <div key={m.id} className={`card ${editing?.id === m.id ? 'border-orange' : ''}`}>
           <p className="font-bold">{m.kind === 'positive' ? 'Positive' : 'Promo'}{m.headline ? `: ${m.headline}` : ''} {m.active ? '' : '(off)'}</p>
           <p className="text-sm">{m.body}</p>
           <p className="muted text-sm">weight {m.weight} · {m.views} views · {m.clicks} taps</p>
-          <div className="mt-2 flex gap-2"><button className="btn-outline py-2" onClick={() => toggle(m)}>{m.active ? 'Turn off' : 'Turn on'}</button><button className="btn-outline py-2" onClick={() => del(m)}>Delete</button></div>
+          <div className="mt-2 flex gap-2"><button className="btn-black py-2" onClick={() => startEdit(m)}>Edit</button><button className="btn-outline py-2" onClick={() => toggle(m)}>{m.active ? 'Turn off' : 'Turn on'}</button><button className="btn-outline py-2" onClick={() => del(m)}>Delete</button></div>
         </div>
       ))}
     </div>
@@ -310,6 +366,11 @@ function Payouts() {
     const { error } = await supabase.rpc('admin_record_payout', { p_holder: h.id, p_cents: Math.round(Number(amt) * 100), p_method: method, p_note: note })
     setErr(error?.message || null); load(); loadPaid()
   }
+  async function undoPayout(p) {
+    if (!confirm(`Undo this ${money(p.amount_cents)} payout? The money goes back on the holder's balance.`)) return
+    const { error } = await supabase.rpc('admin_undo_payout', { p_payout: p.id })
+    setErr(error?.message || null); load(); loadPaid()
+  }
   if (!o) return <Spinner />
   return (
     <div className="space-y-4">
@@ -319,7 +380,11 @@ function Payouts() {
       {o.balances.map((h) => (
         <div key={h.id} className="card flex items-center justify-between"><span className="font-bold">{h.first_name} #{h.holder_code} · {money(h.balance_cents)}</span><button className="btn-orange py-2" onClick={() => pay(h)}>Record payout</button></div>
       ))}
-      <div className="card"><p className="font-bold">Past payouts</p><ul className="mt-2 text-sm">{(paid || []).map((p) => <li key={p.id}>{when(p.created_at)} · {money(p.amount_cents)} · {p.method} {p.note}</li>)}</ul></div>
+      <div className="card"><p className="font-bold">Past payouts</p><ul className="mt-2 divide-y divide-neutral-200 text-sm dark:divide-neutral-700">{(paid || []).map((p) => (
+        <li key={p.id} className="flex items-center justify-between gap-2 py-2">
+          <span>{when(p.created_at)} · {money(p.amount_cents)} · {p.method} {p.note}{p.undone ? ' · undone' : ''}</span>
+          {!p.undone && <button className="btn-outline px-3 py-1 text-sm" onClick={() => undoPayout(p)}>Undo</button>}
+        </li>))}</ul></div>
     </div>
   )
 }
@@ -350,13 +415,20 @@ function Supporters() {
   const [code, setCode] = useState('')
   if (!rows) return <Spinner />
   const real = rows.filter((r) => r.status !== 'pending')
-  async function addCode() { if (!code.trim()) return; await supabase.from('referral_codes').insert({ code: code.trim().toUpperCase(), label: code.trim() }); setCode(''); loadCodes() }
+  async function addCode() { if (!code.trim()) return; await supabase.from('referral_codes').insert({ code: code.trim().toUpperCase().replace(/\s+/g, ''), label: code.trim() }); setCode(''); loadCodes() }
+  async function editCode(c) { const label = prompt(`Who is code ${c.code} for? (a note for you)`, c.label || ''); if (label === null) return; await supabase.from('referral_codes').update({ label }).eq('code', c.code); loadCodes() }
+  async function toggleCode(c) { await supabase.from('referral_codes').update({ active: !c.active }).eq('code', c.code); loadCodes() }
+  async function delCode(c) { if (confirm(`Delete code ${c.code}? Supporters who used it keep their plans.`)) { await supabase.from('referral_codes').delete().eq('code', c.code); loadCodes() } }
   return (
     <div className="space-y-4">
       <div className="card space-y-2">
         <p className="font-bold">Referral codes (add ?ref=CODE to the /support link to track who signed people up)</p>
         <div className="flex gap-2"><input className="input" placeholder="JERMAINE" value={code} onChange={(e) => setCode(e.target.value)} /><button className="btn-orange" onClick={addCode}>Add</button></div>
-        <ul className="text-sm">{(codes || []).map((c) => <li key={c.code}><b>{c.code}</b>: {real.filter((r) => (r.referral_code || '').toUpperCase() === c.code).length} supporters · {window.location.origin}/support?ref={c.code}</li>)}</ul>
+        <ul className="divide-y divide-neutral-200 text-sm dark:divide-neutral-700">{(codes || []).map((c) => (
+          <li key={c.code} className="flex flex-wrap items-center justify-between gap-2 py-2">
+            <span><b>{c.code}</b>{c.label && c.label.toUpperCase() !== c.code ? ` (${c.label})` : ''}{c.active ? '' : ' (off)'}: {real.filter((r) => (r.referral_code || '').toUpperCase() === c.code).length} supporters · {window.location.origin}/support?ref={c.code}</span>
+            <span className="flex gap-2"><button className="btn-black px-3 py-1 text-sm" onClick={() => editCode(c)}>Edit</button><button className="btn-outline px-3 py-1 text-sm" onClick={() => toggleCode(c)}>{c.active ? 'Turn off' : 'Turn on'}</button><button className="btn-outline px-3 py-1 text-sm" onClick={() => delCode(c)}>Delete</button></span>
+          </li>))}</ul>
       </div>
       {real.length === 0 && <p className="muted">No supporters yet.</p>}
       {real.map((r) => <div key={r.id} className="card text-sm"><b>{r.first_name || r.email || 'Supporter'}</b> · {r.plan_type === 'weekly' ? `${money(r.amount_cents)}/week × ${r.weeks}` : `${money(r.amount_cents)} once`} · {r.payments_made} paid · {r.status}{r.referral_code ? ` · ref ${r.referral_code}` : ''}</div>)}
