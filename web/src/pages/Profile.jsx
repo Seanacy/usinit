@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useParams, useSearchParams, useNavigate } from 'react-router-dom'
 import { supabase, useSession } from '../lib/supabase'
+import { QUESTIONS } from '../lib/questions'
 import { Notice, Spinner } from '../components/Layout'
 import AuthBox from '../components/AuthBox'
 
@@ -102,6 +103,16 @@ export function ProfileCard({ code }) {
         </div>
       </div>
       {h.story && <p className="mt-4 whitespace-pre-line text-lg leading-relaxed">{h.story}</p>}
+      {QUESTIONS.some((x) => h.answers?.[x.key]) && (
+        <div className="mt-4 space-y-2">
+          {QUESTIONS.filter((x) => h.answers?.[x.key]).map((x) => (
+            <div key={x.key} className="rounded-xl bg-neutral-100 p-3 dark:bg-neutral-800">
+              <p className="text-xs font-bold uppercase tracking-wide text-orange">{x.short}</p>
+              <p className="whitespace-pre-line">{h.answers[x.key]}</p>
+            </div>
+          ))}
+        </div>
+      )}
       {h.sponsors?.length > 0 && <p className="mt-4 text-sm"><span className="font-bold">Supported by:</span> {h.sponsors.map((x) => x.name).join(', ')}</p>}
       <SupportButtons h={h} code={code} onChange={(r) => setH({ ...h, ...r })} onReload={load} />
       <Updates list={h.updates} name={h.first_name} />

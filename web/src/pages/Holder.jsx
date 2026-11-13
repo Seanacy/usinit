@@ -6,12 +6,25 @@ import { Notice, Spinner } from '../components/Layout'
 import Printables, { scanUrl, useQR } from '../components/Printables'
 import { HolderShares } from './Booking'
 import { HolderDigital } from './Digital'
+import { FIRST, QUESTIONS } from '../lib/questions'
+
+function Question({ x, value, onChange }) {
+  return (
+    <div>
+      <label className="text-sm font-bold" htmlFor={`q_${x.key}`}>{x.q}</label>
+      <textarea id={`q_${x.key}`} className="input mt-1 min-h-[70px]" maxLength={300} value={value} onChange={onChange} />
+    </div>
+  )
+}
 
 function ProfileForm({ session, existing, onSaved }) {
   const [f, setF] = useState({
     first_name: existing?.first_name || '', story: existing?.story || '', general_area: existing?.general_area || '',
     photo_url: existing?.photo_url || '', listed_in_directory: existing?.listed_in_directory || false, allow_champions: existing?.allow_champions || false, digital_only: existing?.digital_only || false,
+    answers: existing?.answers || {},
   })
+  const [more, setMore] = useState(QUESTIONS.slice(FIRST).some((x) => existing?.answers?.[x.key]))
+  const setA = (k) => (e) => setF({ ...f, answers: { ...f.answers, [k]: e.target.value } })
   const [agree, setAgree] = useState(!!existing)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState(null)
@@ -29,7 +42,8 @@ function ProfileForm({ session, existing, onSaved }) {
     if (!f.first_name.trim()) return setErr('Add your first name.')
     if (!agree) return setErr('Please read and accept the Holder Agreement.')
     setBusy(true)
-    const row = { ...f, first_name: f.first_name.trim() }
+    const answers = Object.fromEntries(Object.entries(f.answers).map(([k, v]) => [k, v.trim()]).filter(([, v]) => v))
+    const row = { ...f, first_name: f.first_name.trim(), answers }
     const q = existing
       ? supabase.from('holders').update(row).eq('id', existing.id)
       : supabase.from('holders').insert({ ...row, user_id: session.user.id, agreement_accepted_at: new Date().toISOString() })
@@ -62,6 +76,15 @@ function ProfileForm({ session, existing, onSaved }) {
         <textarea id="story" className="input min-h-[140px]" maxLength={1000} value={f.story} onChange={set('story')} placeholder="I'm Marcus. I grew up in north Minneapolis and I'm saving for a deposit on an apartment…" />
         <p className="muted mt-1 text-right text-xs">{f.story.length} / 1000</p>
       </div>
+      <div className="space-y-3">
+        <div>
+          <p className="label">Questions (all optional)</p>
+          <p className="muted text-sm">Answer any you want, skip the rest. Your answers show on your public page. Don't share private things like health, legal issues, or where you sleep.</p>
+        </div>
+        {QUESTIONS.slice(0, FIRST).map((x) => <Question key={x.key} x={x} value={f.answers[x.key] || ''} onChange={setA(x.key)} />)}
+        <button type="button" className="btn-outline w-full" onClick={() => setMore(!more)}>{more ? 'Hide more questions ▲' : 'More questions ▼'}</button>
+        {more && QUESTIONS.slice(FIRST).map((x) => <Question key={x.key} x={x} value={f.answers[x.key] || ''} onChange={setA(x.key)} />)}
+      </div>
       <div>
         <label className="label" htmlFor="area">General area (never an exact corner)</label>
         <input id="area" className="input" maxLength={80} value={f.general_area} onChange={set('general_area')} placeholder="Uptown, Downtown, Lake Street…" />
@@ -75,7 +98,7 @@ function ProfileForm({ session, existing, onSaved }) {
           <span>I read and agree to the <Link to="/holder-agreement" target="_blank" className="font-bold underline">Holder Agreement</Link>, including the walking rules.</span>
         </label>
       )}
-      {existing && <p className="muted text-sm">Changes to your name, photo, and story show right away. Us In It may review them.</p>}
+      {existing && <p className="muted text-sm">Changes to your name, photo, story, and answers show right away. Us In It may review them.</p>}
       {err && <Notice kind="error">{err}</Notice>}
       <button className="btn-orange w-full" disabled={busy}>{busy ? 'Saving…' : existing ? 'Save changes' : 'Send for approval'}</button>
     </form>
