@@ -59,7 +59,7 @@ export function AddressSearch({ onPick }) {
           onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') search(e) }} />
         <button type="button" className="btn-black shrink-0" onClick={search} disabled={busy}>{busy ? '…' : 'Find'}</button>
       </div>
-      {results && results.length === 0 && <p className="mt-2 text-sm font-bold text-red-600">No match. Try adding the city, like "Minneapolis".</p>}
+      {results && results.length === 0 && <p className="mt-2 text-sm font-bold text-red-600">No match. Try adding the city, like "Minneapolis". For a street corner, type a nearby address, then tap the exact corner on the map.</p>}
       {results && results.length > 1 && (
         <ul className="mt-2 divide-y divide-neutral-200 rounded-xl border border-neutral-200 dark:divide-neutral-700 dark:border-neutral-700">
           {results.map((r) => (
