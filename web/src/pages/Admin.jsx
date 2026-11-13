@@ -94,7 +94,7 @@ function Zones() {
     if (!p) {
       const found = await geocode(name, 1).catch(() => [])
       if (!found.length) return setErr('Type an address in "Find the spot" and click Find, or tap the map.')
-      p = { lat: Number(found[0].lat), lng: Number(found[0].lon) }
+      p = { lat: found[0].lat, lng: found[0].lng }
       setPoint(p)
     }
     if (!(radiusM >= 15)) return setErr('Make the zone at least 50 feet across.')

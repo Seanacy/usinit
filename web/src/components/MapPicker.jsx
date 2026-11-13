@@ -27,14 +27,42 @@ function Follow({ point, radius }) {
   return null
 }
 
-// Address lookup using OpenStreetMap's free service, focused on the Twin Cities.
-export async function geocode(text, limit = 5) {
-  const url = `https://nominatim.openstreetmap.org/search?format=json&limit=${limit}&countrycodes=us&viewbox=-94.0,45.4,-92.6,44.6&q=${encodeURIComponent(text)}`
-  const res = await fetch(url, { headers: { Accept: 'application/json' } })
-  return (await res.json()) || []
+// Address and place lookup (free OpenStreetMap services), kept inside the Twin Cities area.
+const BOX = { w: -94.0, s: 44.6, e: -92.6, n: 45.4 }
+function clean(text) {
+  return text.toLowerCase()
+    .replace(/[&@]/g, ' ')
+    .replace(/\b(on|at|near|by|the|in|of|and|corner|between)\b/g, ' ')
+    .replace(/\s+/g, ' ').trim()
+}
+function label(p) {
+  const street = [p.housenumber, p.street].filter(Boolean).join(' ')
+  return [p.name !== p.street ? p.name : null, street, p.city || p.district].filter(Boolean).join(', ')
+}
+export async function geocode(text, limit = 6) {
+  const out = []
+  const add = (lat, lng, lbl) => {
+    if (!lbl || out.some((o) => o.label === lbl || (Math.abs(o.lat - lat) < 0.0003 && Math.abs(o.lng - lng) < 0.0003))) return
+    out.push({ lat, lng, label: lbl })
+  }
+  const q = clean(text) || text
+  const [photon, nomi] = await Promise.allSettled([
+    fetch(`https://photon.komoot.io/api/?limit=${limit}&lat=44.97&lon=-93.26&bbox=${BOX.w},${BOX.s},${BOX.e},${BOX.n}&q=${encodeURIComponent(q)}`).then((r) => r.json()),
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=${limit}&bounded=1&viewbox=${BOX.w},${BOX.n},${BOX.e},${BOX.s}&q=${encodeURIComponent(text)}`).then((r) => r.json()),
+  ])
+  if (nomi.status === 'fulfilled' && Array.isArray(nomi.value)) {
+    nomi.value.filter((r) => /\d/.test(text.split(' ')[0] || '')).forEach((r) => add(Number(r.lat), Number(r.lon), r.display_name.split(',').slice(0, 3).join(',')))
+  }
+  if (photon.status === 'fulfilled' && photon.value?.features) {
+    photon.value.features.forEach((f) => add(f.geometry.coordinates[1], f.geometry.coordinates[0], label(f.properties)))
+  }
+  if (nomi.status === 'fulfilled' && Array.isArray(nomi.value)) {
+    nomi.value.forEach((r) => add(Number(r.lat), Number(r.lon), r.display_name.split(',').slice(0, 3).join(',')))
+  }
+  return out.slice(0, limit)
 }
 
-export function AddressSearch({ onPick, label = 'Find the spot' }) {
+export function AddressSearch({ onPick, label: title = 'Find the spot' }) {
   const [q, setQ] = useState('')
   const [results, setResults] = useState(null)
   const [busy, setBusy] = useState(false)
@@ -42,35 +70,27 @@ export function AddressSearch({ onPick, label = 'Find the spot' }) {
     e?.preventDefault()
     if (!q.trim()) return
     setBusy(true); setResults(null)
-    try {
-      const data = await geocode(q)
-      setResults(data)
-      if (data?.length === 1) pick(data[0])
-    } catch {
-      setResults([])
-    } finally {
-      setBusy(false)
-    }
+    try { setResults(await geocode(q)) } catch { setResults([]) } finally { setBusy(false) }
   }
-  function pick(r) {
-    onPick({ lat: Number(r.lat), lng: Number(r.lon), label: r.display_name })
-    setResults(null)
-  }
+  function pick(r) { onPick(r); setResults(null) }
   return (
     <div>
-      <label className="label">{label}</label>
+      <label className="label">{title}</label>
       <div className="flex gap-2">
-        <input className="input" placeholder="Type an address or place, like 1477 W Lake St, Minneapolis" value={q}
+        <input className="input" placeholder="Address or place, like Target Lake St or 1477 W Lake St" value={q}
           onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') search(e) }} />
         <button type="button" className="btn-black shrink-0" onClick={search} disabled={busy}>{busy ? '…' : 'Find'}</button>
       </div>
-      {results && results.length === 0 && <p className="mt-2 text-sm font-bold text-red-600">No match. Try adding the city, like "Minneapolis". For a street corner, type a nearby address, then tap the exact corner on the map.</p>}
-      {results && results.length > 1 && (
-        <ul className="mt-2 divide-y divide-neutral-200 rounded-xl border border-neutral-200 dark:divide-neutral-700 dark:border-neutral-700">
-          {results.map((r) => (
-            <li key={r.place_id}><button type="button" className="w-full px-3 py-2 text-left text-sm hover:bg-neutral-100 dark:hover:bg-neutral-800" onClick={() => pick(r)}>{r.display_name}</button></li>
-          ))}
-        </ul>
+      {results && results.length === 0 && <p className="mt-2 text-sm font-bold text-red-600">No match in the Twin Cities. Try fewer words, like "Target Lake St", or tap the spot on the map.</p>}
+      {results && results.length > 0 && (
+        <div className="mt-2">
+          <p className="muted mb-1 text-sm font-bold">Tap the right one:</p>
+          <ul className="divide-y divide-neutral-200 rounded-xl border border-neutral-200 dark:divide-neutral-700 dark:border-neutral-700">
+            {results.map((r, i) => (
+              <li key={i}><button type="button" className="w-full px-3 py-3 text-left hover:bg-neutral-100 dark:hover:bg-neutral-800" onClick={() => pick(r)}>{r.label}</button></li>
+            ))}
+          </ul>
+        </div>
       )}
     </div>
   )
