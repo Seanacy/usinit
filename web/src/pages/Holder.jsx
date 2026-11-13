@@ -79,6 +79,13 @@ function ProfileForm({ session, existing, onSaved }) {
   )
 }
 
+function Stars({ code }) {
+  const [n, setN] = useState(null)
+  useEffect(() => { if (code) supabase.rpc('get_public_holder', { p_code: code }).then(({ data }) => setN(data?.stars ?? null)) }, [code])
+  if (n === null) return null
+  return <p className="mt-1 text-sm font-bold">⭐ {n} {n === 1 ? 'person is' : 'people are'} rooting for you</p>
+}
+
 function Dashboard({ d, session, reload }) {
   const h = d.holder
   const [edit, setEdit] = useState(false)
@@ -107,6 +114,7 @@ function Dashboard({ d, session, reload }) {
           <p className="muted text-sm">Your holder ID</p>
           <p className="text-4xl font-extrabold">#{h.holder_code}</p>
           <Link to={`/p/${h.holder_code}`} className="text-sm font-bold underline">See my public page</Link>
+          <Stars code={h.holder_code} />
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3">

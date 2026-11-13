@@ -82,6 +82,6 @@ export async function homeFor(user) {
   const r = user.user_metadata?.role
   if (r === 'holder') return '/holder'
   if (r === 'business') return '/advertise'
-  return null
+  return '/me'
 }
 

@@ -9,7 +9,8 @@ const ROLES = [
     box: { title: 'Holder sign up', intro: "Use an email you can check. You'll use it to log in and see your earnings." } },
   { key: 'business', title: "I'm a business", text: 'I want my ad shown to people who scan codes near my business.', path: '/advertise',
     box: { title: 'Business sign up', intro: 'Create an account to set up your ads.' } },
-  { key: 'supporter', title: "I'm a supporter", text: 'I want to give to holders or the Community Fund. No account needed.', path: '/support' },
+  { key: 'supporter', title: "I'm a supporter", text: "I want to star holders whose stories I like. (You don't need an account to scan or give.)", path: '/me',
+    box: { title: 'Supporter sign up', intro: 'A free account lets you star holders and keep a list of the people you\'re rooting for.' } },
 ]
 
 export function Signup() {

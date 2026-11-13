@@ -8,7 +8,8 @@ export default function AuthBox({ title = 'Log in or sign up', intro, redirectPa
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState(null)
-  const redirect = window.location.origin + (redirectPath || window.location.pathname) + '?confirmed=1'
+  const base = redirectPath || window.location.pathname
+  const redirect = window.location.origin + base + (base.includes('?') ? '&' : '?') + 'confirmed=1'
 
   // A confirm link that was already used or is too old lands here with an error in the address.
   useEffect(() => {

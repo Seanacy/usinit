@@ -5,7 +5,7 @@ import './index.css'
 import Layout, { Notice, Spinner } from './components/Layout'
 import Home from './pages/Home'
 import Scan from './pages/Scan'
-import Profile from './pages/Profile'
+import Profile, { MyStars } from './pages/Profile'
 import Support from './pages/Support'
 import Fund from './pages/Fund'
 import Thanks from './pages/Thanks'
@@ -58,6 +58,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/signup" element={<Signup />} />
           <Route path="/login" element={<Login />} />
           <Route path="/account" element={<Login />} />
+          <Route path="/me" element={<MyStars />} />
           <Route path="/reset" element={<Reset />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/privacy" element={<Privacy />} />
