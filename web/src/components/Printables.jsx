@@ -43,7 +43,7 @@ export default function Printables({ holder }) {
             Put my first name on this printout
           </label>
         )}
-        {kind === 'sign' && <p className="muted text-sm">Prints sideways (landscape) on one regular 8.5 x 11 sheet.</p>}
+        {kind === 'sign' && <p className="muted text-sm">Black and white, light on ink. Prints sideways (landscape) on one regular 8.5 x 11 sheet.</p>}
         <button className="btn-orange w-full" onClick={() => window.print()}>Print or save as PDF</button>
       </div>
       <style>{kind === 'sign'
@@ -51,13 +51,13 @@ export default function Printables({ holder }) {
         : '@page { size: letter; margin: 0.4in } @media print { .print-color { -webkit-print-color-adjust: exact; print-color-adjust: exact } }'}</style>
 
       {kind === 'sign' && (
-        <div className="print-page print-color mx-auto flex aspect-[11/8.5] w-full max-w-[11in] items-center gap-[2.5%] bg-[#FF6A00] p-[3%] text-ink [container-type:inline-size] print:fixed print:left-0 print:top-0 print:h-[8.5in] print:w-[11in] print:max-w-none">
-          <div className="aspect-square w-[75%] shrink-0 rounded-[2cqw] bg-white p-[2.5%]">
+        <div className="print-page mx-auto flex aspect-[11/8.5] w-full max-w-[11in] items-center gap-[2.5%] border border-neutral-300 bg-white p-[3%] text-black print:border-0 [container-type:inline-size] print:fixed print:left-0 print:top-0 print:h-[8.5in] print:w-[11in] print:max-w-none">
+          <div className="aspect-square w-[75%] shrink-0 bg-white">
             <img src={qr} alt={`QR code for ${url}`} className="h-full w-full" />
           </div>
           <div className="flex h-full flex-1 flex-col justify-between">
             <p className="text-[7.2cqw] font-black leading-[0.95]">Scan<br />to<br />help.</p>
-            <img src="/logo-on-orange.svg" alt="Us In It" className="w-full" />
+            <img src="/logo-print-bw.svg" alt="Us In It" className="w-full" />
             <div>
               <p className="text-[2.4cqw] font-extrabold leading-tight">{label}</p>
               <Verified className="text-[1.8cqw]" />
@@ -80,10 +80,10 @@ export default function Printables({ holder }) {
       )}
 
       {kind === 'card' && (
-        <div className="print-page print-color mx-auto flex h-[2.125in] w-[3.375in] items-center gap-3 rounded-xl bg-[#FF6A00] p-3 text-ink">
-          <div className="w-[38%] rounded-lg bg-white p-1"><img src={qr} alt="QR code" className="w-full" /></div>
+        <div className="print-page mx-auto flex h-[2.125in] w-[3.375in] items-center gap-3 rounded-xl border border-black bg-white p-3 text-black">
+          <div className="w-[38%] bg-white"><img src={qr} alt="QR code" className="w-full" /></div>
           <div className="flex-1">
-            <img src="/logo-on-orange.svg" alt="Us In It" className="w-full" />
+            <img src="/logo-print-bw.svg" alt="Us In It" className="w-full" />
             <p className="mt-1 text-lg font-extrabold leading-tight">Holder #{holder.holder_code}</p>
             <p className="text-[10px] font-bold leading-tight">Log in at UsInIt.com to see your earnings.</p>
             <p className="text-[10px] font-extrabold">Verified UsInIt.com</p>
