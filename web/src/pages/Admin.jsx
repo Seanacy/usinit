@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { money, supabase, useSession } from '../lib/supabase'
 import AuthBox from '../components/AuthBox'
-import MapPicker from '../components/MapPicker'
+import MapPicker, { AddressSearch, FT_PER_M, describeRadius } from '../components/MapPicker'
 import Printables from '../components/Printables'
 import { Notice, Spinner } from '../components/Layout'
 
@@ -72,16 +72,28 @@ function Holders() {
   )
 }
 
+const PRESETS = [[100, 'ft'], [300, 'ft'], [500, 'ft'], [1000, 'ft'], [0.5, 'mi'], [1, 'mi'], [3, 'mi'], [10, 'mi']]
+const toMeters = (n, unit) => (unit === 'mi' ? n * 1609.34 : n / FT_PER_M)
+
 function Zones() {
   const [rows, load] = useTable('advertising_zones')
   const [point, setPoint] = useState(null)
   const [name, setName] = useState('')
-  const [miles, setMiles] = useState(1)
+  const [size, setSize] = useState('300')
+  const [unit, setUnit] = useState('ft')
   const [err, setErr] = useState(null)
+  const radiusM = toMeters(Number(size) || 0, unit)
+  function picked(p) {
+    setPoint(p)
+    if (p.label && !name) setName(p.label.split(',').slice(0, 2).join(',').trim())
+  }
   async function add() {
     setErr(null)
-    if (!point || !name.trim()) return setErr('Tap the map and give the zone a name.')
-    const { error } = await supabase.from('advertising_zones').insert({ name: name.trim(), lat: point.lat, lng: point.lng, radius_m: Math.round(miles * 1609.34) })
+    if (!point) return setErr('Search an address or tap the map to place the zone.')
+    if (!name.trim()) return setErr('Give the zone a name.')
+    if (!(radiusM >= 15)) return setErr('Make the zone at least 50 feet across.')
+    if (radiusM > 50000) return setErr('That zone is too big. Keep it under 30 miles.')
+    const { error } = await supabase.from('advertising_zones').insert({ name: name.trim(), lat: point.lat, lng: point.lng, radius_m: Math.round(radiusM) })
     if (error) return setErr(error.message)
     setPoint(null); setName(''); load()
   }
@@ -89,17 +101,31 @@ function Zones() {
   async function del(z) { if (confirm(`Delete zone "${z.name}"?`)) { await supabase.from('advertising_zones').delete().eq('id', z.id); load() } }
   return (
     <div className="space-y-4">
-      <p className="muted">A scan only pays when the person scanning is inside an active zone. Tap the map to place a new zone.</p>
-      <MapPicker point={point} radius={miles * 1609.34} onPick={setPoint} circles={(rows || []).filter((z) => z.active)} height={380} />
-      <div className="grid gap-2 sm:grid-cols-[1fr_auto_auto]">
-        <input className="input" placeholder="Zone name, like Uptown" value={name} onChange={(e) => setName(e.target.value)} />
-        <select className="input" value={miles} onChange={(e) => setMiles(Number(e.target.value))}>{[0.25, 0.5, 1, 2, 3, 5, 10].map((m) => <option key={m} value={m}>{m} mile radius</option>)}</select>
+      <p className="muted">A scan only pays when the person scanning is inside an active zone. Search an address or tap the map, then pick how far the zone reaches from that spot.</p>
+      <AddressSearch onPick={picked} />
+      <MapPicker point={point} radius={radiusM} onPick={setPoint} circles={(rows || []).filter((z) => z.active)} height={380} />
+      <div>
+        <p className="label">Zone size (distance from the center to the edge)</p>
+        <div className="flex flex-wrap gap-2">
+          {PRESETS.map(([n, u]) => (
+            <button key={`${n}${u}`} type="button" onClick={() => { setSize(String(n)); setUnit(u) }}
+              className={`rounded-lg px-3 py-2 text-sm font-bold ${Number(size) === n && unit === u ? 'bg-orange text-ink' : 'border border-neutral-300 dark:border-neutral-600'}`}>{n} {u}</button>
+          ))}
+        </div>
+        <div className="mt-2 flex gap-2">
+          <input className="input w-32" inputMode="decimal" value={size} onChange={(e) => setSize(e.target.value.replace(/[^0-9.]/g, ''))} aria-label="Zone size" />
+          <select className="input w-32" value={unit} onChange={(e) => setUnit(e.target.value)}><option value="ft">feet</option><option value="mi">miles</option></select>
+        </div>
+        <p className="muted mt-1 text-xs">Tip: GPS on phones can be off by 30 to 100 feet, so very small zones (under 150 ft) may miss some real scans.</p>
+      </div>
+      <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+        <input className="input" placeholder="Zone name, like Lake St and Hennepin" value={name} onChange={(e) => setName(e.target.value)} />
         <button className="btn-orange" onClick={add}>Add zone</button>
       </div>
       {err && <Notice kind="error">{err}</Notice>}
       {(rows || []).map((z) => (
-        <div key={z.id} className="card flex items-center justify-between">
-          <span className="font-bold">{z.name} · {(z.radius_m / 1609.34).toFixed(2)} mi {z.active ? '' : '(off)'}</span>
+        <div key={z.id} className="card flex flex-wrap items-center justify-between gap-2">
+          <button className="text-left font-bold underline-offset-2 hover:underline" onClick={() => setPoint({ lat: z.lat, lng: z.lng })}>{z.name} · {describeRadius(z.radius_m)} {z.active ? '' : '(off)'}</button>
           <span className="flex gap-2"><button className="btn-outline py-2" onClick={() => toggle(z)}>{z.active ? 'Turn off' : 'Turn on'}</button><button className="btn-outline py-2" onClick={() => del(z)}>Delete</button></span>
         </div>
       ))}

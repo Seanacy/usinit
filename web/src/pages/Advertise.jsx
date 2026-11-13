@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { money, startCheckout, supabase, useSession, useStats } from '../lib/supabase'
 import AuthBox from '../components/AuthBox'
-import MapPicker from '../components/MapPicker'
+import MapPicker, { AddressSearch } from '../components/MapPicker'
 import { Notice, Spinner } from '../components/Layout'
 
 const MILES = [1, 3, 5, 10]
@@ -75,7 +75,8 @@ function AdForm({ advertiser, onDone }) {
         </div>
       )}
       <div>
-        <p className="label">Where should it show? Tap the map.</p>
+        <p className="label">Where should it show? Type your address or tap the map.</p>
+        <div className="mb-2"><AddressSearch onPick={setPoint} /></div>
         <MapPicker point={point} radius={f.miles * 1609.34} onPick={setPoint} circles={zones} />
         <p className="muted mt-1 text-xs">Gray circles are Us In It areas. Your ad only shows where your area overlaps them.</p>
         <div className="mt-2 grid grid-cols-4 gap-2">
