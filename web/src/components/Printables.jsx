@@ -59,8 +59,9 @@ export default function Printables({ holder }) {
             <p className="text-[7.2cqw] font-black leading-[0.95]">Scan<br />to<br />help.</p>
             <img src="/logo-print-bw.svg" alt="Us In It" className="w-full" />
             <div>
-              <p className="text-[2.4cqw] font-extrabold leading-tight">{label}</p>
-              <Verified className="text-[1.8cqw]" />
+              {showName && holder.first_name && <p className="text-[3.2cqw] font-extrabold leading-tight">{holder.first_name}</p>}
+              <p className="text-[4.6cqw] font-black leading-none">#{holder.holder_code}</p>
+              <Verified className="mt-[0.6cqw] text-[2.3cqw] leading-tight" />
             </div>
           </div>
         </div>
