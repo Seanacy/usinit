@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { money, startCheckout, supabase, useSession, useStats } from '../lib/supabase'
 import AuthBox from '../components/AuthBox'
 import ZoneManager from '../components/ZoneManager'
+import { CROWDS } from './Champion'
 import PlugPanel from './Plug'
 import { BookingManager, BusinessShares } from './Booking'
 import { describeRadius } from '../components/MapPicker'
@@ -21,6 +22,7 @@ function AdForm({ advertiser, existing, onDone }) {
   const [f, setF] = useState({
     ad_type: e0.ad_type || 'standard', headline: e0.headline || '', body: e0.body || '', image_url: e0.image_url || '',
     button_text: e0.button_text ?? 'Learn more', button_url: e0.button_url || '',
+    champion_scans: e0.champion_scans || false, crowd_types: e0.crowd_types || [],
     days: e0.days || [0, 1, 2, 3, 4, 5, 6], start_hour: e0.start_hour ?? 7, end_hour: e0.end_hour ?? 21,
     daily_budget: existing ? e0.daily_budget_cents / 100 : 10,
     event_name: e0.event_name || '', event_start: toLocalInput(e0.event_start), event_end: toLocalInput(e0.event_end), event_address: e0.event_address || '', ticket_url: e0.ticket_url || '',
@@ -45,6 +47,7 @@ function AdForm({ advertiser, existing, onDone }) {
     if (f.ad_type === 'event' && (!f.event_name || !f.event_start || !f.event_end)) return setErr('Add the event name, start, and end time.')
     if (f.ad_type === 'political' && (!f.political_committee || !f.political_address)) return setErr('Political ads need the committee name and address for the Minnesota disclaimer.')
     if (!f.days.length) return setErr('Pick at least one day.')
+    if (f.champion_scans && !f.crowd_types.length) return setErr('Pick at least one Champion crowd type, or turn Champion scans off.')
     setBusy(true)
     const row = {
       advertiser_id: advertiser.id, ad_type: f.ad_type, headline: f.headline.trim(), body: f.body.trim() || null, image_url: f.image_url.trim() || null,
@@ -109,6 +112,24 @@ function AdForm({ advertiser, existing, onDone }) {
                 <span><b>{z.name}</b> <span className="muted text-sm">· {describeRadius(z.radius_m)} from center{z.admin_off ? ' · turned off by Us In It' : !z.active ? ' · paused' : ''}</span></span>
               </label>
             ))}
+          </div>
+        )}
+      </div>
+      <div className="space-y-2">
+        <p className="label">Scan sources</p>
+        <div className="grid grid-cols-2 gap-2">
+          <button type="button" onClick={() => setF({ ...f, champion_scans: false })} className={!f.champion_scans ? 'btn-black' : 'btn-outline'}>Street scans only</button>
+          <button type="button" onClick={() => setF({ ...f, champion_scans: true })} className={f.champion_scans ? 'btn-black' : 'btn-outline'}>Street + Champion scans</button>
+        </div>
+        {f.champion_scans && (
+          <div className="space-y-2 rounded-xl bg-neutral-100 p-3 dark:bg-neutral-800">
+            <p className="text-sm">Champions share a holder's code at school, work, church, games, or online. Champion scans cost $0.25 each (street scans $0.50), at most 2 paid scans per spot per Champion code per day. Which crowds do you want?</p>
+            <div className="flex flex-wrap gap-2">
+              {CROWDS.map(([k, l]) => (
+                <button type="button" key={k} onClick={() => setF({ ...f, crowd_types: f.crowd_types.includes(k) ? f.crowd_types.filter((x) => x !== k) : [...f.crowd_types, k] })}
+                  className={`rounded-lg px-3 py-2 text-sm font-bold ${f.crowd_types.includes(k) ? 'bg-orange text-ink' : 'border border-neutral-300 dark:border-neutral-600'}`}>{l}</button>
+              ))}
+            </div>
           </div>
         )}
       </div>

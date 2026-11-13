@@ -4,10 +4,11 @@ import { money, supabase, useSession } from '../lib/supabase'
 import AuthBox from '../components/AuthBox'
 import ZoneManager from '../components/ZoneManager'
 import { AdminWorkplaces } from './Workplace'
+import { AdminChampions } from './Champion'
 import Printables from '../components/Printables'
 import { Notice, Spinner } from '../components/Layout'
 
-const TABS = ['Overview', 'Holders', 'Updates', 'Zones', 'Ads', 'Nonprofits', 'Workplaces', 'Fund', 'House messages', 'Openers', 'Payouts', 'Scans', 'Supporters', 'Settings']
+const TABS = ['Overview', 'Holders', 'Champions', 'Updates', 'Zones', 'Ads', 'Nonprofits', 'Workplaces', 'Fund', 'House messages', 'Openers', 'Payouts', 'Scans', 'Supporters', 'Settings']
 const when = (t) => new Date(t).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
 
 function useTable(table, order = 'created_at', deps = []) {
@@ -474,7 +475,7 @@ export default function Admin() {
       </div>
     </div>
   )
-  const C = { Overview, Holders, Updates, Zones, Ads, Nonprofits, Workplaces: AdminWorkplaces, Fund, 'House messages': HouseMessages, Openers, Payouts, Scans, Supporters, Settings }[tab]
+  const C = { Overview, Holders, Champions: AdminChampions, Updates, Zones, Ads, Nonprofits, Workplaces: AdminWorkplaces, Fund, 'House messages': HouseMessages, Openers, Payouts, Scans, Supporters, Settings }[tab]
   return (
     <div className="mx-auto max-w-5xl px-4 py-6">
       <div className="no-print mb-5 flex gap-2 overflow-x-auto pb-1">

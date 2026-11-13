@@ -98,8 +98,8 @@ export function Verified({ className = '' }) {
   return <p className={`font-extrabold tracking-tight ${className}`}>Verified UsInIt.com</p>
 }
 
-export default function Printables({ holder }) {
-  const url = scanUrl(holder.holder_code)
+export default function Printables({ holder, champCode, crowd }) {
+  const url = scanUrl(holder.holder_code) + (champCode ? `?c=${champCode}&t=${crowd || 'other'}` : '')
   const qr = useQR(url)
   const [kind, setKind] = useState('sign')
   const [showName, setShowName] = useState(false)

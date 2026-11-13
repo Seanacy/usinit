@@ -32,6 +32,8 @@ export function Terms() {
       <li>Payments are generally non-refundable once a scan has been paid out. Contact us if something went wrong.</li>
       <h2>Holders</h2>
       <p>Holders must create their own account and accept the <a className="underline" href="/holder-agreement">Holder Agreement</a>. Holders are independent people using the platform, not employees of Us In It.</p>
+      <h2>Champions</h2>
+      <p>Champions print a holder's code and share it (at school, work, church, games, or online). Champions are never paid. Champion scans earn for the holder only inside an Us In It zone, and only from ads that chose to accept Champion scans, at the Champion price ($0.25 per scan, $0.20 to the holder). Each Champion code can earn from at most 2 paid ad scans per 200-foot spot every 24 hours. No fake, repeated, or pressured scans. Champions under 18 need a parent or guardian's OK before their account turns on. Us In It can suspend any Champion.</p>
       <h2>Advertisers</h2>
       <p>Advertisers accept the <a className="underline" href="/advertiser-agreement">Advertiser Agreement</a>. Every ad is reviewed before it runs.</p>
       <h2>Content rules</h2>

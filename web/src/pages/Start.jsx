@@ -9,6 +9,8 @@ const ROLES = [
     box: { title: 'Holder sign up', intro: "Use an email you can check. You'll use it to log in and see your earnings." } },
   { key: 'business', title: "I'm a business or nonprofit", text: 'I want my ad shown to people who scan codes near me, or my nonprofit wants to share messages with other nonprofits.', path: '/advertise',
     box: { title: 'Business or nonprofit sign up', intro: 'Create an account to set up your ads or nonprofit messages.' } },
+  { key: 'champion', title: "I'm a Champion", text: "I want to print a holder's code and get scans for them at school, at work, at church, or online.", path: '/champion',
+    box: { title: 'Champion sign up', intro: 'Make a free account. Then pick a holder and print your Champion code.' } },
   { key: 'supporter', title: "I'm a supporter", text: "I want to star holders whose stories I like. (You don't need an account to scan or give.)", path: '/me',
     box: { title: 'Supporter sign up', intro: 'A free account lets you star holders and keep a list of the people you\'re rooting for.' } },
 ]

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import { deviceId, money, startCheckout, supabase, useStats } from '../lib/supabase'
 import { recordScan } from '../lib/impact'
 import { Notice, Spinner } from '../components/Layout'
@@ -120,6 +120,8 @@ function TipPanel({ code, firstName, scanId, stats }) {
 
 export default function Scan() {
   const { code } = useParams()
+  const [qs] = useSearchParams()
+  const champ = qs.get('c')
   const stats = useStats()
   const [step, setStep] = useState('intro')
   const [res, setRes] = useState(null)
@@ -139,7 +141,7 @@ export default function Scan() {
     started.current = true
     setStep('loading')
     const loc = await getLocation()
-    const { data, error: e } = await supabase.rpc('process_scan', { p_code: code, p_lat: loc?.lat ?? null, p_lng: loc?.lng ?? null, p_device: deviceId() })
+    const { data, error: e } = await supabase.rpc('process_scan', { p_code: code, p_lat: loc?.lat ?? null, p_lng: loc?.lng ?? null, p_device: deviceId(), p_champ: champ || null })
     if (e || !data) { setError('Something went wrong. Please try again.'); started.current = false; setStep('intro'); return }
     if (data.error === 'not_found') { setStep('notfound'); return }
     setRes(data)
