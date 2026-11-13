@@ -16,9 +16,16 @@ async function verify(raw: string, header: string, secret: string): Promise<bool
 Deno.serve(async (req) => {
   const secret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
   const key = Deno.env.get("STRIPE_SECRET_KEY");
-  if (!secret || !key) return new Response("not configured", { status: 503 });
+  if (!key) return new Response("not configured", { status: 503 });
   const raw = await req.text();
-  if (!(await verify(raw, req.headers.get("stripe-signature") ?? "", secret))) return new Response("bad signature", { status: 400 });
+  if (secret && !(await verify(raw, req.headers.get("stripe-signature") ?? "", secret))) return new Response("bad signature", { status: 400 });
+  // Never trust the posted body: re-fetch the event straight from Stripe with our secret key.
+  let posted: any;
+  try { posted = JSON.parse(raw); } catch { return new Response("bad body", { status: 400 }); }
+  if (typeof posted?.id !== "string" || !posted.id.startsWith("evt_")) return new Response("bad event", { status: 400 });
+  const evRes = await fetch(`https://api.stripe.com/v1/events/${posted.id}`, { headers: { Authorization: `Bearer ${key}` } });
+  if (!evRes.ok) return new Response("unknown event", { status: 400 });
+  const event = await evRes.json();
 
   const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
   const { data: rows } = await db.from("settings").select("key,value");
@@ -27,7 +34,6 @@ Deno.serve(async (req) => {
   const stripeFee = (gross: number) => Math.round(gross * pct) + fixed;
   const dup = (e: any) => e && e.code === "23505";
 
-  const event = JSON.parse(raw);
   const obj = event.data.object;
 
   try {
