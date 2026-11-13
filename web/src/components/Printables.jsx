@@ -23,7 +23,7 @@ export default function Printables({ holder }) {
   const url = scanUrl(holder.holder_code)
   const qr = useQR(url)
   const [kind, setKind] = useState('sign')
-  const [showName, setShowName] = useState(true)
+  const [showName, setShowName] = useState(false)
   const label = showName && holder.first_name ? `${holder.first_name} · #${holder.holder_code}` : `#${holder.holder_code}`
   if (!qr) return null
   return (
