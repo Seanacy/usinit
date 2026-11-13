@@ -7,6 +7,7 @@ import Printables, { scanUrl, useQR } from '../components/Printables'
 import { HolderShares } from './Booking'
 import { HolderDigital } from './Digital'
 import { FIRST, QUESTIONS } from '../lib/questions'
+import { PERSPECTIVES, PERSPECTIVE_DAYS } from '../lib/perspective'
 
 function Question({ x, value, onChange }) {
   return (
@@ -184,6 +185,52 @@ function PostUpdates({ holder, session }) {
   )
 }
 
+function TodayIm({ h, reload }) {
+  const fresh = h.perspective && h.perspective_at && (Date.now() - new Date(h.perspective_at).getTime()) < PERSPECTIVE_DAYS * 864e5
+  const [cur, setCur] = useState(fresh ? h.perspective : null)
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState(null)
+  const [win, setWin] = useState('')
+  const [posted, setPosted] = useState(false)
+  async function pick(k) {
+    setBusy(true); setErr(null); setPosted(false)
+    const next = cur === k ? null : k
+    const { error } = await supabase.rpc('set_perspective', { p_key: next })
+    setBusy(false)
+    if (error) return setErr(error.message)
+    setCur(next)
+  }
+  async function shareWin(e) {
+    e.preventDefault(); if (!win.trim()) return
+    setBusy(true); setErr(null)
+    const { error } = await supabase.from('holder_updates').insert({ holder_id: h.id, body: '🏆 ' + win.trim() })
+    setBusy(false)
+    if (error) return setErr(error.message)
+    setWin(''); setPosted(true)
+  }
+  return (
+    <div className="card space-y-3">
+      <h2 className="h2">Today I'm…</h2>
+      <p className="muted text-sm">Tap one. It shows on your page for {PERSPECTIVE_DAYS} days, and your followers see it. Tap it again to take it off.</p>
+      <div className="flex flex-wrap gap-2">
+        {PERSPECTIVES.map((x) => (
+          <button key={x.key} disabled={busy} onClick={() => pick(x.key)}
+            className={`rounded-full px-3 py-2 text-sm font-bold ${cur === x.key ? 'bg-orange text-ink' : 'border border-neutral-300 dark:border-neutral-600'}`}>{x.emoji} {x.label}</button>
+        ))}
+      </div>
+      {cur === 'win' && !posted && (
+        <form onSubmit={shareWin} className="space-y-2 rounded-xl bg-neutral-100 p-3 dark:bg-neutral-800">
+          <p className="text-sm font-bold">Nice! 🏆 Want to tell your followers what happened? (optional)</p>
+          <textarea className="input min-h-[70px]" maxLength={480} value={win} onChange={(e) => setWin(e.target.value)} placeholder="Got my ID back today!" />
+          <button className="btn-orange w-full" disabled={busy || !win.trim()}>Share my win</button>
+        </form>
+      )}
+      {posted && <Notice kind="ok">Your win was shared with your followers.</Notice>}
+      {err && <Notice kind="error">{err}</Notice>}
+    </div>
+  )
+}
+
 function Dashboard({ d, session, reload }) {
   const h = d.holder
   const [edit, setEdit] = useState(false)
@@ -223,6 +270,7 @@ function Dashboard({ d, session, reload }) {
         <p className="font-bold">{d.count_today} scans today · goal {d.goal}</p>
         <div className="mt-2 h-3 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-700"><div className="h-3 bg-orange" style={{ width: `${pct}%` }} /></div>
       </div>
+      <TodayIm h={h} reload={reload} />
       <HolderDigital />
       <PostUpdates holder={h} session={session} />
       <HolderShares code={h.holder_code} />

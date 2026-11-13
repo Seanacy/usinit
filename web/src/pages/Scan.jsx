@@ -174,6 +174,7 @@ export default function Scan() {
       {step === 'intro' && (
         <div className="text-center">
           {holder?.photo_url && <img src={holder.photo_url} alt="" className="mx-auto mb-4 h-24 w-24 rounded-full object-cover" />}
+          {holder?.perspective && <p className="mb-3 inline-block rounded-full bg-orange/15 px-3 py-1 text-sm font-bold">{holder.first_name} says: Today I'm {holder.perspective}</p>}
           <h1 className="h1">Allow location so {holder?.first_name || 'they'} get{holder?.first_name ? 's' : ''} paid for your scan.</h1>
           <p className="muted mt-3">Your location only checks that you scanned in an Us In It area. It isn't saved with your identity.</p>
           {error && <div className="mt-3"><Notice kind="error">{error}</Notice></div>}

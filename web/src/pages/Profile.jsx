@@ -75,7 +75,7 @@ function Updates({ list, name }) {
       {list.map((u) => (
         <div key={u.id} className={u.kind === 'milestone' ? 'rounded-xl bg-orange/15 p-3' : ''}>
           <p className="muted text-xs">{u.kind === 'milestone' ? 'Milestone · ' : ''}{ago(u.created_at)}</p>
-          <p className={`whitespace-pre-line ${u.kind === 'milestone' ? 'font-extrabold' : ''}`}>{u.body}</p>
+          <p className={`whitespace-pre-line ${u.kind === 'milestone' ? 'font-extrabold' : u.kind === 'perspective' ? 'font-bold' : ''}`}>{u.body}</p>
           {u.photo_url && <img src={u.photo_url} alt="" className="mt-2 max-h-72 rounded-xl object-cover" />}
         </div>
       ))}
@@ -100,6 +100,7 @@ export function ProfileCard({ code }) {
           <p className="text-2xl font-extrabold">{h.first_name}</p>
           <p className="muted text-sm">Holder #{h.code}{h.general_area ? ` · Usually around ${h.general_area}` : ''}</p>
           <p className="text-sm font-bold">{h.count_today} scan{h.count_today === 1 ? '' : 's'} today</p>
+          {h.perspective && <p className="mt-1 inline-block rounded-full bg-orange/15 px-3 py-1 text-sm font-bold">Today I'm {h.perspective}</p>}
         </div>
       </div>
       {h.story && <p className="mt-4 whitespace-pre-line text-lg leading-relaxed">{h.story}</p>}
