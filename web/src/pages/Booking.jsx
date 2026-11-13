@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
-import { SITE_URL, money, supabase } from '../lib/supabase'
+import { SITE_URL, money, supabase, startCheckout } from '../lib/supabase'
 import { Notice, Spinner } from '../components/Layout'
 import { BookingSign, useQR } from '../components/Printables'
 
@@ -297,8 +297,11 @@ export default function BookingPage() {
   async function book(e) {
     e.preventDefault(); setErr(null); setBusy(true)
     const { data, error } = await supabase.rpc('create_booking', { p_slug: slug, p_service: svc.id, p_start: time, p_name: f.name, p_email: f.email, p_phone: f.phone, p_note: f.note, p_via: via })
+    if (error) { setBusy(false); setErr(error.message); if (/took that time/.test(error.message)) loadSlots(); return }
+    if (svc.deposit_cents > 0) {
+      try { await startCheckout({ kind: 'booking_deposit', booking_id: data.id }); return } catch (x) { setBusy(false); setErr(x.message); return }
+    }
     setBusy(false)
-    if (error) { setErr(error.message); if (/took that time/.test(error.message)) loadSlots(); return }
     setDone(data)
   }
 

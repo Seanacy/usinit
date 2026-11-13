@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
-import { deviceId, money, startCheckout, supabase, useStats } from '../lib/supabase'
+import { deviceId, money, startCheckout, supabase, useStats, withCardFee } from '../lib/supabase'
 import { recordScan } from '../lib/impact'
 import { CampaignCard } from './Schools'
 import { Notice, Spinner } from '../components/Layout'
@@ -96,9 +96,11 @@ function TipPanel({ code, firstName, scanId, stats }) {
   const [err, setErr] = useState(null)
   const s = stats?.settings || {}
   const cents = other ? Math.round(Number(other) * 100) : amount
-  const fee = Math.round(cents * (Number(s.stripe_fee_pct ?? 2.9) / 100)) + Number(s.stripe_fee_fixed_cents ?? 30)
+  const onTop = s.tip_fee_model === 'added_on_top'
+  const total = onTop ? withCardFee(cents, s) : cents
+  const fee = onTop ? total - cents : Math.round(cents * (Number(s.stripe_fee_pct ?? 2.9) / 100)) + Number(s.stripe_fee_fixed_cents ?? 30)
   const platform = Math.round(cents * (Number(s.tip_platform_pct ?? 10) / 100))
-  const gets = Math.max(0, cents - fee - platform)
+  const gets = Math.max(0, cents - (onTop ? 0 : fee) - platform)
   async function tip() {
     setErr(null)
     if (!(cents >= 100)) return setErr('Tips start at $1.')
@@ -113,7 +115,9 @@ function TipPanel({ code, firstName, scanId, stats }) {
         ))}
       </div>
       <input className="input mt-2" inputMode="decimal" placeholder="Other amount, like 7" value={other} onChange={(e) => setOther(e.target.value.replace(/[^0-9.]/g, ''))} aria-label="Other tip amount in dollars" />
-      {cents >= 100 && <p className="mt-2 text-sm font-bold">{firstName} gets about {money(gets)}. Card fees and a {s.tip_platform_pct ?? 10}% Us In It fee come out first. Not tax-deductible.</p>}
+      {cents >= 100 && (onTop
+        ? <p className="mt-2 text-sm font-bold">Tip {money(cents)} + card fee {money(fee)} = {money(total)}. {firstName} gets {money(gets)}{platform > 0 ? ` (${s.tip_platform_pct ?? 10}% helps run Us In It)` : ''}. Not tax-deductible.</p>
+        : <p className="mt-2 text-sm font-bold">{firstName} gets about {money(gets)}. Card fees and a {s.tip_platform_pct ?? 10}% Us In It fee come out first. Not tax-deductible.</p>)}
       {err && <div className="mt-2"><Notice kind="error">{err}</Notice></div>}
       <button className="btn-orange mt-3 w-full" onClick={tip} disabled={busy}>{busy ? 'Opening checkout…' : `Tip ${money(cents || 0)}`}</button>
     </div>

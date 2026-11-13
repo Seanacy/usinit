@@ -46,6 +46,26 @@ export function useStats() {
   return stats
 }
 
+// Payer covers the card fee: what to charge so the recipient gets the full base amount.
+export function withCardFee(base, settings = {}) {
+  const pct = Number(settings.stripe_fee_pct ?? 2.9) / 100, fixed = Number(settings.stripe_fee_fixed_cents ?? 30)
+  return Math.ceil((base + fixed) / (1 - pct))
+}
+
+// Stripe Connect payouts: action = status | onboard | dashboard | cashout; kind = holder | creator | business
+export async function callConnect(action, kind) {
+  const { data: s } = await supabase.auth.getSession()
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/connect`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', apikey: KEY, Authorization: `Bearer ${s?.session?.access_token || KEY}` },
+    body: JSON.stringify({ action, kind }),
+  })
+  let out = {}
+  try { out = await res.json() } catch { /* ignore */ }
+  if (!res.ok) throw new Error(out.error || 'Something went wrong. Try again.')
+  return out
+}
+
 export async function startCheckout(payload) {
   const { data: s } = await supabase.auth.getSession()
   const headers = { 'Content-Type': 'application/json', apikey: KEY }

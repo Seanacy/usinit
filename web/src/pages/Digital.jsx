@@ -6,6 +6,7 @@ import AuthBox from '../components/AuthBox'
 import { useQR } from '../components/Printables'
 import { ContentCard } from './Scan'
 import { recordScan } from '../lib/impact'
+import StripePayouts from '../components/StripePayouts'
 
 export const digitalUrl = (code) => `${SITE_URL}/d/${code}`
 
@@ -120,8 +121,9 @@ export default function CreatorPage() {
                 <p className="muted text-sm">Your earnings</p>
                 <p className="text-3xl font-extrabold">{money(d.balance_cents)}</p>
                 {d.pending_cashout ? <p className="text-sm font-bold">Cash-out of {money(d.pending_cashout)} requested.</p>
-                  : <button className="btn-black py-2" disabled={d.balance_cents < d.min_cashout_cents} onClick={() => run('creator_request_cashout', {}, 'Cash-out requested.')}>Request cash-out (from {money(d.min_cashout_cents)})</button>}
+                  : <button className="text-sm font-bold underline" disabled={d.balance_cents < d.min_cashout_cents} onClick={() => run('creator_request_cashout', {}, 'Cash-out requested.')}>No bank or debit card? Ask Us In It to pay you by hand (from {money(d.min_cashout_cents)})</button>}
               </div>
+              <StripePayouts kind="creator" />
               <div className="card space-y-3">
                 <h2 className="h2">Your own code</h2>
                 <p className="muted text-sm">Put this on your screen. Viewers who scan it see a short business message, and you earn $0.20 per scan (one per phone per day). The page tells viewers: "This code supports {d.name}, the creator."</p>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { SITE_URL, money, supabase } from '../lib/supabase'
+import { SITE_URL, money, supabase, startCheckout } from '../lib/supabase'
 import { Notice, Spinner } from '../components/Layout'
 
 const slugify = (t) => t.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40)
@@ -27,16 +27,34 @@ export function CampaignCard({ c }) {
 function CampaignForm({ election }) {
   const [f, setF] = useState({ name: '', slogan: '', photo: '', photo_ok: false, parent_name: '', parent_email: '', parent_ok: false })
   const [err, setErr] = useState(null)
-  const [done, setDone] = useState(false)
+  const [done, setDone] = useState(null)
+  const [pay, setPay] = useState(String(election.cap_cents / 100))
+  const [busy, setBusy] = useState(false)
   const set = (k) => (e) => setF({ ...f, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value })
   async function send(e) {
     e.preventDefault(); setErr(null)
-    const { error } = await supabase.rpc('submit_school_campaign', { p_election: election.id, p_name: f.name, p_slogan: f.slogan, p_photo: f.photo, p_photo_ok: f.photo_ok,
+    const { data: id, error } = await supabase.rpc('submit_school_campaign', { p_election: election.id, p_name: f.name, p_slogan: f.slogan, p_photo: f.photo, p_photo_ok: f.photo_ok,
       p_parent_name: f.parent_name, p_parent_email: f.parent_email, p_parent_ok: f.parent_ok })
     if (error) return setErr(error.message)
-    setDone(true)
+    setDone(id)
   }
-  if (done) return <Notice kind="ok">Sent! The school's adviser and Us In It check every campaign. Online payment is coming soon; we'll email the parent to pay (up to {money(election.cap_cents)}).</Notice>
+  async function payNow(e) {
+    e.preventDefault(); setErr(null)
+    const cents = Math.round(Number(pay) * 100)
+    if (!(cents >= 500)) return setErr('The smallest payment is $5.')
+    if (cents > election.cap_cents) return setErr(`The spending cap is ${money(election.cap_cents)}.`)
+    setBusy(true)
+    try { await startCheckout({ kind: 'campaign', campaign_id: done, amount_cents: cents }) } catch (x) { setErr(x.message); setBusy(false) }
+  }
+  if (done) return (
+    <form onSubmit={payNow} className="space-y-3 rounded-xl border border-neutral-300 p-3 dark:border-neutral-600">
+      <Notice kind="ok">Sent! The school's adviser and Us In It check every campaign before it shows. Now pay for the campaign's scans.</Notice>
+      <label className="text-sm font-bold">Campaign budget ($5 to {money(election.cap_cents)})<input className="input mt-1" inputMode="decimal" value={pay} onChange={(e) => setPay(e.target.value.replace(/[^0-9.]/g, ''))} /></label>
+      <p className="muted text-sm">A small card fee is added at checkout. Every candidate has the same cap. If the campaign isn't approved, Us In It refunds the parent.</p>
+      {err && <Notice kind="error">{err}</Notice>}
+      <button className="btn-orange w-full" disabled={busy}>{busy ? 'Opening checkout…' : 'Pay now'}</button>
+    </form>
+  )
   return (
     <form onSubmit={send} className="space-y-3 rounded-xl border border-neutral-300 p-3 dark:border-neutral-600">
       <p className="font-bold">Start a campaign (parent or guardian fills this out)</p>
@@ -168,7 +186,7 @@ export function AdminSchools() {
   }
   const setCampaign = async (c, status) => done((await supabase.from('school_campaigns').update({ status }).eq('id', c.id)).error, 'Saved.')
   async function pay(c) {
-    const v = prompt('How many dollars did the parent pay? (Online payment comes with Stripe.)'); if (!v) return
+    const v = prompt('Parent paid outside the website (cash or check)? How many dollars? Online payments are added automatically.'); if (!v) return
     const { error } = await supabase.rpc('admin_campaign_payment', { p_id: c.id, p_cents: Math.round(Number(v) * 100) }); done(error, 'Payment recorded.')
   }
   const toggleSchool = async (s) => done((await supabase.from('schools').update({ adviser_approved: !s.adviser_approved }).eq('id', s.id)).error, 'Saved.')

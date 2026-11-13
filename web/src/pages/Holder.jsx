@@ -6,6 +6,7 @@ import { Notice, Spinner } from '../components/Layout'
 import Printables, { scanUrl, useQR } from '../components/Printables'
 import { HolderShares } from './Booking'
 import { HolderDigital } from './Digital'
+import StripePayouts from '../components/StripePayouts'
 import { FIRST, QUESTIONS } from '../lib/questions'
 import { PERSPECTIVES, PERSPECTIVE_DAYS } from '../lib/perspective'
 
@@ -274,10 +275,7 @@ function Dashboard({ d, session, reload }) {
       <HolderDigital />
       <PostUpdates holder={h} session={session} />
       <HolderShares code={h.holder_code} />
-      <div className="card">
-        <h2 className="h2">Cash out</h2>
-        <p className="muted mt-1">Instant cash-out to a debit card is coming soon. For now, ask Us In It or your partner organization to pay out your balance (minimum {money(d.min_payout_cents)}).</p>
-      </div>
+      <StripePayouts kind="holder" handNote={`No bank account or debit card? Ask Us In It or your partner organization to pay you by hand (minimum ${money(d.min_payout_cents)}).`} />
       <div className="grid grid-cols-2 gap-3">
         <button className="btn-orange" onClick={() => setPrint(true)}>Print my sign</button>
         <button className="btn-outline" onClick={() => setEdit(true)}>Edit profile</button>

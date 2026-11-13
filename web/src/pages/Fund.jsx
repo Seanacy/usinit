@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { money, startCheckout, useStats } from '../lib/supabase'
+import { money, startCheckout, useStats, withCardFee } from '../lib/supabase'
 import { GoalTracker } from './Home'
 import { Notice } from '../components/Layout'
 
@@ -13,8 +13,10 @@ export default function Fund() {
   const [err, setErr] = useState(null)
   const s = stats?.settings || {}
   const cents = other ? Math.round(Number(other) * 100) : amount
-  const fee = Math.round(cents * (Number(s.stripe_fee_pct ?? 2.9) / 100)) + Number(s.stripe_fee_fixed_cents ?? 30)
-  const net = Math.max(0, cents - fee)
+  const onTop = s.gift_fee_on_top !== false
+  const total = onTop ? withCardFee(cents, s) : cents
+  const fee = onTop ? total - cents : Math.round(cents * (Number(s.stripe_fee_pct ?? 2.9) / 100)) + Number(s.stripe_fee_fixed_cents ?? 30)
+  const net = onTop ? cents : Math.max(0, cents - fee)
   const platform = Math.round(net * (Number(s.fund_gift_fee_pct ?? 10) / 100))
   const price = stats?.price_per_scan_cents || 50
   const share = stats?.holder_share_cents || 40
@@ -46,7 +48,7 @@ export default function Fund() {
         </div>
         <input className="input mt-2" inputMode="decimal" placeholder="Other amount, like 40" value={other} onChange={(e) => setOther(e.target.value.replace(/[^0-9.]/g, ''))} aria-label="Other amount in dollars" />
         <input className="input mt-2" placeholder="Your first name for the thank-you wall (optional)" maxLength={40} value={donor} onChange={(e) => setDonor(e.target.value)} />
-        {cents >= 100 && <p className="mt-3 text-sm font-bold">{money(net - platform)} goes to the Community Fund, {money(platform)} supports running Us In It, {money(fee)} is card processing.</p>}
+        {cents >= 100 && <p className="mt-3 text-sm font-bold">{onTop ? `Gift ${money(cents)} + card fee ${money(fee)} = ${money(total)}. ` : ''}{money(net - platform)} goes to the Community Fund{platform > 0 ? `, ${money(platform)} supports running Us In It` : ''}{onTop ? '' : `, ${money(fee)} is card processing`}.</p>}
         {err && <div className="mt-2"><Notice kind="error">{err}</Notice></div>}
         <button className="btn-orange mt-3 w-full" onClick={give} disabled={busy}>{busy ? 'Opening checkout…' : `Give ${money(cents || 0)}`}</button>
         <p className="muted mt-3 text-xs">Your gift goes into the Community Fund, which pays people on the street for scans when no paid messages are running. Us In It is a business, not a charity. Not tax-deductible.</p>

@@ -44,16 +44,21 @@ Deno.serve(async (req) => {
       const name = (obj.customer_details?.name ?? "").split(" ")[0] || null;
 
       if (m.kind === "tip") {
-        const fee = stripeFee(gross);
-        const platform = Math.round((gross * Number(s.tip_platform_pct ?? 10)) / 100);
-        const holder = Math.max(0, gross - fee - platform);
+        // fee_on_top: payer covered the card fee, so the holder's share is based on the tip they chose
+        const onTop = m.fee_on_top === "1";
+        const base = onTop ? Number(m.base_cents) : gross;
+        const fee = onTop ? gross - base : stripeFee(gross);
+        const platform = Math.round((base * Number(s.tip_platform_pct ?? 10)) / 100);
+        const holder = Math.max(0, base - (onTop ? 0 : fee) - platform);
         const { data: tip, error } = await db.from("tips").insert({ holder_id: m.holder_id, scan_id: m.scan_id || null, amount_cents: gross, fee_cents: fee, platform_cents: platform, holder_cents: holder, stripe_session_id: obj.id, status: "paid" }).select("id").single();
         if (!dup(error) && tip) {
           await db.from("holder_ledger").insert({ holder_id: m.holder_id, amount_cents: holder, kind: "tip", ref_id: tip.id });
           await db.from("platform_ledger").insert({ amount_cents: platform, source: "tip", ref_id: tip.id });
         }
       } else if (m.kind === "gift") {
-        const fee = stripeFee(gross), net = gross - fee;
+        const onTop = m.fee_on_top === "1";
+        const net = onTop ? Number(m.base_cents) : gross - stripeFee(gross);
+        const fee = gross - net;
         const platform = Math.round((net * Number(s.fund_gift_fee_pct ?? 10)) / 100);
         const { error } = await db.from("community_fund_transactions").insert({ amount_cents: net - platform, source: "public_gift", gross_cents: gross, fee_cents: fee, platform_cents: platform, donor_name: m.donor_name || null, stripe_ref: obj.id });
         if (!dup(error)) await db.from("platform_ledger").insert({ amount_cents: platform, source: "gift_fee" });
@@ -77,6 +82,15 @@ Deno.serve(async (req) => {
             if (platform > 0) await db.from("platform_ledger").insert({ amount_cents: platform, source: "supporter_fee" });
           }
         }
+      } else if (m.kind === "love_note") {
+        const { error } = await db.rpc("stripe_note_paid", { p_note: m.note_id, p_session: obj.id, p_gross: gross });
+        if (error) throw error;
+      } else if (m.kind === "campaign") {
+        const { error } = await db.rpc("stripe_campaign_paid", { p_campaign: m.campaign_id, p_cents: Number(m.credit_cents), p_session: obj.id, p_gross: gross });
+        if (error) throw error;
+      } else if (m.kind === "booking_deposit") {
+        const { error } = await db.rpc("stripe_booking_paid", { p_booking: m.booking_id, p_session: obj.id, p_gross: gross });
+        if (error) throw error;
       } else if (m.kind === "ad_deposit") {
         const credit = Number(m.credit_cents);
         const { error } = await db.from("advertiser_transactions").insert({ advertiser_id: m.advertiser_id, kind: "deposit", amount_cents: credit, fee_cents: Number(m.fee_cents ?? 0), stripe_session_id: obj.id });

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { SITE_URL, money, supabase } from '../lib/supabase'
+import { SITE_URL, money, supabase, startCheckout } from '../lib/supabase'
 import { Notice, Spinner } from '../components/Layout'
 import { WorkplaceSign } from '../components/Printables'
 
@@ -19,10 +19,9 @@ export default function WorkplacePage() {
   useEffect(() => { supabase.rpc('get_workplace', { p_slug: slug }).then(({ data }) => setW(data || null)) }, [slug])
   async function send(e) {
     e.preventDefault(); setErr(null); setBusy(true)
-    const { error } = await supabase.rpc('submit_workplace_note', { p_slug: slug, p_to: f.to, p_message: f.message, p_from: f.from, p_email: f.email, p_no_private: f.ok })
-    setBusy(false)
-    if (error) return setErr(error.message)
-    setSent(true)
+    const { data: noteId, error } = await supabase.rpc('submit_workplace_note', { p_slug: slug, p_to: f.to, p_message: f.message, p_from: f.from, p_email: f.email, p_no_private: f.ok })
+    if (error) { setBusy(false); return setErr(error.message) }
+    try { await startCheckout({ kind: 'love_note', note_id: noteId }) } catch (x) { setBusy(false); setErr(x.message); setSent(true) }
   }
   if (w === undefined) return <Spinner />
   if (!w) return <div className="mx-auto max-w-md px-4 py-16 text-center"><h1 className="h2">This page isn't open right now.</h1></div>
@@ -46,10 +45,10 @@ export default function WorkplacePage() {
       <div className="card space-y-3">
         <h2 className="h2">Send a thank-you</h2>
         {sent ? (
-          <Notice kind="ok">Thank you! Online payment is coming soon. We'll email you to finish your {money(w.price_cents)} payment. Then Us In It reads your note and posts it for the team.</Notice>
+          <Notice kind="error">Your note was saved, but the payment page didn't open. Us In It will email you to finish your {money(w.price_cents)} payment.</Notice>
         ) : (
           <form onSubmit={send} className="space-y-3">
-            <p className="muted text-sm">{money(w.price_cents)} per note. {money(w.fund_cents)} of it goes to the Us In It Community Fund, which pays people on our streets. Your thank-you also helps someone else.</p>
+            <p className="muted text-sm">{money(w.price_cents)} per note, plus a small card fee. {money(w.fund_cents)} of it goes to the Us In It Community Fund, which pays people on our streets. Your thank-you also helps someone else.</p>
             <input className="input" maxLength={80} placeholder="To (optional): a unit, team, or first name, like Night shift on 2 East" value={f.to} onChange={(e) => setF({ ...f, to: e.target.value })} />
             <textarea className="input min-h-[110px]" maxLength={280} placeholder="Your thank-you" value={f.message} onChange={(e) => setF({ ...f, message: e.target.value })} />
             <p className="muted -mt-2 text-right text-xs">{f.message.length} / 280</p>

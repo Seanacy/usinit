@@ -30,6 +30,9 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const site = Deno.env.get("SITE_URL") || req.headers.get("origin") || "https://usinit.com";
     const kind = body.kind as string;
+    const pct = Number(s.stripe_fee_pct ?? 2.9) / 100, fixed = Number(s.stripe_fee_fixed_cents ?? 30);
+    const withFee = (base: number) => Math.ceil((base + fixed) / (1 - pct)); // payer covers the card fee
+    const feeLine = (base: number) => ({ quantity: 1, price_data: { currency: "usd", unit_amount: withFee(base) - base, product_data: { name: "Card processing fee" } } });
     const amt = Math.round(Number(body.amount_cents));
     let session: Record<string, unknown>;
 
@@ -39,8 +42,10 @@ Deno.serve(async (req) => {
       if (!h) return json({ error: "Holder not found." }, 404);
       session = {
         mode: "payment",
-        line_items: { 0: { quantity: 1, price_data: { currency: "usd", unit_amount: amt, product_data: { name: `Tip for ${h.first_name}` } } } },
-        metadata: { kind: "tip", holder_id: h.id, scan_id: body.scan_id ?? "" },
+        line_items: s.tip_fee_model === "added_on_top"
+          ? { 0: { quantity: 1, price_data: { currency: "usd", unit_amount: amt, product_data: { name: `Tip for ${h.first_name}` } } }, 1: feeLine(amt) }
+          : { 0: { quantity: 1, price_data: { currency: "usd", unit_amount: amt, product_data: { name: `Tip for ${h.first_name}` } } } },
+        metadata: { kind: "tip", holder_id: h.id, scan_id: body.scan_id ?? "", base_cents: amt, fee_on_top: s.tip_fee_model === "added_on_top" ? "1" : "0" },
         success_url: `${site}/thanks?type=tip&name=${encodeURIComponent(h.first_name)}`,
         cancel_url: `${site}/s/${body.holder_code}`,
       };
@@ -48,8 +53,10 @@ Deno.serve(async (req) => {
       if (!(amt >= 100 && amt <= 500000)) return json({ error: "Gift must be between $1 and $5,000." }, 400);
       session = {
         mode: "payment",
-        line_items: { 0: { quantity: 1, price_data: { currency: "usd", unit_amount: amt, product_data: { name: "Us In It Community Fund gift" } } } },
-        metadata: { kind: "gift", donor_name: String(body.donor_name ?? "").slice(0, 40) },
+        line_items: s.gift_fee_on_top !== false
+          ? { 0: { quantity: 1, price_data: { currency: "usd", unit_amount: amt, product_data: { name: "Us In It Community Fund gift" } } }, 1: feeLine(amt) }
+          : { 0: { quantity: 1, price_data: { currency: "usd", unit_amount: amt, product_data: { name: "Us In It Community Fund gift" } } } },
+        metadata: { kind: "gift", donor_name: String(body.donor_name ?? "").slice(0, 40), base_cents: amt, fee_on_top: s.gift_fee_on_top !== false ? "1" : "0" },
         success_url: `${site}/thanks?type=gift`,
         cancel_url: `${site}/fund`,
       };
@@ -88,7 +95,6 @@ Deno.serve(async (req) => {
       const { data: adv } = await admin.from("advertisers").select("id,business_name").eq("user_id", u.user.id).single();
       if (!adv) return json({ error: "Advertiser account not found." }, 404);
       if (!(amt >= 1000 && amt <= 1000000)) return json({ error: "Add between $10 and $10,000." }, 400);
-      const pct = Number(s.stripe_fee_pct ?? 2.9) / 100, fixed = Number(s.stripe_fee_fixed_cents ?? 30);
       const onTop = s.advertiser_fee_on_top !== false;
       const total = onTop ? Math.ceil((amt + fixed) / (1 - pct)) : amt;
       const fee = total - amt;
@@ -102,6 +108,47 @@ Deno.serve(async (req) => {
         metadata: { kind: "ad_deposit", advertiser_id: adv.id, credit_cents: amt, fee_cents: fee },
         success_url: `${site}/advertise?paid=1`,
         cancel_url: `${site}/advertise`,
+      };
+    } else if (kind === "love_note") {
+      const { data: n } = await admin.from("workplace_notes").select("id,price_cents,paid,buyer_email,workplace_id").eq("id", body.note_id).single();
+      if (!n || n.paid) return json({ error: "This note is already paid or was not found." }, 400);
+      const { data: w } = await admin.from("workplaces").select("name,slug").eq("id", n.workplace_id).single();
+      session = {
+        mode: "payment",
+        customer_email: n.buyer_email ?? undefined,
+        line_items: { 0: { quantity: 1, price_data: { currency: "usd", unit_amount: n.price_cents, product_data: { name: `Love Note at ${w?.name ?? "your workplace"}` } } }, 1: feeLine(n.price_cents) },
+        metadata: { kind: "love_note", note_id: n.id },
+        success_url: `${site}/thanks?type=note`,
+        cancel_url: `${site}/w/${w?.slug ?? ""}`,
+      };
+    } else if (kind === "campaign") {
+      const { data: c } = await admin.from("school_campaigns").select("id,display_name,parent_email,budget_cents,election_id,status").eq("id", body.campaign_id).single();
+      if (!c || ["rejected", "removed"].includes(c.status)) return json({ error: "Campaign not found." }, 404);
+      const { data: e } = await admin.from("school_elections").select("cap_cents,school_id").eq("id", c.election_id).single();
+      const { data: sc } = await admin.from("schools").select("slug").eq("id", e!.school_id).single();
+      const room = (e?.cap_cents ?? 0) - c.budget_cents;
+      if (!(amt >= 500)) return json({ error: "The smallest payment is $5." }, 400);
+      if (amt > room) return json({ error: `This election's spending cap leaves $${(room / 100).toFixed(2)} for this campaign.` }, 400);
+      session = {
+        mode: "payment",
+        customer_email: c.parent_email ?? undefined,
+        line_items: { 0: { quantity: 1, price_data: { currency: "usd", unit_amount: amt, product_data: { name: `School campaign: ${c.display_name}` } } }, 1: feeLine(amt) },
+        metadata: { kind: "campaign", campaign_id: c.id, credit_cents: amt },
+        success_url: `${site}/thanks?type=campaign`,
+        cancel_url: `${site}/school/${sc?.slug ?? ""}`,
+      };
+    } else if (kind === "booking_deposit") {
+      const { data: b } = await admin.from("bookings").select("id,page_id,service_name,deposit_cents,deposit_status,status,customer_email,starts_at").eq("id", body.booking_id).single();
+      if (!b || b.deposit_cents <= 0 || b.deposit_status !== "not_collected" || b.status !== "requested") return json({ error: "This booking doesn't need a deposit right now." }, 400);
+      const { data: pg } = await admin.from("booking_pages").select("slug,title").eq("id", b.page_id).single();
+      session = {
+        mode: "payment",
+        customer_email: b.customer_email ?? undefined,
+        expires_at: Math.floor(Date.now() / 1000) + 31 * 60,
+        line_items: { 0: { quantity: 1, price_data: { currency: "usd", unit_amount: b.deposit_cents, product_data: { name: `Deposit: ${b.service_name} with ${pg?.title ?? "your booking"}` } } } },
+        metadata: { kind: "booking_deposit", booking_id: b.id },
+        success_url: `${site}/thanks?type=booking`,
+        cancel_url: `${site}/b/${pg?.slug ?? ""}`,
       };
     } else {
       return json({ error: "Unknown payment type." }, 400);

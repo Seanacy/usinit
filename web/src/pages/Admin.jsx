@@ -350,6 +350,22 @@ function Openers() {
   )
 }
 
+function StripeCashouts() {
+  const [rows, setRows] = useState(null)
+  useEffect(() => { supabase.rpc('admin_stripe_cashouts').then(({ data }) => setRows(data || [])) }, [])
+  if (!rows) return null
+  return (
+    <div className="card">
+      <p className="font-bold">Stripe cash-outs (sent automatically)</p>
+      {rows.length === 0 ? <p className="muted mt-1 text-sm">None yet.</p> : (
+        <ul className="mt-2 divide-y divide-neutral-200 text-sm dark:divide-neutral-700">
+          {rows.map((r, i) => <li key={i} className="py-2">{when(r.created_at)} · {r.name} ({r.kind}) · {money(r.amount_cents)} · <b>{r.status === 'paid' ? 'sent' : r.status === 'failed' ? 'failed, money returned to their balance' : 'sending'}</b>{r.error ? ` · ${r.error}` : ''}</li>)}
+        </ul>
+      )}
+    </div>
+  )
+}
+
 function Payouts() {
   const [o, setO] = useState(null)
   const [paid, loadPaid] = useTable('payouts')
@@ -372,7 +388,8 @@ function Payouts() {
   if (!o) return <Spinner />
   return (
     <div className="space-y-4">
-      <p className="muted">Pay holders by hand for now, then record it here. Instant debit-card cash-out comes in the next round.</p>
+      <p className="muted">Holders, creators, and businesses with Stripe set up cash out by themselves (listed below). For anyone without a bank or debit card, pay by hand, then record it here.</p>
+      <StripeCashouts />
       {err && <Notice kind="error">{err}</Notice>}
       {o.balances.length === 0 && <p className="muted">Nobody has a balance yet.</p>}
       {o.balances.map((h) => (
@@ -381,7 +398,7 @@ function Payouts() {
       <div className="card"><p className="font-bold">Past payouts</p><ul className="mt-2 divide-y divide-neutral-200 text-sm dark:divide-neutral-700">{(paid || []).map((p) => (
         <li key={p.id} className="flex items-center justify-between gap-2 py-2">
           <span>{when(p.created_at)} · {money(p.amount_cents)} · {p.method} {p.note}{p.undone ? ' · undone' : ''}</span>
-          {!p.undone && <button className="btn-outline px-3 py-1 text-sm" onClick={() => undoPayout(p)}>Undo</button>}
+          {!p.undone && p.method !== 'stripe' && <button className="btn-outline px-3 py-1 text-sm" onClick={() => undoPayout(p)}>Undo</button>}
         </li>))}</ul></div>
     </div>
   )

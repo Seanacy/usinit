@@ -5,6 +5,7 @@ import AuthBox from '../components/AuthBox'
 import ZoneManager from '../components/ZoneManager'
 import { CROWDS } from './Champion'
 import PlugPanel from './Plug'
+import StripePayouts from '../components/StripePayouts'
 import { BookingManager, BusinessShares } from './Booking'
 import { describeRadius } from '../components/MapPicker'
 import { Notice, Spinner } from '../components/Layout'
@@ -279,6 +280,7 @@ export default function Advertise() {
               <AddFunds stats={stats} />
               <BookingManager adv={adv} />
               <BusinessShares />
+              {adv.status === 'approved' && <StripePayouts kind="business" title="Your earnings (bookings and The Plug)" handNote="Booking deposits and Plug hosting earnings land here. Card fees for your deposits come out of your share." />}
               <PlugPanel adv={adv} ads={ads} reloadAds={load} />
               <div className="card flex flex-wrap items-center justify-between gap-2">
                 <span><b>Your zones:</b> {zoneCount}<span className="muted block text-sm">The areas where your ads show, with live scan counts.</span></span>

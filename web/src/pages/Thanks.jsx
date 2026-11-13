@@ -6,6 +6,9 @@ export default function Thanks() {
   const name = p.get('name')
   const title = type === 'tip' ? `Your tip is on its way to ${name || 'them'}. 🧡`
     : type === 'supporter' ? "You're in! 🎉 Thank you, Founding Supporter."
+    : type === 'note' ? 'Thank you! 💛 Us In It reads every note, then posts it for the team.'
+    : type === 'campaign' ? 'Paid! 🎉 The campaign starts once the school and Us In It approve it.'
+    : type === 'booking' ? 'Deposit paid! 🧡 Your booking request is in. They\'ll confirm with you by email or phone.'
     : 'Thank you! 🎉 Your gift is in the Community Fund.'
   async function share() {
     const data = { title: 'Us In It', text: 'Local businesses pay people on our streets to share their messages. Check out Us In It.', url: window.location.origin }
