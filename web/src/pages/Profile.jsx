@@ -4,46 +4,76 @@ import { supabase, useSession } from '../lib/supabase'
 import { Notice, Spinner } from '../components/Layout'
 import AuthBox from '../components/AuthBox'
 
-function StarButton({ h, code, onChange }) {
+const ago = (iso) => {
+  const s = (Date.now() - new Date(iso).getTime()) / 1000
+  if (s < 3600) return `${Math.max(1, Math.round(s / 60))} min ago`
+  if (s < 86400) return `${Math.round(s / 3600)} hr ago`
+  if (s < 86400 * 7) return `${Math.round(s / 86400)} day${Math.round(s / 86400) === 1 ? '' : 's'} ago`
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+const people = (n, rest) => `${n} ${n === 1 ? 'person' : 'people'}${rest}`
+
+// Star and Follow both need a free account. Tapping either one while logged out asks for it,
+// then finishes the action after they log in or confirm their email.
+function SupportButtons({ h, code, onChange }) {
   const session = useSession()
   const [params, setParams] = useSearchParams()
-  const [askAccount, setAskAccount] = useState(false)
+  const [ask, setAsk] = useState(null) // null | 'star' | 'follow'
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState(null)
-  const pending = useRef(params.get('star') === '1')
+  const pending = useRef(params.get('star') === '1' ? 'star' : params.get('follow') === '1' ? 'follow' : null)
 
-  async function toggle() {
+  async function run(action) {
     setBusy(true); setErr(null)
-    const { data, error } = await supabase.rpc('toggle_star', { p_code: code })
+    const { data, error } = await supabase.rpc(action === 'star' ? 'toggle_star' : 'toggle_follow', { p_code: code })
     setBusy(false)
     if (error) return setErr(error.message)
-    onChange(data)
+    onChange(action === 'star' ? { starred_by_me: data.starred, stars: data.stars } : { following: data.following, followers: data.followers })
   }
-  // After someone makes an account or logs in to star, finish the star for them.
   useEffect(() => {
-    if (!session || h.is_me) return
-    if (pending.current) {
-      pending.current = false; setAskAccount(false)
-      if (params.get('star')) { params.delete('star'); setParams(params, { replace: true }) }
-      if (!h.starred_by_me) toggle()
-    }
+    if (!session || h.is_me || !pending.current) return
+    const a = pending.current
+    pending.current = null; setAsk(null)
+    if (params.get(a)) { params.delete(a); setParams(params, { replace: true }) }
+    if (a === 'star' ? !h.starred_by_me : !h.following) run(a)
   }, [session]) // eslint-disable-line
 
-  if (h.is_me) return <p className="mt-4 font-bold">⭐ {h.stars} {h.stars === 1 ? 'person is' : 'people are'} rooting for you</p>
+  if (h.is_me) return (
+    <p className="mt-4 font-bold">⭐ {people(h.stars, ' rooting for you')} · {people(h.followers, ' following you')}</p>
+  )
+  const tap = (a) => (session ? run(a) : (pending.current = a, setAsk(a)))
   return (
-    <div className="mt-4">
-      <div className="flex flex-wrap items-center gap-3">
-        <button disabled={busy} onClick={() => (session ? toggle() : (pending.current = true, setAskAccount(true)))}
-          className={h.starred_by_me ? 'btn-black' : 'btn-orange'}>{h.starred_by_me ? `⭐ Starred` : `⭐ Star ${h.first_name}`}</button>
-        <span className="font-bold">{h.stars} {h.stars === 1 ? 'person is' : 'people are'} rooting for {h.first_name}</span>
+    <div className="mt-4 space-y-2">
+      <div className="flex flex-wrap gap-2">
+        <button disabled={busy} onClick={() => tap('star')} className={h.starred_by_me ? 'btn-black' : 'btn-orange'}>{h.starred_by_me ? '⭐ Starred' : `⭐ Star ${h.first_name}`}</button>
+        <button disabled={busy} onClick={() => tap('follow')} className={h.following ? 'btn-black' : 'btn-outline'}>{h.following ? '✓ Following' : `Follow ${h.first_name}`}</button>
       </div>
-      {err && <div className="mt-2"><Notice kind="error">{err}</Notice></div>}
-      {askAccount && !session && (
-        <div className="mt-4">
-          <AuthBox title={`Create a free account to star ${h.first_name}`} intro="Scanning and giving never need an account. An account just lets you star holders and keep your list." redirectPath={`/p/${code}?star=1`} role="supporter" />
-          <button className="mt-2 w-full py-2 font-bold text-neutral-500" onClick={() => { pending.current = false; setAskAccount(false) }}>Not now</button>
+      <p className="text-sm font-bold">{people(h.stars, ' rooting for')} {h.first_name} · {people(h.followers, ' following')}</p>
+      {err && <Notice kind="error">{err}</Notice>}
+      {ask && !session && (
+        <div className="pt-2">
+          <AuthBox title={`Create a free account to ${ask} ${h.first_name}`}
+            intro={ask === 'follow' ? `Following lets you see ${h.first_name}'s updates. Scanning and giving never need an account.` : 'Scanning and giving never need an account. An account just lets you star holders and keep your list.'}
+            redirectPath={`/p/${code}?${ask}=1`} role="supporter" />
+          <button className="mt-2 w-full py-2 font-bold text-neutral-500" onClick={() => { pending.current = null; setAsk(null) }}>Not now</button>
         </div>
       )}
+    </div>
+  )
+}
+
+function Updates({ list, name }) {
+  if (!list?.length) return null
+  return (
+    <div className="mt-5 space-y-3 border-t border-neutral-200 pt-4 dark:border-neutral-700">
+      <p className="text-lg font-extrabold">Updates from {name}</p>
+      {list.map((u) => (
+        <div key={u.id}>
+          <p className="muted text-xs">{ago(u.created_at)}</p>
+          <p className="whitespace-pre-line">{u.body}</p>
+          {u.photo_url && <img src={u.photo_url} alt="" className="mt-2 max-h-72 rounded-xl object-cover" />}
+        </div>
+      ))}
     </div>
   )
 }
@@ -68,33 +98,59 @@ export function ProfileCard({ code }) {
         </div>
       </div>
       {h.story && <p className="mt-4 whitespace-pre-line text-lg leading-relaxed">{h.story}</p>}
-      <StarButton h={h} code={code} onChange={(r) => setH({ ...h, starred_by_me: r.starred, stars: r.stars })} />
+      <SupportButtons h={h} code={code} onChange={(r) => setH({ ...h, ...r })} />
+      <Updates list={h.updates} name={h.first_name} />
     </div>
   )
 }
 
+function PersonRow({ x }) {
+  return (
+    <Link to={`/p/${x.code}`} className="card flex items-center gap-4 hover:border-orange">
+      {x.photo_url
+        ? <img src={x.photo_url} alt="" className="h-14 w-14 rounded-full object-cover" />
+        : <div className="flex h-14 w-14 items-center justify-center rounded-full bg-orange text-2xl font-extrabold text-ink">{x.first_name?.[0]}</div>}
+      <div><p className="text-lg font-extrabold">{x.first_name}</p><p className="muted text-sm">#{x.code}{x.general_area ? ` · ${x.general_area}` : ''}</p></div>
+    </Link>
+  )
+}
+
+// Supporter's "My account" page: updates from people they follow, who they follow, who they starred.
 export function MyStars() {
   const session = useSession()
-  const [list, setList] = useState(null)
-  useEffect(() => { if (session) supabase.rpc('my_stars').then(({ data }) => setList(data || [])) }, [session])
+  const [d, setD] = useState(null)
+  useEffect(() => {
+    if (!session) return
+    Promise.all([supabase.rpc('my_feed'), supabase.rpc('my_following'), supabase.rpc('my_stars')])
+      .then(([f, fo, st]) => setD({ feed: f.data || [], following: fo.data || [], stars: st.data || [] }))
+  }, [session])
   if (session === undefined) return <Spinner />
   if (!session) return <div className="px-4 py-8"><AuthBox title="Log in" allowSignup={false} redirectPath="/me" /></div>
+  if (!d) return <Spinner />
   return (
-    <div className="mx-auto max-w-md px-4 py-8">
-      <h1 className="h1">My stars</h1>
-      <p className="muted mt-2">The holders you're rooting for. Tap one to see their story or help again.</p>
-      <div className="mt-5 space-y-3">
-        {list === null ? <Spinner /> : list.length === 0 ? (
-          <p className="muted">No stars yet. When you scan a holder's code, tap "Meet" and then "⭐ Star" to add them here.</p>
-        ) : list.map((x) => (
-          <Link key={x.code} to={`/p/${x.code}`} className="card flex items-center gap-4 hover:border-orange">
-            {x.photo_url
-              ? <img src={x.photo_url} alt="" className="h-14 w-14 rounded-full object-cover" />
-              : <div className="flex h-14 w-14 items-center justify-center rounded-full bg-orange text-2xl font-extrabold text-ink">{x.first_name?.[0]}</div>}
-            <div><p className="text-lg font-extrabold">{x.first_name}</p><p className="muted text-sm">#{x.code}{x.general_area ? ` · ${x.general_area}` : ''}</p></div>
+    <div className="mx-auto max-w-md space-y-8 px-4 py-8">
+      <h1 className="h1">My account</h1>
+
+      <section className="space-y-3">
+        <h2 className="h2">Updates</h2>
+        {d.feed.length === 0 ? <p className="muted">No updates yet. Follow a holder to see their updates here.</p> : d.feed.map((u) => (
+          <Link key={u.id} to={`/p/${u.code}`} className="card block hover:border-orange">
+            <p className="font-extrabold">{u.first_name} <span className="muted text-xs font-normal">· {ago(u.created_at)}</span></p>
+            <p className="mt-1 whitespace-pre-line">{u.body}</p>
+            {u.photo_url && <img src={u.photo_url} alt="" className="mt-2 max-h-60 rounded-xl object-cover" />}
           </Link>
         ))}
-      </div>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="h2">Following</h2>
+        {d.following.length === 0 ? <p className="muted">You're not following anyone yet.</p> : d.following.map((x) => <PersonRow key={x.code} x={x} />)}
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="h2">My stars</h2>
+        {d.stars.length === 0 ? <p className="muted">No stars yet. When you scan a holder's code, tap "Meet" and then "⭐ Star".</p> : d.stars.map((x) => <PersonRow key={x.code} x={x} />)}
+      </section>
     </div>
   )
 }

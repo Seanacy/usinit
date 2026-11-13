@@ -6,7 +6,7 @@ import ZoneManager from '../components/ZoneManager'
 import Printables from '../components/Printables'
 import { Notice, Spinner } from '../components/Layout'
 
-const TABS = ['Overview', 'Holders', 'Zones', 'Ads', 'Nonprofits', 'Fund', 'House messages', 'Openers', 'Payouts', 'Scans', 'Supporters', 'Settings']
+const TABS = ['Overview', 'Holders', 'Updates', 'Zones', 'Ads', 'Nonprofits', 'Fund', 'House messages', 'Openers', 'Payouts', 'Scans', 'Supporters', 'Settings']
 const when = (t) => new Date(t).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
 
 function useTable(table, order = 'created_at', deps = []) {
@@ -103,6 +103,28 @@ function Holders() {
 }
 
 function Zones() { return <ZoneManager isAdmin /> }
+
+function Updates() {
+  const [rows, setRows] = useState(null)
+  const load = () => supabase.rpc('admin_recent_updates').then(({ data }) => setRows(data || []))
+  useEffect(() => { load() }, [])
+  async function hide(u) { await supabase.from('holder_updates').update({ hidden: !u.hidden }).eq('id', u.id); load() }
+  if (!rows) return <Spinner />
+  return (
+    <div className="space-y-3">
+      <p className="muted">Updates holders post for their followers. Hide anything that shares where someone is staying, private info, or breaks the rules.</p>
+      {rows.length === 0 && <p className="muted">No updates yet.</p>}
+      {rows.map((u) => (
+        <div key={u.id} className="card space-y-1">
+          <p className="text-sm font-bold">{u.first_name} #{u.code} · {when(u.created_at)}{u.hidden ? ' · HIDDEN' : ''}</p>
+          <p className="whitespace-pre-line">{u.body}</p>
+          {u.photo_url && <img src={u.photo_url} alt="" className="max-h-48 rounded-lg object-cover" />}
+          <button className="btn-outline py-2" onClick={() => hide(u)}>{u.hidden ? 'Show again' : 'Hide'}</button>
+        </div>
+      ))}
+    </div>
+  )
+}
 
 function Nonprofits() {
   const [o, setO] = useState(null)
@@ -451,7 +473,7 @@ export default function Admin() {
       </div>
     </div>
   )
-  const C = { Overview, Holders, Zones, Ads, Nonprofits, Fund, 'House messages': HouseMessages, Openers, Payouts, Scans, Supporters, Settings }[tab]
+  const C = { Overview, Holders, Updates, Zones, Ads, Nonprofits, Fund, 'House messages': HouseMessages, Openers, Payouts, Scans, Supporters, Settings }[tab]
   return (
     <div className="mx-auto max-w-5xl px-4 py-6">
       <div className="no-print mb-5 flex gap-2 overflow-x-auto pb-1">

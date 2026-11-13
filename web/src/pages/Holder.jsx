@@ -82,9 +82,59 @@ function ProfileForm({ session, existing, onSaved }) {
 
 function Stars({ code }) {
   const [n, setN] = useState(null)
-  useEffect(() => { if (code) supabase.rpc('get_public_holder', { p_code: code }).then(({ data }) => setN(data?.stars ?? null)) }, [code])
-  if (n === null) return null
-  return <p className="mt-1 text-sm font-bold">⭐ {n} {n === 1 ? 'person is' : 'people are'} rooting for you</p>
+  useEffect(() => { if (code) supabase.rpc('get_public_holder', { p_code: code }).then(({ data }) => setN(data ? { s: data.stars, f: data.followers } : null)) }, [code])
+  if (!n) return null
+  return <p className="mt-1 text-sm font-bold">⭐ {n.s} rooting for you · {n.f} following you</p>
+}
+
+function PostUpdates({ holder, session }) {
+  const [rows, setRows] = useState(null)
+  const [body, setBody] = useState('')
+  const [photo, setPhoto] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState(null)
+  const load = () => supabase.from('holder_updates').select('*').eq('holder_id', holder.id).order('created_at', { ascending: false }).limit(30).then(({ data }) => setRows(data || []))
+  useEffect(() => { load() }, [holder.id]) // eslint-disable-line
+  async function pick(e) {
+    const file = e.target.files?.[0]; if (!file) return
+    setBusy(true); setErr(null)
+    try { setPhoto(await uploadPhoto(file, session.user.id)) } catch (x) { setErr(x.message) } finally { setBusy(false) }
+  }
+  async function post(e) {
+    e.preventDefault(); setErr(null)
+    if (!body.trim()) return setErr('Write something first.')
+    setBusy(true)
+    const { error } = await supabase.from('holder_updates').insert({ holder_id: holder.id, body: body.trim(), photo_url: photo || null })
+    setBusy(false)
+    if (error) return setErr(error.message)
+    setBody(''); setPhoto(''); load()
+  }
+  async function del(u) { if (confirm('Delete this update?')) { await supabase.from('holder_updates').delete().eq('id', u.id); load() } }
+  return (
+    <div className="card space-y-3">
+      <h2 className="h2">Post an update</h2>
+      <p className="muted text-sm">People who follow you see your updates. Share only what you're comfortable sharing. Never post where you're staying.</p>
+      <form onSubmit={post} className="space-y-2">
+        <textarea className="input min-h-[90px]" maxLength={500} value={body} onChange={(e) => setBody(e.target.value)} placeholder="Got my ID today. Starting a job Monday…" />
+        <div className="flex flex-wrap items-center gap-3">
+          {photo && <img src={photo} alt="" className="h-14 w-14 rounded-lg object-cover" />}
+          <label className="btn-outline cursor-pointer py-2">{photo ? 'Change photo' : 'Add a photo (optional)'}<input type="file" accept="image/*" className="hidden" onChange={pick} /></label>
+          {photo && <button type="button" className="text-sm font-bold underline" onClick={() => setPhoto('')}>Remove photo</button>}
+          <span className="muted ml-auto text-xs">{body.length} / 500</span>
+        </div>
+        {err && <Notice kind="error">{err}</Notice>}
+        <button className="btn-orange w-full" disabled={busy}>{busy ? 'Posting…' : 'Post update'}</button>
+      </form>
+      {rows?.map((u) => (
+        <div key={u.id} className="rounded-xl border border-neutral-200 p-3 dark:border-neutral-700">
+          <p className="muted text-xs">{new Date(u.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}{u.hidden ? ' · hidden by Us In It' : ''}</p>
+          <p className="whitespace-pre-line">{u.body}</p>
+          {u.photo_url && <img src={u.photo_url} alt="" className="mt-2 max-h-48 rounded-lg object-cover" />}
+          <button className="mt-2 text-sm font-bold underline" onClick={() => del(u)}>Delete</button>
+        </div>
+      ))}
+    </div>
+  )
 }
 
 function Dashboard({ d, session, reload }) {
@@ -126,6 +176,7 @@ function Dashboard({ d, session, reload }) {
         <p className="font-bold">{d.count_today} scans today · goal {d.goal}</p>
         <div className="mt-2 h-3 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-700"><div className="h-3 bg-orange" style={{ width: `${pct}%` }} /></div>
       </div>
+      <PostUpdates holder={h} session={session} />
       <HolderShares code={h.holder_code} />
       <div className="card">
         <h2 className="h2">Cash out</h2>
