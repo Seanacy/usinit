@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { money, useStats } from '../lib/supabase'
+import { getImpact } from '../lib/impact'
 
 export function GoalTracker({ stats, compact }) {
   if (!stats) return null
@@ -28,6 +29,7 @@ const Step = ({ n, title }) => (
 
 export default function Home() {
   const stats = useStats()
+  const impact = getImpact()
   const s = stats?.settings || {}
   const headline = s.home_headline || 'Local businesses pay people on our streets to share their messages.'
   const sub = s.home_subline || "Every scan of a holder's QR code shows a local ad, and the holder gets paid for it. A new, honest way to earn, and a new way for businesses to reach their neighbors."
@@ -38,6 +40,11 @@ export default function Home() {
         <div className="mx-auto max-w-5xl px-4 pb-10 pt-8 sm:pt-14">
           <h1 className="text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-6xl">{headline}</h1>
           <p className="mt-4 max-w-2xl text-lg text-neutral-300">{sub}</p>
+          {impact && impact.allScans > 0 && (
+            <p className="mt-4 inline-block rounded-xl bg-orange px-4 py-2 font-extrabold text-ink">
+              {impact.monthPeople > 0 ? `You've helped ${impact.monthPeople} ${impact.monthPeople === 1 ? 'person' : 'people'} this month 💛` : `You've helped ${impact.allPeople} ${impact.allPeople === 1 ? 'person' : 'people'} so far 💛`}
+            </p>
+          )}
           <div className="mt-6 grid gap-3 sm:grid-cols-3">
             <Step n="1" title="A business buys an ad for its neighborhood." />
             <Step n="2" title="A holder carries the QR code. People scan it and see the ad." />

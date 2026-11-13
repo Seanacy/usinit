@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { deviceId, money, startCheckout, supabase, useStats } from '../lib/supabase'
+import { recordScan } from '../lib/impact'
 import { Notice, Spinner } from '../components/Layout'
 import Support from './Support'
 import { ProfileCard } from './Profile'
@@ -16,6 +17,17 @@ function getLocation() {
       { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 },
     )
   })
+}
+
+function ImpactCard({ impact }) {
+  return (
+    <div className="mx-auto mt-6 max-w-sm rounded-2xl bg-ink p-4 text-white">
+      {impact.first
+        ? <p className="text-xl font-extrabold">Your first Us In It scan! 💛</p>
+        : <p className="text-xl font-extrabold">You've helped {impact.monthPeople} {impact.monthPeople === 1 ? 'person' : 'people'} this month 💛</p>}
+      <p className="mt-1 text-sm text-neutral-300">{impact.allScans} scan{impact.allScans === 1 ? '' : 's'} all-time · {impact.allPeople} {impact.allPeople === 1 ? 'person' : 'people'} helped. Only saved on this phone.</p>
+    </div>
+  )
 }
 
 export function ContentCard({ content, scanId }) {
@@ -111,6 +123,7 @@ export default function Scan() {
   const stats = useStats()
   const [step, setStep] = useState('intro')
   const [res, setRes] = useState(null)
+  const [impact, setImpact] = useState(null)
   const [error, setError] = useState(null)
   const [wait, setWait] = useState(5)
   const [panel, setPanel] = useState(null)
@@ -130,6 +143,7 @@ export default function Scan() {
     if (e || !data) { setError('Something went wrong. Please try again.'); started.current = false; setStep('intro'); return }
     if (data.error === 'not_found') { setStep('notfound'); return }
     setRes(data)
+    if (data && !data.error) setImpact(recordScan(code))
     if (data.opener) setStep('opener')
     else if (data.content) setStep('content')
     else setStep('none')
@@ -239,6 +253,7 @@ export default function Scan() {
           ) : (
             <p className="text-3xl font-extrabold">Thank you for scanning. 🧡</p>
           )}
+          {impact && <ImpactCard impact={impact} />}
           <button className="btn-black mt-6 w-full" onClick={() => { setStep('next'); setPanel('meet') }}>See {name}'s story</button>
           <p className="muted mt-6 text-xs">Do not use your phone while driving.</p>
         </div>
