@@ -175,11 +175,6 @@ export default function Scan() {
       {step === 'content' && (
         <div>
           {res.earned && <p className="mb-3 text-xl font-extrabold">You just helped {name} earn money. 🙌</p>}
-          {!res.verified && (
-            <div className="mb-3"><Notice>{res.status === 'UNVERIFIED_NO_LOCATION'
-              ? `Location was off, so this scan didn't pay ${name}. You can still help below.`
- : ''}</Notice></div>
-          )}
           <ContentCard content={res.content} scanId={res.scan_id} />
           <button className="btn-black mt-4 w-full" disabled={wait > 0} onClick={() => setStep('next')}>{wait > 0 ? `Continue in ${wait}` : 'Continue'}</button>
         </div>
@@ -190,12 +185,7 @@ export default function Scan() {
           <div className="card">
             <p className="text-xl font-extrabold">{res.earned ? `You just helped ${name} earn money. 🙌` : 'Thanks for scanning!'}</p>
             <p className="mt-2">
-              {res.earned ? `Thank you for scanning. Want to do even more for ${name}?`
-                : res.status === 'DUPLICATE_DEVICE' ? `You already scanned ${name} today. Thank you! You can still help ${name} directly.`
-                : res.status === 'HOLDER_DAILY_CAP' ? `${name} hit their max scan earnings for today. You can still help ${name} directly.`
-                : res.status === 'UNVERIFIED_NO_LOCATION' ? `Location was off, so this scan didn't pay ${name}. You can still help ${name} directly.`
-                : res.ads_nearby ? `Paid messages are running nearby, but not right here. You can still help ${name} directly.`
-                : `No paid messages are running right now, but you can still help ${name} directly.`}
+              {`Thank you for scanning. Want to do even more for ${name}?`}
             </p>
           </div>
           <button className="btn-black mt-4 w-full" onClick={() => setStep('next')}>Continue</button>
