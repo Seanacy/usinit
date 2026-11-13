@@ -8,6 +8,7 @@ import Scan from './pages/Scan'
 import Profile, { MyStars } from './pages/Profile'
 import { PlugScan } from './pages/Plug'
 import BookingPage from './pages/Booking'
+import WorkplacePage from './pages/Workplace'
 import Support from './pages/Support'
 import Fund from './pages/Fund'
 import Thanks from './pages/Thanks'
@@ -53,6 +54,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/p/:code" element={<Profile />} />
           <Route path="/n/:code" element={<PlugScan />} />
           <Route path="/b/:slug" element={<BookingPage />} />
+          <Route path="/w/:slug" element={<WorkplacePage />} />
           <Route path="/support" element={<Support />} />
           <Route path="/fund" element={<Fund />} />
           <Route path="/thanks" element={<Thanks />} />

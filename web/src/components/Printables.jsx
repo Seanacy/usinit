@@ -18,6 +18,31 @@ export function hostUrl(code) {
   return `${SITE_URL}/n/${code}`
 }
 
+// Black-and-white sheet for a workplace break room or lobby (Workplace Love Notes).
+export function WorkplaceSign({ url, name }) {
+  const qr = useQR(url)
+  if (!qr) return null
+  return (
+    <div>
+      <div className="no-print mb-4 space-y-3">
+        {!IS_FINAL_DOMAIN && <Notice kind="error">Test prints only. This QR code points to {new URL(SITE_URL).host}, not UsInIt.com yet.</Notice>}
+        <p className="muted text-sm">Black and white, light on ink. Prints sideways (landscape) on one regular 8.5 x 11 sheet.</p>
+        <button className="btn-orange w-full" onClick={() => window.print()}>Print or save as PDF</button>
+      </div>
+      <style>{'@page { size: letter landscape; margin: 0 }'}</style>
+      <div className="print-page mx-auto flex aspect-[11/8.5] w-full max-w-[11in] items-center gap-[2.5%] border border-neutral-300 bg-white p-[3%] text-black [container-type:inline-size] print:fixed print:left-0 print:top-0 print:h-[8.5in] print:w-[11in] print:max-w-none print:border-0">
+        <div className="aspect-square w-[68%] shrink-0 bg-white"><img src={qr} alt={`QR code for ${url}`} className="h-full w-full" /></div>
+        <div className="flex h-full flex-1 flex-col justify-between">
+          <p className="text-[5.6cqw] font-black leading-[0.95]">Scan for<br />a note<br />for you.</p>
+          <p className="text-[2.6cqw] font-extrabold leading-tight">A thank-you for the team at {name}. Send one too.</p>
+          <img src="/logo-print-bw.svg" alt="Us In It" className="w-full" />
+          <Verified className="text-[2.3cqw] leading-tight" />
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // Black-and-white sheet a business posts for another business's booking page (The Plug).
 export function BookingSign({ url, title }) {
   const qr = useQR(url)
