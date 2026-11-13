@@ -22,13 +22,14 @@ export default function StripePayouts({ kind, title = 'Cash out', handNote }) {
     setBusy(false)
   }
   if (st === undefined) return <div className="card"><Spinner /></div>
+  if (st && st.stripe_on === false) return handNote ? <div className="card space-y-2"><h2 className="h2">{title}</h2><p className="muted text-sm">{handNote}</p></div> : null
   return (
     <div className="card space-y-3">
       <h2 className="h2">{title}</h2>
       {st && <p className="text-2xl font-extrabold">{money(st.balance_cents)} <span className="muted text-sm font-normal">ready to cash out</span></p>}
       {st && !st.has_account && (
         <>
-          <p className="muted text-sm">Get paid straight to your bank account or debit card (a Cash App or other prepaid debit card works). Stripe, our payment company, asks for your name, birthday, last 4 of your SSN, and address one time. Us In It never sees your card or bank numbers.</p>
+          <p className="muted text-sm">Get paid straight to your bank account or debit card (a Cash App or other prepaid debit card works). Stripe charges a small payout fee (up to $2 + 0.25% + 25¢ per month), taken from your cash-out and shown before you tap. Stripe, our payment company, asks for your name, birthday, last 4 of your SSN, and address one time. Us In It never sees your card or bank numbers.</p>
           <button className="btn-orange w-full" disabled={busy} onClick={() => go('onboard')}>{busy ? 'Opening Stripe…' : 'Set up cash-outs with Stripe'}</button>
         </>
       )}
@@ -40,8 +41,9 @@ export default function StripePayouts({ kind, title = 'Cash out', handNote }) {
       )}
       {st && st.payouts_enabled && (
         <>
+          {st.balance_cents >= st.min_cents && <p className="text-sm font-bold">Cash out {money(st.balance_cents)} − Stripe payout fee {money(st.fee_cents)} = you get {money(st.balance_cents - st.fee_cents)}</p>}
           <button className="btn-orange w-full" disabled={busy || st.balance_cents < st.min_cents} onClick={() => go('cashout')}>
-            {busy ? 'Sending…' : st.balance_cents < st.min_cents ? `Cash out (from ${money(st.min_cents)})` : `Cash out ${money(st.balance_cents)}`}
+            {busy ? 'Sending…' : st.balance_cents < st.min_cents ? `Cash out (from ${money(st.min_cents)})` : `Cash out ${money(st.balance_cents - st.fee_cents)}`}
           </button>
           <button className="text-sm font-bold underline" disabled={busy} onClick={() => go('dashboard')}>See my payouts or change my bank on Stripe</button>
         </>

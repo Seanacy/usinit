@@ -99,11 +99,11 @@ Deno.serve(async (req) => {
       if (error) return json({ error: error.message }, 400);
       try {
         const t = await stripe("transfers", {
-          amount: c.amount_cents, currency: "usd", destination: c.account,
+          amount: c.send_cents, currency: "usd", destination: c.account,
           description: "Us In It cash-out", metadata: { usinit_cashout: c.id, usinit_kind: kind },
         }, `cashout-${c.id}`);
         await admin.rpc("finish_stripe_cashout", { p_id: c.id, p_transfer: t.id, p_ok: true });
-        return json({ ok: true, amount_cents: c.amount_cents });
+        return json({ ok: true, amount_cents: c.send_cents, fee_cents: c.fee_cents });
       } catch (e) {
         await admin.rpc("finish_stripe_cashout", { p_id: c.id, p_transfer: null, p_ok: false, p_error: String((e as Error).message) });
         console.error("transfer failed", e);
