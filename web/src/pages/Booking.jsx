@@ -196,7 +196,7 @@ export function BookingManager({ adv }) {
             </div>
           </div>
           {adv.status !== 'approved' && <Notice kind="error">Your page goes live once Us In It approves your business account. You can set it up now.</Notice>}
-          <Notice>Deposits turn on when Us In It payments open. Until then, bookings come in as requests, and the sharer's cut is tracked so they're paid once deposits start.</Notice>
+          <Notice>Customers pay your deposit when they book. From each deposit: the sharer's cut (if someone sent them), $2 to Us In It, and the card fee. The rest goes to your earnings, which you cash out below.</Notice>
           <Services page={page} />
           <Hours page={page} />
           <BookingsList page={page} />
@@ -214,7 +214,7 @@ export function HolderShares({ code }) {
   return (
     <div className="card space-y-3">
       <h2 className="h2">Share a booking page and earn</h2>
-      <p className="muted text-sm">When someone books through your link, you earn your cut from their deposit. Deposits turn on soon, and every booking you send is counted now.</p>
+      <p className="muted text-sm">When someone books through your link, you earn your cut from their deposit as soon as they pay it.</p>
       {rows.map((r) => {
         const link = bookingUrl(r.slug, code)
         return (
@@ -245,7 +245,7 @@ export function BusinessShares() {
   return (
     <div className="card space-y-3">
       <h2 className="h2">The Plug: carry other businesses' codes</h2>
-      <p className="muted text-sm">Post another local business's code at your place (like a nail tech's code at your booth). When someone books through it, you earn their cut from the deposit. Deposits turn on soon; every booking you send is counted now. Your share code: <b>{d.code}</b></p>
+      <p className="muted text-sm">Post another local business's code at your place (like a nail tech's code at your booth). When someone books through it, you earn their cut from the deposit as soon as the customer pays it. Your share code: <b>{d.code}</b></p>
       {d.pages.length === 0 && <p className="muted text-sm">No other businesses are open for sharing yet.</p>}
       {d.pages.map((r) => {
         const link = bookingUrl(r.slug, d.code)
