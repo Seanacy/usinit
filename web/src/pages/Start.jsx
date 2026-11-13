@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import AuthBox from '../components/AuthBox'
 import { Spinner } from '../components/Layout'
-import { supabase, useSession } from '../lib/supabase'
+import { homeFor, useSession } from '../lib/supabase'
 
 const ROLES = [
   { key: 'holder', title: "I'm a holder", text: 'I carry an Us In It QR code and get paid when people scan it.', path: '/holder',
@@ -43,20 +43,6 @@ export function Signup() {
       <p className="muted mt-6 text-center text-sm">Already have an account? <Link to="/login" className="font-bold underline">Log in</Link></p>
     </div>
   )
-}
-
-// After log in, send each person to their own page.
-async function homeFor(user) {
-  const { data: admin } = await supabase.rpc('is_admin')
-  if (admin) return '/admin'
-  const { data: h } = await supabase.from('holders').select('id').eq('user_id', user.id).maybeSingle()
-  if (h) return '/holder'
-  const { data: a } = await supabase.from('advertisers').select('id').eq('user_id', user.id).maybeSingle()
-  if (a) return '/advertise'
-  const r = user.user_metadata?.role
-  if (r === 'holder') return '/holder'
-  if (r === 'business') return '/advertise'
-  return null
 }
 
 function AlreadyIn() {

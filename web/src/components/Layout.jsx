@@ -1,6 +1,6 @@
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-import { supabase, useSession } from '../lib/supabase'
+import { homeFor, supabase, useSession } from '../lib/supabase'
 
 export function Logo({ className = 'h-9', variant = 'black' }) {
   const src = variant === 'white' ? '/logo-on-white.svg' : variant === 'orange' ? '/logo-on-orange.svg' : '/logo-on-black.svg'
@@ -37,6 +37,9 @@ function ConfirmedBanner({ session }) {
 
 export default function Layout() {
   const session = useSession()
+  // Hide the tab that just leads to the person's own page (Holders for holders, Advertise for businesses).
+  const [home, setHome] = useState(null)
+  useEffect(() => { if (!session) { setHome(null); return } homeFor(session.user).then(setHome).catch(() => setHome(null)) }, [session?.user?.id]) // eslint-disable-line
   const [open, setOpen] = useState(false)
   const link = ({ isActive }) => `block rounded-lg px-3 py-2 font-bold ${isActive ? 'text-orange' : 'text-white hover:text-orange'}`
   return (
@@ -46,8 +49,8 @@ export default function Layout() {
           <Link to="/" aria-label="Us In It home"><Logo className="h-9 sm:h-10" /></Link>
           <nav className="hidden items-center gap-1 md:flex">
             <NavLink to="/support" className={link}>Support</NavLink>
-            <NavLink to="/advertise" className={link}>Advertise</NavLink>
-            <NavLink to="/holder" className={link}>Holders</NavLink>
+            {home !== '/advertise' && <NavLink to="/advertise" className={link}>Advertise</NavLink>}
+            {home !== '/holder' && <NavLink to="/holder" className={link}>Holders</NavLink>}
             <NavLink to="/fund" className={link}>Community Fund</NavLink>
             {session && <NavLink to="/account" className={link}>My account</NavLink>}
             {session && <button onClick={() => supabase.auth.signOut()} className="px-3 py-2 font-bold text-neutral-300 hover:text-white">Log out</button>}
@@ -62,8 +65,8 @@ export default function Layout() {
         {open && (
           <nav className="border-t border-neutral-800 px-4 pb-4 md:hidden" onClick={() => setOpen(false)}>
             <NavLink to="/support" className={link}>Support the launch</NavLink>
-            <NavLink to="/advertise" className={link}>Advertise with us</NavLink>
-            <NavLink to="/holder" className={link}>Holders: sign up or log in</NavLink>
+            {home !== '/advertise' && <NavLink to="/advertise" className={link}>Advertise with us</NavLink>}
+            {home !== '/holder' && <NavLink to="/holder" className={link}>Holders: sign up or log in</NavLink>}
             <NavLink to="/fund" className={link}>Community Fund</NavLink>
             {session && <NavLink to="/account" className={link}>My account</NavLink>}
             {session && <button onClick={() => supabase.auth.signOut()} className="block px-3 py-2 font-bold text-neutral-300">Log out</button>}

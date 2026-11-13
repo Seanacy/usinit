@@ -70,3 +70,18 @@ export async function uploadPhoto(file, userId) {
 }
 
 export const CENTRAL_TZ = 'America/Chicago'
+
+// After log in, send each person to their own page.
+export async function homeFor(user) {
+  const { data: admin } = await supabase.rpc('is_admin')
+  if (admin) return '/admin'
+  const { data: h } = await supabase.from('holders').select('id').eq('user_id', user.id).maybeSingle()
+  if (h) return '/holder'
+  const { data: a } = await supabase.from('advertisers').select('id').eq('user_id', user.id).maybeSingle()
+  if (a) return '/advertise'
+  const r = user.user_metadata?.role
+  if (r === 'holder') return '/holder'
+  if (r === 'business') return '/advertise'
+  return null
+}
+
