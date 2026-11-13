@@ -11,6 +11,7 @@ import BookingPage from './pages/Booking'
 import WorkplacePage from './pages/Workplace'
 import ChampionPage, { Directory } from './pages/Champion'
 import { KindnessPage, SchoolPage } from './pages/Schools'
+import CreatorPage, { DigitalScan } from './pages/Digital'
 import Support from './pages/Support'
 import Fund from './pages/Fund'
 import Thanks from './pages/Thanks'
@@ -60,6 +61,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/directory" element={<Directory />} />
           <Route path="/champion" element={<ChampionPage />} />
           <Route path="/school/:slug" element={<SchoolPage />} />
+          <Route path="/d/:code" element={<DigitalScan />} />
+          <Route path="/creator" element={<CreatorPage />} />
           <Route path="/kindness/:slug" element={<KindnessPage />} />
           <Route path="/support" element={<Support />} />
           <Route path="/fund" element={<Fund />} />

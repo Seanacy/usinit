@@ -5,11 +5,12 @@ import AuthBox from '../components/AuthBox'
 import { Notice, Spinner } from '../components/Layout'
 import Printables, { scanUrl, useQR } from '../components/Printables'
 import { HolderShares } from './Booking'
+import { HolderDigital } from './Digital'
 
 function ProfileForm({ session, existing, onSaved }) {
   const [f, setF] = useState({
     first_name: existing?.first_name || '', story: existing?.story || '', general_area: existing?.general_area || '',
-    photo_url: existing?.photo_url || '', listed_in_directory: existing?.listed_in_directory || false, allow_champions: existing?.allow_champions || false,
+    photo_url: existing?.photo_url || '', listed_in_directory: existing?.listed_in_directory || false, allow_champions: existing?.allow_champions || false, digital_only: existing?.digital_only || false,
   })
   const [agree, setAgree] = useState(!!existing)
   const [busy, setBusy] = useState(false)
@@ -66,7 +67,8 @@ function ProfileForm({ session, existing, onSaved }) {
         <input id="area" className="input" maxLength={80} value={f.general_area} onChange={set('general_area')} placeholder="Uptown, Downtown, Lake Street…" />
       </div>
       <label className="flex items-start gap-3"><input type="checkbox" className="mt-1 h-5 w-5 accent-[#FF6A00]" checked={f.listed_in_directory} onChange={set('listed_in_directory')} /><span>List me in the public directory</span></label>
-      <label className="flex items-start gap-3"><input type="checkbox" className="mt-1 h-5 w-5 accent-[#FF6A00]" checked={f.allow_champions} onChange={set('allow_champions')} /><span>Allow Champions to print and share my code</span></label>
+      <label className="flex items-start gap-3"><input type="checkbox" className="mt-1 h-5 w-5 accent-[#FF6A00]" checked={f.digital_only} onChange={set('digital_only')} /><span>I'm not on the street. I'll share my code online only (couch-surfing, in a shelter, or another hard time).</span></label>
+      <label className="flex items-start gap-3"><input type="checkbox" className="mt-1 h-5 w-5 accent-[#FF6A00]" checked={f.allow_champions} onChange={set('allow_champions')} /><span>Allow Champions and creators to share my code (at school, at work, online)</span></label>
       {!existing && (
         <label className="flex items-start gap-3">
           <input type="checkbox" className="mt-1 h-5 w-5 accent-[#FF6A00]" checked={agree} onChange={(e) => setAgree(e.target.checked)} />
@@ -198,6 +200,7 @@ function Dashboard({ d, session, reload }) {
         <p className="font-bold">{d.count_today} scans today · goal {d.goal}</p>
         <div className="mt-2 h-3 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-700"><div className="h-3 bg-orange" style={{ width: `${pct}%` }} /></div>
       </div>
+      <HolderDigital />
       <PostUpdates holder={h} session={session} />
       <HolderShares code={h.holder_code} />
       <div className="card">

@@ -81,8 +81,11 @@ export async function homeFor(user) {
   if (a) return '/advertise'
   const { data: c } = await supabase.from('champions').select('id').eq('user_id', user.id).maybeSingle()
   if (c) return '/champion'
+  const { data: cr } = await supabase.from('creators').select('id').eq('user_id', user.id).maybeSingle()
+  if (cr) return '/creator'
   const r = user.user_metadata?.role
   if (r === 'champion') return '/champion'
+  if (r === 'creator') return '/creator'
   if (r === 'holder') return '/holder'
   if (r === 'business') return '/advertise'
   return '/me'

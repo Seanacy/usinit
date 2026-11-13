@@ -23,6 +23,7 @@ function AdForm({ advertiser, existing, onDone }) {
     ad_type: e0.ad_type || 'standard', headline: e0.headline || '', body: e0.body || '', image_url: e0.image_url || '',
     button_text: e0.button_text ?? 'Learn more', button_url: e0.button_url || '',
     champion_scans: e0.champion_scans || false, crowd_types: e0.crowd_types || [],
+    digital_on: e0.digital_on || false, digital_kinds: e0.digital_kinds || ['holder'], digital_cap: existing ? (e0.digital_daily_cap_cents / 100) : 10,
     days: e0.days || [0, 1, 2, 3, 4, 5, 6], start_hour: e0.start_hour ?? 7, end_hour: e0.end_hour ?? 21,
     daily_budget: existing ? e0.daily_budget_cents / 100 : 10,
     event_name: e0.event_name || '', event_start: toLocalInput(e0.event_start), event_end: toLocalInput(e0.event_end), event_address: e0.event_address || '', ticket_url: e0.ticket_url || '',
@@ -42,11 +43,12 @@ function AdForm({ advertiser, existing, onDone }) {
   async function save(e) {
     e.preventDefault(); setErr(null)
     if (!f.headline.trim()) return setErr('Add a headline.')
-    if (!zoneIds.length) return setErr('Pick at least one zone where your ad should show.')
+    if (!zoneIds.length && !f.digital_on) return setErr('Pick at least one zone where your ad should show, or turn on online (digital) scans.')
     if (f.button_url && !/^https?:\/\//i.test(f.button_url)) return setErr('The button link must start with https://')
     if (f.ad_type === 'event' && (!f.event_name || !f.event_start || !f.event_end)) return setErr('Add the event name, start, and end time.')
     if (f.ad_type === 'political' && (!f.political_committee || !f.political_address)) return setErr('Political ads need the committee name and address for the Minnesota disclaimer.')
     if (!f.days.length) return setErr('Pick at least one day.')
+    if (f.digital_on && !f.digital_kinds.length) return setErr('Pick who your online scans help: holders, creators, or both.')
     if (f.champion_scans && !f.crowd_types.length) return setErr('Pick at least one Champion crowd type, or turn Champion scans off.')
     setBusy(true)
     const row = {
@@ -102,7 +104,7 @@ function AdForm({ advertiser, existing, onDone }) {
       <div>
         <p className="label">Where should it show? Pick one or more of your zones.</p>
         {zones === null ? <Spinner /> : zones.length === 0 ? (
-          <Notice kind="error">You don't have any zones yet. Click Cancel, then "Add or edit zones" to draw one first.</Notice>
+          <Notice>No zones yet. For street scans, click Cancel, then "Draw your first zone". For online-only ads, turn on "Also show online" below.</Notice>
         ) : (
           <div className="space-y-2">
             {zones.map((z) => (
@@ -130,6 +132,22 @@ function AdForm({ advertiser, existing, onDone }) {
                   className={`rounded-lg px-3 py-2 text-sm font-bold ${f.crowd_types.includes(k) ? 'bg-orange text-ink' : 'border border-neutral-300 dark:border-neutral-600'}`}>{l}</button>
               ))}
             </div>
+          </div>
+        )}
+      </div>
+      <div className="space-y-2">
+        <label className="flex items-start gap-3"><input type="checkbox" className="mt-1 h-5 w-5 accent-[#FF6A00]" checked={f.digital_on} onChange={(e) => setF({ ...f, digital_on: e.target.checked })} />
+          <span><b>Also show online (digital scans)</b><span className="muted block text-sm">People watching videos or livestreams scan a code and see your ad, anywhere. $0.25 per scan.</span></span></label>
+        {f.digital_on && (
+          <div className="space-y-2 rounded-xl bg-neutral-100 p-3 dark:bg-neutral-800">
+            <p className="text-sm font-bold">Who should your online scans help?</p>
+            <div className="flex flex-wrap gap-2">
+              {[['holder', 'People in hard times (holders)'], ['creator', 'Content creators']].map(([k, l]) => (
+                <button type="button" key={k} onClick={() => setF({ ...f, digital_kinds: f.digital_kinds.includes(k) ? f.digital_kinds.filter((x) => x !== k) : [...f.digital_kinds, k] })}
+                  className={`rounded-lg px-3 py-2 text-sm font-bold ${f.digital_kinds.includes(k) ? 'bg-orange text-ink' : 'border border-neutral-300 dark:border-neutral-600'}`}>{l}</button>
+              ))}
+            </div>
+            <label className="text-sm font-bold">Online daily max ($)<input className="input w-32" inputMode="decimal" value={f.digital_cap} onChange={(e) => setF({ ...f, digital_cap: e.target.value.replace(/[^0-9.]/g, '') })} /></label>
           </div>
         )}
       </div>
@@ -266,7 +284,7 @@ export default function Advertise() {
                 <span><b>Your zones:</b> {zoneCount}<span className="muted block text-sm">The areas where your ads show, with live scan counts.</span></span>
                 <button className="btn-black py-2" onClick={() => setManagingZones(true)}>{zoneCount ? 'Add or edit zones' : 'Draw your first zone'}</button>
               </div>
-              <button className="btn-black w-full" onClick={() => (zoneCount ? setCreating(true) : setManagingZones(true))}>{zoneCount ? 'Create a new ad' : 'Create a new ad (draw a zone first)'}</button>
+              <button className="btn-black w-full" onClick={() => setCreating(true)}>Create a new ad</button>
               <h2 className="h2 pt-2">Your ads</h2>
               {ads.filter((a) => a.ad_type !== 'outreach').map((a) => (
                 <div key={a.id} className="card">
