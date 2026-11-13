@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { money, supabase, useSession } from '../lib/supabase'
 import AuthBox from '../components/AuthBox'
 import MapPicker, { AddressSearch, FT_PER_M, describeRadius, geocode, radiusParts } from '../components/MapPicker'
@@ -466,9 +467,19 @@ export default function Admin() {
   const [tab, setTab] = useState('Overview')
   useEffect(() => { if (session) supabase.rpc('is_admin').then(({ data }) => setIsAdmin(!!data)) }, [session])
   if (session === undefined) return <Spinner />
-  if (!session) return <div className="px-4 py-8"><AuthBox title="Admin log in" redirectPath="/admin" /></div>
+  if (!session) return <div className="px-4 py-8"><AuthBox title="Admin log in" redirectPath="/admin" allowSignup={false} /></div>
   if (isAdmin === undefined) return <Spinner />
-  if (!isAdmin) return <div className="mx-auto max-w-md px-4 py-16 text-center"><h1 className="h2">This page is for Us In It admins.</h1><p className="muted mt-2">Logged in as {session.user.email}.</p></div>
+  if (!isAdmin) return (
+    <div className="mx-auto max-w-md px-4 py-16 text-center">
+      <h1 className="h2">You're logged in</h1>
+      <p className="muted mt-2">{session.user.email} doesn't have admin access. Where do you want to go?</p>
+      <div className="mt-6 grid gap-3">
+        <Link to="/holder" className="btn-orange">I'm a holder</Link>
+        <Link to="/advertise" className="btn-black">I'm a business</Link>
+        <button onClick={() => supabase.auth.signOut()} className="btn-outline">Log out</button>
+      </div>
+    </div>
+  )
   const C = { Overview, Holders, Zones, Ads, Fund, 'House messages': HouseMessages, Openers, Payouts, Scans, Supporters, Settings }[tab]
   return (
     <div className="mx-auto max-w-5xl px-4 py-6">

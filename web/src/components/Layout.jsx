@@ -1,4 +1,4 @@
-import { Link, NavLink, Outlet } from 'react-router-dom'
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { supabase, useSession } from '../lib/supabase'
 
@@ -17,6 +17,21 @@ function ThemeToggle() {
     <button onClick={() => setDark(!dark)} className="rounded-lg px-2 py-1 text-sm text-neutral-300 hover:text-white" aria-label="Switch light or dark mode">
       {dark ? 'Light' : 'Dark'}
     </button>
+  )
+}
+
+function ConfirmedBanner({ session }) {
+  const loc = useLocation()
+  const nav = useNavigate()
+  const confirmed = new URLSearchParams(loc.search).get('confirmed') === '1'
+  if (!confirmed || !session) return null
+  return (
+    <div className="bg-orange text-ink">
+      <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3 font-bold">
+        <span>Your email is confirmed. Welcome to Us In It!</span>
+        <button onClick={() => nav(loc.pathname, { replace: true })} className="rounded-lg px-2 underline" aria-label="Close message">Close</button>
+      </div>
+    </div>
   )
 }
 
@@ -52,7 +67,7 @@ export default function Layout() {
           </nav>
         )}
       </header>
-      <main className="flex-1"><Outlet /></main>
+      <main className="flex-1"><ConfirmedBanner session={session} /><Outlet /></main>
       <footer className="no-print bg-ink text-neutral-400">
         <div className="mx-auto flex max-w-5xl flex-col gap-3 px-4 py-8 text-sm sm:flex-row sm:items-center sm:justify-between">
           <div>© {new Date().getFullYear()} Us In It · A Many Ways Up LLC project · Minneapolis</div>

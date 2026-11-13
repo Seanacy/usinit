@@ -1,14 +1,26 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { Notice } from './Layout'
 
-export default function AuthBox({ title = 'Log in or sign up', intro, redirectPath }) {
-  const [mode, setMode] = useState('signup')
+export default function AuthBox({ title = 'Log in or sign up', intro, redirectPath, allowSignup = true }) {
+  const [mode, setMode] = useState(allowSignup ? 'signup' : 'login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState(null)
-  const redirect = window.location.origin + (redirectPath || window.location.pathname)
+  const redirect = window.location.origin + (redirectPath || window.location.pathname) + '?confirmed=1'
+
+  // A confirm link that was already used or is too old lands here with an error in the address.
+  useEffect(() => {
+    const h = new URLSearchParams(window.location.hash.replace(/^#/, ''))
+    if (h.get('error_code')) {
+      setMode('login')
+      setMsg({ kind: 'error', text: h.get('error_code') === 'otp_expired'
+        ? 'That email link was already used or is too old. If you already confirmed, just log in below.'
+        : 'That email link did not work. Log in below, or sign up again.' })
+      window.history.replaceState(null, '', window.location.pathname)
+    }
+  }, [])
 
   async function submit(e) {
     e.preventDefault()
@@ -20,7 +32,7 @@ export default function AuthBox({ title = 'Log in or sign up', intro, redirectPa
       if (mode === 'signup') {
         const { data, error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: redirect } })
         if (error) throw error
-        if (!data.session) setMsg({ kind: 'ok', text: 'Check your email and tap the link to confirm your account. Then come back here and log in.' })
+        if (!data.session) setMsg({ kind: 'ok', text: 'Almost done! Check your email (look in Spam too) and tap the link to confirm. It will bring you right back here, logged in.' })
       } else if (mode === 'login') {
         const { error } = await supabase.auth.signInWithPassword({ email, password })
         if (error) throw error
@@ -40,10 +52,12 @@ export default function AuthBox({ title = 'Log in or sign up', intro, redirectPa
     <div className="card mx-auto w-full max-w-md">
       <h1 className="h2 mb-1">{mode === 'reset' ? 'Reset your password' : title}</h1>
       {intro && mode !== 'reset' && <p className="muted mb-4">{intro}</p>}
-      <div className="mb-4 grid grid-cols-2 gap-2">
-        <button type="button" onClick={() => setMode('signup')} className={mode === 'signup' ? 'btn-black' : 'btn-outline'}>Sign up</button>
-        <button type="button" onClick={() => setMode('login')} className={mode === 'login' ? 'btn-black' : 'btn-outline'}>Log in</button>
-      </div>
+      {allowSignup && mode !== 'reset' && (
+        <div className="mb-4 grid grid-cols-2 gap-2">
+          <button type="button" onClick={() => setMode('signup')} className={mode === 'signup' ? 'btn-black' : 'btn-outline'}>Sign up</button>
+          <button type="button" onClick={() => setMode('login')} className={mode === 'login' ? 'btn-black' : 'btn-outline'}>Log in</button>
+        </div>
+      )}
       <form onSubmit={submit} className="space-y-3">
         <div>
           <label className="label" htmlFor="email">Email</label>
