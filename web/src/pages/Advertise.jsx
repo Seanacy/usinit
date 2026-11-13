@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { money, startCheckout, supabase, useSession, useStats } from '../lib/supabase'
 import AuthBox from '../components/AuthBox'
-import MapPicker, { AddressSearch } from '../components/MapPicker'
+import ZoneManager from '../components/ZoneManager'
+import { describeRadius } from '../components/MapPicker'
 import { Notice, Spinner } from '../components/Layout'
 
-const MILES = [1, 3, 5, 10]
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 const toLocalInput = (iso) => {
@@ -19,22 +19,26 @@ function AdForm({ advertiser, existing, onDone }) {
   const [f, setF] = useState({
     ad_type: e0.ad_type || 'standard', headline: e0.headline || '', body: e0.body || '', image_url: e0.image_url || '',
     button_text: e0.button_text ?? 'Learn more', button_url: e0.button_url || '',
-    miles: existing ? (MILES.find((m) => Math.abs(m * 1609.34 - e0.radius_m) < 50) || Math.round(e0.radius_m / 1609.34) || 1) : 1,
     days: e0.days || [0, 1, 2, 3, 4, 5, 6], start_hour: e0.start_hour ?? 7, end_hour: e0.end_hour ?? 21,
     daily_budget: existing ? e0.daily_budget_cents / 100 : 10,
     event_name: e0.event_name || '', event_start: toLocalInput(e0.event_start), event_end: toLocalInput(e0.event_end), event_address: e0.event_address || '', ticket_url: e0.ticket_url || '',
     political_committee: e0.political_committee || '', political_address: e0.political_address || '', political_registration: e0.political_registration || '' })
-  const [point, setPoint] = useState(existing ? { lat: e0.lat, lng: e0.lng } : null)
-  const [zones, setZones] = useState([])
+  const [zoneIds, setZoneIds] = useState(e0.zone_ids || [])
+  const [zones, setZones] = useState(null)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState(null)
-  useEffect(() => { supabase.from('advertising_zones').select('id,name,lat,lng,radius_m').then(({ data }) => setZones(data || [])) }, [])
+  useEffect(() => {
+    supabase.from('advertising_zones').select('id,name,radius_m,active,admin_off').order('created_at').then(({ data }) => {
+      setZones(data || [])
+      if (!existing && data?.length === 1) setZoneIds([data[0].id])
+    })
+  }, []) // eslint-disable-line
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value })
 
   async function save(e) {
     e.preventDefault(); setErr(null)
     if (!f.headline.trim()) return setErr('Add a headline.')
-    if (!point) return setErr('Tap the map to pick where your ad shows.')
+    if (!zoneIds.length) return setErr('Pick at least one zone where your ad should show.')
     if (f.button_url && !/^https?:\/\//i.test(f.button_url)) return setErr('The button link must start with https://')
     if (f.ad_type === 'event' && (!f.event_name || !f.event_start || !f.event_end)) return setErr('Add the event name, start, and end time.')
     if (f.ad_type === 'political' && (!f.political_committee || !f.political_address)) return setErr('Political ads need the committee name and address for the Minnesota disclaimer.')
@@ -42,7 +46,7 @@ function AdForm({ advertiser, existing, onDone }) {
     setBusy(true)
     const row = {
       advertiser_id: advertiser.id, ad_type: f.ad_type, headline: f.headline.trim(), body: f.body.trim() || null, image_url: f.image_url.trim() || null,
-      button_text: f.button_text.trim() || null, button_url: f.button_url.trim() || null, lat: point.lat, lng: point.lng, radius_m: Math.round(f.miles * 1609.34),
+      button_text: f.button_text.trim() || null, button_url: f.button_url.trim() || null, zone_ids: zoneIds,
       days: f.days, start_hour: Number(f.start_hour), end_hour: Number(f.end_hour), daily_budget_cents: Math.round(Number(f.daily_budget) * 100),
     }
     if (f.ad_type === 'event') Object.assign(row, { event_name: f.event_name, event_start: new Date(f.event_start).toISOString(), event_end: new Date(f.event_end).toISOString(), event_address: f.event_address || null, ticket_url: f.ticket_url || null })
@@ -58,7 +62,7 @@ function AdForm({ advertiser, existing, onDone }) {
   return (
     <form onSubmit={save} className="card space-y-4">
       <h2 className="h2">{existing ? 'Edit ad' : 'New ad'}</h2>
-      {existing && <Notice>Changing the words, picture, or link sends the ad back for a quick approval. Changing the area, days, hours, or daily max does not.</Notice>}
+      {existing && <Notice>Changing the words, picture, or link sends the ad back for a quick approval. Changing the zones, days, hours, or daily max does not.</Notice>}
       <div className="grid grid-cols-3 gap-2">
         {[['standard', 'Business'], ['event', 'Event'], ['political', 'Political']].map(([k, l]) => (
           <button type="button" key={k} onClick={() => setF({ ...f, ad_type: k })} className={f.ad_type === k ? 'btn-black' : 'btn-outline'}>{l}</button>
@@ -91,13 +95,20 @@ function AdForm({ advertiser, existing, onDone }) {
         </div>
       )}
       <div>
-        <p className="label">Where should it show? Type your address or tap the map.</p>
-        <div className="mb-2"><AddressSearch onPick={setPoint} /></div>
-        <MapPicker point={point} radius={f.miles * 1609.34} onPick={setPoint} circles={zones} />
-        <p className="muted mt-1 text-xs">Gray circles are Us In It areas. Your ad only shows where your area overlaps them.</p>
-        <div className="mt-2 grid grid-cols-4 gap-2">
-          {MILES.map((m) => <button type="button" key={m} onClick={() => setF({ ...f, miles: m })} className={f.miles === m ? 'btn-black' : 'btn-outline'}>{m} mi</button>)}
-        </div>
+        <p className="label">Where should it show? Pick one or more of your zones.</p>
+        {zones === null ? <Spinner /> : zones.length === 0 ? (
+          <Notice kind="error">You don't have any zones yet. Click Cancel, then "Add or edit zones" to draw one first.</Notice>
+        ) : (
+          <div className="space-y-2">
+            {zones.map((z) => (
+              <label key={z.id} className="flex items-center gap-3 rounded-xl border border-neutral-300 p-3 dark:border-neutral-600">
+                <input type="checkbox" className="h-5 w-5 accent-[#FF6A00]" checked={zoneIds.includes(z.id)}
+                  onChange={() => setZoneIds(zoneIds.includes(z.id) ? zoneIds.filter((x) => x !== z.id) : [...zoneIds, z.id])} />
+                <span><b>{z.name}</b> <span className="muted text-sm">· {describeRadius(z.radius_m)} from center{z.admin_off ? ' · turned off by Us In It' : !z.active ? ' · paused' : ''}</span></span>
+              </label>
+            ))}
+          </div>
+        )}
       </div>
       <div>
         <p className="label">Days</p>
@@ -158,6 +169,8 @@ export default function Advertise() {
   const [creating, setCreating] = useState(false)
   const [editingAd, setEditingAd] = useState(null)
   const [editingBiz, setEditingBiz] = useState(false)
+  const [managingZones, setManagingZones] = useState(false)
+  const [zoneCount, setZoneCount] = useState(0)
   const [biz, setBiz] = useState({ business_name: '', contact_name: '', phone: '' })
   const [err, setErr] = useState(null)
   const price = stats?.price_per_scan_cents || 50
@@ -165,7 +178,10 @@ export default function Advertise() {
   async function load() {
     const { data } = await supabase.from('advertisers').select('*').maybeSingle()
     setAdv(data ?? null)
-    if (data) { const { data: a } = await supabase.from('ads').select('*').order('created_at', { ascending: false }); setAds(a || []) }
+    if (data) {
+      const { data: a } = await supabase.from('ads').select('*').order('created_at', { ascending: false }); setAds(a || [])
+      const { count } = await supabase.from('advertising_zones').select('id', { count: 'exact', head: true }); setZoneCount(count || 0)
+    }
   }
   useEffect(() => { if (session) load() }, [session])
 
@@ -184,7 +200,7 @@ export default function Advertise() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
       <h1 className="h1">Advertise with Us In It</h1>
-      <p className="muted mt-2">Pick your neighborhood. Pay {money(price)} only for real scans by real people standing near you. No bidding, same price for everyone.</p>
+      <p className="muted mt-2">Draw the zone around your business. Pay {money(price)} only for real scans by real people standing in your zone. No bidding, same price for everyone.</p>
       <div className="mt-6">
         {session === undefined ? <Spinner /> : !session ? <AuthBox title="Business account" intro="Create an account to set up your ads." redirectPath="/advertise" role="business" />
           : adv === undefined ? <Spinner />
@@ -201,6 +217,12 @@ export default function Advertise() {
                 <button className="btn-orange flex-1">{adv ? 'Save changes' : 'Create business account'}</button>
               </div>
             </form>
+          ) : managingZones ? (
+            <div className="space-y-4">
+              <button className="btn-outline w-full" onClick={() => { setManagingZones(false); load() }}>← Back to my ads</button>
+              <ZoneManager advertiser={adv} />
+              <button className="btn-outline w-full" onClick={() => { setManagingZones(false); load() }}>← Back to my ads</button>
+            </div>
           ) : (creating || editingAd) ? <AdForm advertiser={adv} existing={editingAd} onDone={() => { setCreating(false); setEditingAd(null); load() }} /> : (
             <div className="space-y-4">
               {params.get('paid') && <Notice kind="ok">Payment received. Your balance updates in a few seconds. Refresh if you don't see it.</Notice>}
@@ -214,13 +236,17 @@ export default function Advertise() {
                 <button className="btn-black py-2" onClick={startBizEdit}>Edit</button>
               </div>
               <AddFunds stats={stats} />
-              <button className="btn-black w-full" onClick={() => setCreating(true)}>Create a new ad</button>
+              <div className="card flex flex-wrap items-center justify-between gap-2">
+                <span><b>Your zones:</b> {zoneCount}<span className="muted block text-sm">The areas where your ads show, with live scan counts.</span></span>
+                <button className="btn-black py-2" onClick={() => setManagingZones(true)}>{zoneCount ? 'Add or edit zones' : 'Draw your first zone'}</button>
+              </div>
+              <button className="btn-black w-full" onClick={() => (zoneCount ? setCreating(true) : setManagingZones(true))}>{zoneCount ? 'Create a new ad' : 'Create a new ad (draw a zone first)'}</button>
               {ads.map((a) => (
                 <div key={a.id} className="card">
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <p className="text-lg font-extrabold">{a.headline}</p>
-                      <p className="muted text-sm">{a.ad_type} · {(a.radius_m / 1609.34).toFixed(0)} mi · {a.views} scans · {a.clicks} taps · cost {money(a.views * price)}</p>
+                      <p className="muted text-sm">{a.ad_type} · {(a.zone_ids || []).length} zone{(a.zone_ids || []).length === 1 ? '' : 's'} · {a.views} scans · {a.clicks} taps · cost {money(a.views * price)}</p>
                     </div>
                     <span className={`pill ${a.status === 'active' ? 'bg-green-100 text-green-800' : a.status === 'pending' ? 'bg-orange/20 text-ink dark:text-white' : 'bg-neutral-200 text-neutral-700'}`}>{a.status === 'pending' ? 'waiting for approval' : a.status}</span>
                   </div>

@@ -93,7 +93,10 @@ export function HolderAgreement() {
 export function AdvertiserAgreement() {
   return (
     <Page title="Advertiser Agreement">
-      <li>You pay a flat price per verified scan (currently $0.50). A scan is verified when the person scanning is inside an approved Us In It area and inside the area you chose.</li>
+      <li>You pay a flat price per verified scan (currently $0.50). Your ad shows when the person scanning is inside one of the zones you drew for that ad.</li>
+      <li>You draw your own zones. They are ready right away. The smallest zone is 75 feet from the center to the edge (150 feet across). Us In It may turn off any zone, for example one around a school.</li>
+      <li><b>GPS buffer:</b> phone locations aren't exact. Scans within 50 feet of your zone's edge count toward your zone. Why 50 feet: in a city, phone GPS is often off by 30 to 50 feet because buildings bounce the signal. A smaller buffer would be smaller than that error, so real scans would be missed or counted in the wrong place. By creating a zone, you agree that scans inside this 50 foot buffer are billable scans for your zone.</li>
+      <li>You see live scan counts for each of your zones. You never see which holder was scanned or where any holder is.</li>
       <li>You prepay your ad balance by card. The card processing fee is added on top at checkout, so the full amount you choose goes into your balance.</li>
       <li>Ads pause automatically when your balance or daily maximum runs out.</li>
       <li>Every ad is reviewed before it runs. We may reject or remove any ad.</li>
