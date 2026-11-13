@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="620" height="260" viewBox="0 0 620 260">
+<rect width="620" height="260" fill="#FF6A00"/>
+<path d="M110 60 H70 V200 H110" fill="none" stroke="#111111" stroke-width="16" stroke-linecap="square"/>
+<path d="M510 60 H550 V200 H510" fill="none" stroke="#111111" stroke-width="16" stroke-linecap="square"/>
+<text x="310" y="162" text-anchor="middle" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-weight="800" font-size="118" letter-spacing="-3" fill="#111111">Us In It</text>
+</svg>

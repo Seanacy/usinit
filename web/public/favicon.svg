@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+<rect width="512" height="512" rx="96" fill="#111111"/>
+<path d="M150 96 H96 V416 H150" fill="none" stroke="#FF6A00" stroke-width="28" stroke-linecap="square"/>
+<path d="M362 96 H416 V416 H362" fill="none" stroke="#FF6A00" stroke-width="28" stroke-linecap="square"/>
+<g font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-weight="800" font-size="104" fill="#FFFFFF" text-anchor="middle" letter-spacing="-2">
+<text x="256" y="196">Us</text><text x="256" y="292">In</text><text x="256" y="388">It</text></g>
+</svg>

@@ -1,0 +1,72 @@
+import { createClient } from '@supabase/supabase-js'
+import { useEffect, useState } from 'react'
+
+export const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://tebmvynzkoxfmyyclbsj.supabase.co'
+const KEY = import.meta.env.VITE_SUPABASE_KEY || 'sb_publishable_MlgsMgr1xnfSMhgVbK_3Bw_rlHDZOeh'
+
+export const supabase = createClient(SUPABASE_URL, KEY, {
+  auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+})
+
+// Public site address used inside QR codes. Set VITE_SITE_URL=https://usinit.com once the domain is live.
+export const SITE_URL = (import.meta.env.VITE_SITE_URL || window.location.origin).replace(/\/$/, '')
+export const IS_FINAL_DOMAIN = /(^|\.)usinit\.com$/i.test(new URL(SITE_URL).hostname)
+
+export const money = (cents) =>
+  (Number(cents || 0) / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' })
+
+export function deviceId() {
+  try {
+    let id = localStorage.getItem('uii_device')
+    if (!id) {
+      id = crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2) + Date.now()
+      localStorage.setItem('uii_device', id)
+    }
+    return id
+  } catch {
+    return null
+  }
+}
+
+export function useSession() {
+  const [session, setSession] = useState(undefined)
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setSession(data.session ?? null))
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s ?? null))
+    return () => sub.subscription.unsubscribe()
+  }, [])
+  return session // undefined = loading, null = signed out
+}
+
+export function useStats() {
+  const [stats, setStats] = useState(null)
+  useEffect(() => {
+    supabase.rpc('public_stats').then(({ data }) => setStats(data))
+  }, [])
+  return stats
+}
+
+export async function startCheckout(payload) {
+  const { data: s } = await supabase.auth.getSession()
+  const headers = { 'Content-Type': 'application/json', apikey: KEY }
+  if (s?.session?.access_token) headers.Authorization = `Bearer ${s.session.access_token}`
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/create-checkout`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(payload),
+  })
+  let out = {}
+  try { out = await res.json() } catch { /* ignore */ }
+  if (!res.ok || !out.url) throw new Error(out.error || 'Payments are not turned on yet.')
+  window.location.href = out.url
+}
+
+export async function uploadPhoto(file, userId) {
+  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()
+  const path = `${userId}/${Date.now()}.${ext}`
+  const { error } = await supabase.storage.from('photos').upload(path, file, { upsert: false })
+  if (error) throw error
+  return supabase.storage.from('photos').getPublicUrl(path).data.publicUrl
+}
+
+export const CENTRAL_TZ = 'America/Chicago'
