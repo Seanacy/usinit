@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { Notice } from './Layout'
 
-export default function AuthBox({ title = 'Log in or sign up', intro, redirectPath, allowSignup = true }) {
-  const [mode, setMode] = useState(allowSignup ? 'signup' : 'login')
+export default function AuthBox({ title = 'Log in or sign up', intro, redirectPath, allowSignup = true, role, startMode }) {
+  const [mode, setMode] = useState(startMode || (allowSignup ? 'signup' : 'login'))
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
@@ -30,7 +30,7 @@ export default function AuthBox({ title = 'Log in or sign up', intro, redirectPa
     setBusy(true)
     try {
       if (mode === 'signup') {
-        const { data, error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: redirect } })
+        const { data, error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: redirect, data: role ? { role } : undefined } })
         if (error) throw error
         if (!data.session) setMsg({ kind: 'ok', text: 'Almost done! Check your email (look in Spam too) and tap the link to confirm. It will bring you right back here, logged in.' })
       } else if (mode === 'login') {

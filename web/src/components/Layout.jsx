@@ -50,6 +50,8 @@ export default function Layout() {
             <NavLink to="/holder" className={link}>Holders</NavLink>
             <NavLink to="/fund" className={link}>Community Fund</NavLink>
             {session && <button onClick={() => supabase.auth.signOut()} className="px-3 py-2 font-bold text-neutral-300 hover:text-white">Log out</button>}
+            {session === null && <NavLink to="/login" className={link}>Log in</NavLink>}
+            {session === null && <Link to="/signup" className="ml-1 rounded-lg bg-orange px-3 py-2 font-bold text-ink">Sign up</Link>}
             <ThemeToggle />
           </nav>
           <button className="rounded-lg px-3 py-2 font-bold text-white md:hidden" onClick={() => setOpen(!open)} aria-expanded={open}>
@@ -63,6 +65,8 @@ export default function Layout() {
             <NavLink to="/holder" className={link}>Holders: sign up or log in</NavLink>
             <NavLink to="/fund" className={link}>Community Fund</NavLink>
             {session && <button onClick={() => supabase.auth.signOut()} className="block px-3 py-2 font-bold text-neutral-300">Log out</button>}
+            {session === null && <NavLink to="/login" className={link}>Log in</NavLink>}
+            {session === null && <NavLink to="/signup" className={link}>Sign up</NavLink>}
             <ThemeToggle />
           </nav>
         )}

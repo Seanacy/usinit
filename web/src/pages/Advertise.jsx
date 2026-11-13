@@ -186,7 +186,7 @@ export default function Advertise() {
       <h1 className="h1">Advertise with Us In It</h1>
       <p className="muted mt-2">Pick your neighborhood. Pay {money(price)} only for real scans by real people standing near you. No bidding, same price for everyone.</p>
       <div className="mt-6">
-        {session === undefined ? <Spinner /> : !session ? <AuthBox title="Business account" intro="Create an account to set up your ads." redirectPath="/advertise" />
+        {session === undefined ? <Spinner /> : !session ? <AuthBox title="Business account" intro="Create an account to set up your ads." redirectPath="/advertise" role="business" />
           : adv === undefined ? <Spinner />
           : (adv === null || editingBiz) ? (
             <form onSubmit={createAdv} className="card space-y-3">

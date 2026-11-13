@@ -9,6 +9,7 @@ import Profile from './pages/Profile'
 import Support from './pages/Support'
 import Fund from './pages/Fund'
 import Thanks from './pages/Thanks'
+import { Login, Signup } from './pages/Start'
 const Holder = lazy(() => import('./pages/Holder'))
 const Advertise = lazy(() => import('./pages/Advertise'))
 const Admin = lazy(() => import('./pages/Admin'))
@@ -54,6 +55,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/holder" element={<Suspense fallback={<Spinner />}><Holder /></Suspense>} />
           <Route path="/advertise" element={<Suspense fallback={<Spinner />}><Advertise /></Suspense>} />
           <Route path="/admin" element={<Suspense fallback={<Spinner />}><Admin /></Suspense>} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/login" element={<Login />} />
           <Route path="/reset" element={<Reset />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/privacy" element={<Privacy />} />

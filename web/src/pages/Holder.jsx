@@ -152,7 +152,7 @@ export default function Holder() {
         <>
           <h1 className="h1 mb-2">Earn with Us In It</h1>
           <p className="muted mb-6">Carry your own QR code. Every verified scan pays you. Every holder makes their own account. You can sign up on your phone, a friend's phone, or a library or shelter computer.</p>
-          <AuthBox title="Holder account" intro="Use an email you can check. You'll use it to log in and see your earnings." redirectPath="/holder" />
+          <AuthBox title="Holder account" intro="Use an email you can check. You'll use it to log in and see your earnings." redirectPath="/holder" role="holder" />
         </>
       ) : d === undefined ? <Spinner /> : d === null ? (
         <>
