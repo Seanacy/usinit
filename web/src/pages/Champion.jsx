@@ -119,6 +119,23 @@ function AddHolder({ preset, onDone }) {
   )
 }
 
+function TeamJoin({ codeId, onDone }) {
+  const [v, setV] = useState('')
+  const [err, setErr] = useState(null)
+  async function join() {
+    setErr(null)
+    const { error } = await supabase.rpc('champion_join_team', { p_code_id: codeId, p_join: v })
+    if (error) return setErr(error.message)
+    onDone()
+  }
+  return (
+    <div className="space-y-1">
+      <div className="flex gap-2"><input className="input" placeholder="Kindness Campaign team code (optional)" value={v} onChange={(e) => setV(e.target.value.toUpperCase())} /><button className="btn-outline shrink-0" disabled={!v} onClick={join}>Join team</button></div>
+      {err && <p className="text-sm font-bold text-red-600">{err}</p>}
+    </div>
+  )
+}
+
 export default function ChampionPage() {
   const session = useSession()
   const [params] = useSearchParams()
@@ -164,6 +181,7 @@ export default function ChampionPage() {
                 <select className="input" value={c.crowd_type} onChange={async (e) => { await supabase.rpc('champion_set_crowd', { p_code_id: c.id, p_crowd: e.target.value }); load() }}>
                   {CROWDS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}
                 </select>
+                {c.team ? <p className="text-sm font-bold">💛 Team: {c.team} · <Link className="underline" to={`/kindness/${c.team_slug}`}>leaderboard</Link></p> : <TeamJoin codeId={c.id} onDone={load} />}
                 <div className="flex flex-wrap gap-2">
                   <button className="btn-black py-2" onClick={() => setPrinting(c)}>Print my Champion code</button>
                   <button className="btn-outline py-2" onClick={() => { navigator.clipboard?.writeText(brag); setCopied(c.id); setTimeout(() => setCopied(null), 1500) }}>{copied === c.id ? 'Copied!' : 'Copy "I\'ve helped…" to share'}</button>

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { deviceId, money, startCheckout, supabase, useStats } from '../lib/supabase'
 import { recordScan } from '../lib/impact'
+import { CampaignCard } from './Schools'
 import { Notice, Spinner } from '../components/Layout'
 import Support from './Support'
 import { ProfileCard } from './Profile'
@@ -32,6 +33,7 @@ function ImpactCard({ impact }) {
 
 export function ContentCard({ content, scanId }) {
   if (!content) return null
+  if (content.type === 'campaign') return <CampaignCard c={content} />
   const click = () => scanId && supabase.rpc('record_click', { p_scan: scanId })
   if (content.type === 'house' && content.kind === 'positive') {
     return (
