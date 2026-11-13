@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams, useNavigate } from 'react-router-dom'
 import { supabase, useSession } from '../lib/supabase'
 import { Notice, Spinner } from '../components/Layout'
 import AuthBox from '../components/AuthBox'
@@ -162,8 +162,11 @@ export function MyStars() {
 
 export default function Profile() {
   const { code } = useParams()
+  const nav = useNavigate()
+  const back = () => (window.history.state?.idx > 0 ? nav(-1) : nav('/'))
   return (
     <div className="mx-auto max-w-md px-4 py-8">
+      <button onClick={back} className="mb-4 font-bold underline">← Back</button>
       <ProfileCard code={code} />
       <Link to={`/s/${code}`} className="btn-orange mt-4 w-full">Scan to help</Link>
     </div>
