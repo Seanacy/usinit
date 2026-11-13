@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { money, supabase, useSession } from '../lib/supabase'
 import AuthBox from '../components/AuthBox'
-import MapPicker, { AddressSearch, FT_PER_M, describeRadius } from '../components/MapPicker'
+import MapPicker, { AddressSearch, FT_PER_M, describeRadius, geocode } from '../components/MapPicker'
 import Printables from '../components/Printables'
 import { Notice, Spinner } from '../components/Layout'
 
@@ -89,11 +89,17 @@ function Zones() {
   }
   async function add() {
     setErr(null)
-    if (!point) return setErr('Search an address or tap the map to place the zone.')
     if (!name.trim()) return setErr('Give the zone a name.')
+    let p = point
+    if (!p) {
+      const found = await geocode(name, 1).catch(() => [])
+      if (!found.length) return setErr('Type an address in "Find the spot" and click Find, or tap the map.')
+      p = { lat: Number(found[0].lat), lng: Number(found[0].lon) }
+      setPoint(p)
+    }
     if (!(radiusM >= 15)) return setErr('Make the zone at least 50 feet across.')
     if (radiusM > 50000) return setErr('That zone is too big. Keep it under 30 miles.')
-    const { error } = await supabase.from('advertising_zones').insert({ name: name.trim(), lat: point.lat, lng: point.lng, radius_m: Math.round(radiusM) })
+    const { error } = await supabase.from('advertising_zones').insert({ name: name.trim(), lat: p.lat, lng: p.lng, radius_m: Math.round(radiusM) })
     if (error) return setErr(error.message)
     setPoint(null); setName(''); load()
   }
@@ -102,10 +108,10 @@ function Zones() {
   return (
     <div className="space-y-4">
       <p className="muted">A scan only pays when the person scanning is inside an active zone. Search an address or tap the map, then pick how far the zone reaches from that spot.</p>
-      <AddressSearch onPick={picked} />
+      <AddressSearch onPick={picked} label="Step 1: Find the spot (type an address, then click Find, or tap the map)" />
       <MapPicker point={point} radius={radiusM} onPick={setPoint} circles={(rows || []).filter((z) => z.active)} height={380} />
       <div>
-        <p className="label">Zone size (distance from the center to the edge)</p>
+        <p className="label">Step 2: Zone size (distance from the center to the edge)</p>
         <div className="flex flex-wrap gap-2">
           {PRESETS.map(([n, u]) => (
             <button key={`${n}${u}`} type="button" onClick={() => { setSize(String(n)); setUnit(u) }}
@@ -118,6 +124,7 @@ function Zones() {
         </div>
         <p className="muted mt-1 text-xs">Tip: GPS on phones can be off by 30 to 100 feet, so very small zones (under 150 ft) may miss some real scans.</p>
       </div>
+      <p className="label">Step 3: Name the zone and save</p>
       <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
         <input className="input" placeholder="Zone name, like Lake St and Hennepin" value={name} onChange={(e) => setName(e.target.value)} />
         <button className="btn-orange" onClick={add}>Add zone</button>

@@ -27,8 +27,14 @@ function Follow({ point, radius }) {
   return null
 }
 
-// Address search using OpenStreetMap's free lookup, kept to Minnesota first.
-export function AddressSearch({ onPick }) {
+// Address lookup using OpenStreetMap's free service, focused on the Twin Cities.
+export async function geocode(text, limit = 5) {
+  const url = `https://nominatim.openstreetmap.org/search?format=json&limit=${limit}&countrycodes=us&viewbox=-94.0,45.4,-92.6,44.6&q=${encodeURIComponent(text)}`
+  const res = await fetch(url, { headers: { Accept: 'application/json' } })
+  return (await res.json()) || []
+}
+
+export function AddressSearch({ onPick, label = 'Find the spot' }) {
   const [q, setQ] = useState('')
   const [results, setResults] = useState(null)
   const [busy, setBusy] = useState(false)
@@ -37,10 +43,8 @@ export function AddressSearch({ onPick }) {
     if (!q.trim()) return
     setBusy(true); setResults(null)
     try {
-      const url = `https://nominatim.openstreetmap.org/search?format=json&limit=5&countrycodes=us&viewbox=-94.0,45.4,-92.6,44.6&q=${encodeURIComponent(q)}`
-      const res = await fetch(url, { headers: { Accept: 'application/json' } })
-      const data = await res.json()
-      setResults(data || [])
+      const data = await geocode(q)
+      setResults(data)
       if (data?.length === 1) pick(data[0])
     } catch {
       setResults([])
@@ -54,6 +58,7 @@ export function AddressSearch({ onPick }) {
   }
   return (
     <div>
+      <label className="label">{label}</label>
       <div className="flex gap-2">
         <input className="input" placeholder="Type an address or place, like 1477 W Lake St, Minneapolis" value={q}
           onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') search(e) }} />
@@ -73,7 +78,7 @@ export function AddressSearch({ onPick }) {
 
 export default function MapPicker({ point, radius, onPick, circles = [], height = 320 }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-neutral-300 dark:border-neutral-600" style={{ height }}>
+    <div className="relative z-0 overflow-hidden rounded-xl border border-neutral-300 dark:border-neutral-600" style={{ height }}>
       <MapContainer center={point ? [point.lat, point.lng] : MPLS} zoom={12} style={{ height: '100%', width: '100%' }} scrollWheelZoom>
         <TileLayer attribution='&copy; OpenStreetMap contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
         {onPick && <Clicker onPick={onPick} />}
