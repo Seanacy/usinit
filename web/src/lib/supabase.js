@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import { useEffect, useState } from 'react'
 
 export const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://tebmvynzkoxfmyyclbsj.supabase.co'
-const KEY = import.meta.env.VITE_SUPABASE_KEY || 'sb_publishable_MlgsMgr1xnfSMhgVbK_3Bw_rlHDZOeh'
+export const KEY = import.meta.env.VITE_SUPABASE_KEY || 'sb_publishable_MlgsMgr1xnfSMhgVbK_3Bw_rlHDZOeh'
 
 export const supabase = createClient(SUPABASE_URL, KEY, {
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },

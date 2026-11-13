@@ -366,6 +366,33 @@ function StripeCashouts() {
   )
 }
 
+function GiftCashouts({ balances }) {
+  const [rows, setRows] = useState(null)
+  const [msg, setMsg] = useState(null)
+  useEffect(() => { supabase.rpc('admin_gift_cashouts').then(({ data }) => setRows(data || [])) }, [])
+  async function taxForm() {
+    const code = prompt('Holder number (like 5473) whose tax form (W-9) you collected:')
+    const h = (balances || []).find((x) => String(x.holder_code) === String(code).trim())
+    if (!h) return setMsg('Holder not found in the list above.')
+    const { error } = await supabase.rpc('admin_set_tax_form', { p_holder: h.id, p_on: true })
+    setMsg(error ? error.message : `Tax form marked on file for ${h.first_name}. They can cash out past $2,000 this year.`)
+  }
+  if (!rows) return null
+  return (
+    <div className="card space-y-2">
+      <p className="font-bold">Holder cash-out links (Tremendous)</p>
+      <p className="muted text-sm">Holders who reach $2,000 in a year need a tax form (W-9) on file before cashing out more. Collect it, then mark it here.</p>
+      <button className="btn-outline py-2" onClick={taxForm}>Mark a holder's tax form on file</button>
+      {msg && <Notice>{msg}</Notice>}
+      {rows.length === 0 ? <p className="muted text-sm">None yet.</p> : (
+        <ul className="divide-y divide-neutral-200 text-sm dark:divide-neutral-700">
+          {rows.map((r, i) => <li key={i} className="py-2">{when(r.created_at)} · {r.name} · {money(r.amount_cents)} · <b>{r.status === 'sent' ? 'link sent' : r.status === 'failed' ? 'failed, money returned' : 'making'}</b>{r.error ? ` · ${r.error}` : ''}</li>)}
+        </ul>
+      )}
+    </div>
+  )
+}
+
 function Payouts() {
   const [o, setO] = useState(null)
   const [paid, loadPaid] = useTable('payouts')
@@ -388,7 +415,8 @@ function Payouts() {
   if (!o) return <Spinner />
   return (
     <div className="space-y-4">
-      <p className="muted">Holders, creators, and businesses with Stripe set up cash out by themselves (listed below). For anyone without a bank or debit card, pay by hand, then record it here.</p>
+      <p className="muted">Holders cash out by themselves with a cash-out link (gift card, Visa card, or Cash App/Venmo/PayPal). Creators and businesses cash out with Stripe. For anyone with no phone or internet, pay by hand, then record it here.</p>
+      <GiftCashouts balances={o.balances} />
       <StripeCashouts />
       {err && <Notice kind="error">{err}</Notice>}
       {o.balances.length === 0 && <p className="muted">Nobody has a balance yet.</p>}
