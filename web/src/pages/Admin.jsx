@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { money, supabase, useSession } from '../lib/supabase'
 import AuthBox from '../components/AuthBox'
-import MapPicker, { AddressSearch, FT_PER_M, describeRadius, geocode } from '../components/MapPicker'
+import MapPicker, { AddressSearch, FT_PER_M, describeRadius, geocode, radiusParts } from '../components/MapPicker'
 import Printables from '../components/Printables'
 import { Notice, Spinner } from '../components/Layout'
 
@@ -82,7 +82,14 @@ function Zones() {
   const [size, setSize] = useState('300')
   const [unit, setUnit] = useState('ft')
   const [err, setErr] = useState(null)
+  const [editing, setEditing] = useState(null)
   const radiusM = toMeters(Number(size) || 0, unit)
+  function startEdit(z) {
+    const r = radiusParts(z.radius_m)
+    setEditing(z); setPoint({ lat: z.lat, lng: z.lng }); setName(z.name); setSize(r.size); setUnit(r.unit); setErr(null)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+  function cancelEdit() { setEditing(null); setPoint(null); setName(''); setSize('300'); setUnit('ft'); setErr(null) }
   function picked(p) {
     setPoint(p)
     if (p.label && !name) setName(p.label.split(',').slice(0, 2).join(',').trim())
@@ -99,17 +106,21 @@ function Zones() {
     }
     if (!(radiusM >= 15)) return setErr('Make the zone at least 50 feet across.')
     if (radiusM > 50000) return setErr('That zone is too big. Keep it under 30 miles.')
-    const { error } = await supabase.from('advertising_zones').insert({ name: name.trim(), lat: p.lat, lng: p.lng, radius_m: Math.round(radiusM) })
+    const row = { name: name.trim(), lat: p.lat, lng: p.lng, radius_m: Math.round(radiusM) }
+    const { error } = editing
+      ? await supabase.from('advertising_zones').update(row).eq('id', editing.id)
+      : await supabase.from('advertising_zones').insert(row)
     if (error) return setErr(error.message)
-    setPoint(null); setName(''); load()
+    cancelEdit(); load()
   }
   async function toggle(z) { await supabase.from('advertising_zones').update({ active: !z.active }).eq('id', z.id); load() }
   async function del(z) { if (confirm(`Delete zone "${z.name}"?`)) { await supabase.from('advertising_zones').delete().eq('id', z.id); load() } }
   return (
     <div className="space-y-4">
       <p className="muted">A scan only pays when the person scanning is inside an active zone. Search an address or tap the map, then pick how far the zone reaches from that spot.</p>
+      {editing && <Notice>Editing "{editing.name}". Move the pin, change the size or name, then click Save changes.</Notice>}
       <AddressSearch onPick={picked} label="Step 1: Find the spot (type an address, then click Find, or tap the map)" />
-      <MapPicker point={point} radius={radiusM} onPick={setPoint} circles={(rows || []).filter((z) => z.active)} height={380} />
+      <MapPicker point={point} radius={radiusM} onPick={setPoint} circles={(rows || []).filter((z) => z.active && z.id !== editing?.id)} height={380} />
       <div>
         <p className="label">Step 2: Zone size (distance from the center to the edge)</p>
         <div className="flex flex-wrap gap-2">
@@ -127,13 +138,16 @@ function Zones() {
       <p className="label">Step 3: Name the zone and save</p>
       <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
         <input className="input" placeholder="Zone name, like Lake St and Hennepin" value={name} onChange={(e) => setName(e.target.value)} />
-        <button className="btn-orange" onClick={add}>Add zone</button>
+        <div className="flex gap-2">
+          {editing && <button className="btn-outline" onClick={cancelEdit}>Cancel</button>}
+          <button className="btn-orange" onClick={add}>{editing ? 'Save changes' : 'Add zone'}</button>
+        </div>
       </div>
       {err && <Notice kind="error">{err}</Notice>}
       {(rows || []).map((z) => (
         <div key={z.id} className="card flex flex-wrap items-center justify-between gap-2">
-          <button className="text-left font-bold underline-offset-2 hover:underline" onClick={() => setPoint({ lat: z.lat, lng: z.lng })}>{z.name} · {describeRadius(z.radius_m)} {z.active ? '' : '(off)'}</button>
-          <span className="flex gap-2"><button className="btn-outline py-2" onClick={() => toggle(z)}>{z.active ? 'Turn off' : 'Turn on'}</button><button className="btn-outline py-2" onClick={() => del(z)}>Delete</button></span>
+          <button className="text-left font-bold underline-offset-2 hover:underline" onClick={() => startEdit(z)}>{z.name} · {describeRadius(z.radius_m)} {z.active ? '' : '(off)'}</button>
+          <span className="flex gap-2"><button className="btn-black py-2" onClick={() => startEdit(z)}>Edit</button><button className="btn-outline py-2" onClick={() => toggle(z)}>{z.active ? 'Turn off' : 'Turn on'}</button><button className="btn-outline py-2" onClick={() => del(z)}>Delete</button></span>
         </div>
       ))}
     </div>

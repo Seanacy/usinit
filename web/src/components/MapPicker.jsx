@@ -114,7 +114,13 @@ export default function MapPicker({ point, radius, onPick, circles = [], height 
 }
 
 export const FT_PER_M = 3.28084
-export function describeRadius(m) {
+// Zones are saved in whole meters, so round feet back to a clean number for display.
+export function radiusParts(m) {
   const ft = m * FT_PER_M
-  return ft < 2640 ? `${Math.round(ft).toLocaleString()} ft` : `${(ft / 5280).toFixed(ft < 26400 ? 2 : 1)} mi`
+  if (ft < 2640) return { size: String(ft < 1000 ? Math.round(ft / 5) * 5 : Math.round(ft / 10) * 10), unit: 'ft' }
+  return { size: String(Number((ft / 5280).toFixed(2))), unit: 'mi' }
+}
+export function describeRadius(m) {
+  const { size, unit } = radiusParts(m)
+  return `${Number(size).toLocaleString()} ${unit}`
 }
