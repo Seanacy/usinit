@@ -55,7 +55,7 @@ export function Privacy() {
       <h2>What's public</h2>
       <p>A holder's first name, photo, story, general area (never an exact or live location), and daily scan count. Holder dollar earnings and payment handles are never shown publicly.</p>
       <h2>Holder location sharing</h2>
-      <p>When the shared Many Ways Up location feature is turned on, the general area of a holder's verified scans (blurred to about 500 feet, delayed, and deleted after 90 days) may be shared with TentCity, BridgeWork, and OSAAT to connect holders with work and resources. The person who scanned is never identified in that shared data. Holders can ask us to delete their shared location history.</p>
+      <p>Only for holders who tell us they are homeless or without stable housing, and whom we approve for it: the general area of their verified scans (blurred to about 500 feet, rounded to the hour, and deleted after 90 days) is shared with TentCity, BridgeWork, and OSAAT to connect them with outreach, work, and resources. No one else's scans are shared. The person who scanned is never identified in that shared data. Holders can ask us to delete their shared location history.</p>
       <h2>How long we keep it</h2>
       <p>Scan and payment records are kept as long as needed for accounting, fraud prevention, and the law. You can ask us to delete your account.</p>
       <h2>Who we share with</h2>
@@ -86,7 +86,7 @@ export function HolderAgreement() {
       <li>Fake or forced scans are not allowed and can get your account turned off.</li>
       <h2>Your information</h2>
       <li>Your first name, photo, story, and general area can be public. Your earnings and payment details are private.</li>
-      <li>When people scan your code, the general area of the scan is logged to you. When the shared Many Ways Up feature is on, it is shared with TentCity, BridgeWork, and OSAAT to connect you with work and resources. The person who scanned stays anonymous. You can ask us to delete your past shared locations.</li>
+      <li>When people scan your code, the general area of the scan is logged to you. If you tell us you're homeless or without stable housing (and we approve it), the general area of your scans, blurred to about 500 feet, is shared with TentCity, BridgeWork, and OSAAT so outreach and work can find you. If you didn't say that, nothing is shared. The person who scanned stays anonymous. You can ask us to delete your past shared locations.</li>
       <li>Partner nonprofits that fund your pay can see your holder ID, first name, and the amounts they paid you. Nothing else.</li>
     </Page>
   )

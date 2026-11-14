@@ -81,6 +81,8 @@ function Holders() {
   if (!rows) return <Spinner />
   async function approve(h) { const { data, error } = await supabase.rpc('approve_holder', { p_holder: h.id }); setMsg(error ? { k: 'error', t: error.message } : { k: 'ok', t: `${h.first_name} approved as #${data}` }); load() }
   async function setStatus(h, status) { await supabase.from('holders').update({ status }).eq('id', h.id); load() }
+  async function setPool(h, on) { const { error } = await supabase.from('holders').update({ in_location_pool: on }).eq('id', h.id); setMsg(error ? { k: 'error', t: error.message } : { k: 'ok', t: `${h.first_name} ${on ? 'added to' : 'removed from'} the location pool.` }); load() }
+  async function forget(h) { if (!window.confirm(`Delete all of ${h.first_name}'s shared location pings? Us In It keeps its own scan records.`)) return; const { error } = await supabase.rpc('admin_forget_shared_pings', { p_holder: h.id }); setMsg(error ? { k: 'error', t: error.message } : { k: 'ok', t: `${h.first_name}'s shared pings were deleted.` }) }
   return (
     <div className="space-y-3">
       {msg && <Notice kind={msg.k}>{msg.t}</Notice>}
@@ -92,11 +94,17 @@ function Holders() {
             <p className="font-extrabold">{h.first_name} {h.holder_code ? `#${h.holder_code}` : ''} <span className="pill bg-neutral-200 text-neutral-800">{h.status}</span></p>
             <p className="muted truncate text-sm">{h.general_area} · joined {when(h.created_at)}</p>
             {h.story && <p className="mt-1 line-clamp-2 text-sm">{h.story}</p>}
+            <p className="mt-1 text-sm">
+              {h.housing_unstable ? <span className="pill bg-orange/20 text-neutral-900 dark:text-white">Says homeless / no stable housing</span> : <span className="muted">Didn't say homeless</span>}
+              {' · '}Location pool: <b>{h.in_location_pool ? 'On' : 'Off'}</b>
+            </p>
           </div>
           <div className="flex flex-wrap gap-2">
             {h.status !== 'active' && <button className="btn-orange py-2" onClick={() => approve(h)}>Approve</button>}
             {h.status === 'active' && <button className="btn-outline py-2" onClick={() => setPrinting(h)}>Print</button>}
             <button className="btn-black py-2" onClick={() => setEditing(h)}>Edit</button>
+            <button className="btn-outline py-2" onClick={() => setPool(h, !h.in_location_pool)}>{h.in_location_pool ? 'Pool off' : 'Pool on'}</button>
+            {h.in_location_pool !== undefined && <button className="btn-outline py-2" onClick={() => forget(h)}>Delete shared pings</button>}
             {h.status !== 'deactivated' ? <button className="btn-outline py-2" onClick={() => setStatus(h, 'deactivated')}>Turn off</button>
               : h.holder_code && <button className="btn-outline py-2" onClick={() => setStatus(h, 'active')}>Turn back on</button>}
           </div>

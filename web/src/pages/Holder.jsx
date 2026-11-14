@@ -22,7 +22,7 @@ function Question({ x, value, onChange }) {
 function ProfileForm({ session, existing, onSaved }) {
   const [f, setF] = useState({
     first_name: existing?.first_name || '', story: existing?.story || '', general_area: existing?.general_area || '',
-    photo_url: existing?.photo_url || '', listed_in_directory: existing?.listed_in_directory || false, allow_champions: existing?.allow_champions || false, digital_only: existing?.digital_only || false,
+    photo_url: existing?.photo_url || '', listed_in_directory: existing?.listed_in_directory || false, allow_champions: existing?.allow_champions || false, digital_only: existing?.digital_only || false, housing_unstable: existing?.housing_unstable || false,
     answers: existing?.answers || {},
   })
   const [more, setMore] = useState(QUESTIONS.slice(FIRST).some((x) => existing?.answers?.[x.key]))
@@ -92,6 +92,7 @@ function ProfileForm({ session, existing, onSaved }) {
         <input id="area" className="input" maxLength={80} value={f.general_area} onChange={set('general_area')} placeholder="Uptown, Downtown, Lake Street…" />
       </div>
       <label className="flex items-start gap-3"><input type="checkbox" className="mt-1 h-5 w-5 accent-[#FF6A00]" checked={f.listed_in_directory} onChange={set('listed_in_directory')} /><span>List me in the public directory</span></label>
+      <label className="flex items-start gap-3"><input type="checkbox" className="mt-1 h-5 w-5 accent-[#FF6A00]" checked={f.housing_unstable} onChange={set('housing_unstable')} /><span>I'm homeless or without stable housing right now (outside, in a car, a shelter, or couch-surfing).<span className="muted block text-sm">If you check this and we approve it, the general area where your code gets scanned (about a city block, never the exact spot) is shared with TentCity, BridgeWork, and OSAAT so outreach, resources, and quick work can find you. The person scanning stays anonymous. You can ask us to delete it anytime.</span></span></label>
       <label className="flex items-start gap-3"><input type="checkbox" className="mt-1 h-5 w-5 accent-[#FF6A00]" checked={f.digital_only} onChange={set('digital_only')} /><span>I'm not on the street. I'll share my code online only (couch-surfing, in a shelter, or another hard time).</span></label>
       <label className="flex items-start gap-3"><input type="checkbox" className="mt-1 h-5 w-5 accent-[#FF6A00]" checked={f.allow_champions} onChange={set('allow_champions')} /><span>Allow Champions and creators to share my code (at school, at work, online)</span></label>
       {!existing && (
