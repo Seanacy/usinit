@@ -35,13 +35,14 @@ export default function GiftCashout() {
     <div className="card space-y-3">
       <h2 className="h2">Cash out</h2>
       <p className="text-2xl font-extrabold">{money(d.balance_cents)} <span className="muted text-sm font-normal">ready to cash out</span></p>
-      <p className="muted text-sm">No ID, bank account, or phone needed. You get a cash-out link. Open it on any phone or computer (a library computer works) and pick how you want your money: a gift card (Walmart, Target, groceries, gas, and more), a Visa card, or Cash App, Venmo, or PayPal (those take a small fee).</p>
+      <p className="muted text-sm">No ID, bank account, or phone needed. You get a cash-out link. Open it on any phone or computer (a library computer works) and pick how you want your money: a gift card (Walmart, Target, groceries, gas, and more), a Visa card, or money sent to Cash App, Venmo, PayPal, or a bank (those take a small fee). 💚 Good for Cash App: pick Instant Debit Transfer (Cash App Card) or Bank Transfer.</p>
       <button className="btn-orange w-full py-4 text-lg" disabled={busy || !can} onClick={cashOut}>
         {busy ? 'Making your link…' : can ? `Cash out ${money(d.balance_cents)}` : `Cash out (from ${money(d.min_cents)})`}
       </button>
       {fresh && (
         <div className="space-y-2 rounded-xl bg-orange/15 p-3">
           <p className="font-extrabold">Your {money(fresh.amount_cents)} cash-out link is ready.</p>
+          <p className="rounded-lg bg-white p-2 text-sm dark:bg-neutral-900"><b>💚 Good for Cash App:</b> pick <b>Instant Debit Transfer</b> and enter your Cash App Card number, or pick <b>Bank Transfer</b> and use the account and routing numbers in the Money tab of Cash App.</p>
           <a className="btn-black w-full" href={fresh.link} target="_blank" rel="noreferrer">Open my cash-out link</a>
           <p className="text-sm">It stays saved below, so you can come back to it anytime. Keep it private. It works like cash.</p>
         </div>

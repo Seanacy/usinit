@@ -11,6 +11,7 @@ const cors = {
 const json = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { ...cors, "Content-Type": "application/json" } });
 const BASE = (Deno.env.get("TREMENDOUS_BASE") || "https://testflight.tremendous.com") + "/api/v2";
 // Product types holders can pick from (gift cards, prepaid Visa/Mastercard, and money apps).
+const CASHAPP_NOTE = "Your Us In It earnings. Good for Cash App: pick Instant Debit Transfer and enter your Cash App Card number, or pick Bank Transfer and use the account and routing numbers in the Money tab of Cash App. Gift cards and Visa cards have no fee.";
 const KEEP = new Set(["merchant_card", "visa_card", "mastercard", "cash_app", "venmo", "paypal", "ach", "instant_debit_transfer"]);
 
 Deno.serve(async (req) => {
@@ -57,7 +58,7 @@ Deno.serve(async (req) => {
         payment: { funding_source_id: "BALANCE" },
         reward: {
           value: { denomination: c.amount_cents / 100, currency_code: "USD" },
-          delivery: { method: "LINK" },
+          delivery: { method: "LINK", meta: { message: CASHAPP_NOTE } },
           recipient: { name: `${c.first_name} (Us In It #${c.holder_code})` },
           products: ids,
         },
