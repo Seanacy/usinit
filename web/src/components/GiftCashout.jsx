@@ -41,6 +41,9 @@ export default function GiftCashout() {
       <h2 className="h2">Cash out</h2>
       <p className="text-2xl font-extrabold">{money(d.balance_cents)} <span className="muted text-sm font-normal">ready to cash out</span></p>
       <p className="muted text-sm">No ID, bank account, or phone needed. You get a cash-out link. Open it on any phone or computer (a library computer works) and pick how you want your money: a gift card (Walmart, Target, groceries, gas, and more), a Visa card, or money sent to Cash App, Venmo, PayPal, or a bank (those take a small fee). 💚 Good for Cash App: pick Instant Debit Transfer (Cash App Card, $10 or more) or Bank Transfer.</p>
+      <p className="rounded-lg border-2 border-orange p-2 text-sm"><b>⚠️ $10 minimum for Instant Debit Transfer (Cash App Card).</b> {d.balance_cents < 1000
+        ? <>You have {money(d.balance_cents)}. If you cash out now, your link will <b>not</b> have Instant Debit Transfer. You can still use Bank Transfer, a gift card, or a Visa card. Or wait until you have $10.</>
+        : <>You have {money(d.balance_cents)}, so your link will have it.</>}</p>
       <button className="btn-orange w-full py-4 text-lg" disabled={busy || !can} onClick={cashOut}>
         {busy ? 'Making your link…' : can ? `Cash out ${money(d.balance_cents)}` : `Cash out (from ${money(d.min_cents)})`}
       </button>
