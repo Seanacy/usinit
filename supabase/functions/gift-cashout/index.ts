@@ -58,7 +58,7 @@ Deno.serve(async (req) => {
         payment: { funding_source_id: "BALANCE" },
         reward: {
           value: { denomination: c.amount_cents / 100, currency_code: "USD" },
-          delivery: { method: "LINK", meta: { message: CASHAPP_NOTE } },
+          delivery: { method: "LINK", meta: { message: CASHAPP_NOTE, from_name: "Us In It", sender_name: "Us In It" } },
           recipient: { name: `${c.first_name} (Us In It #${c.holder_code})` },
           products: ids,
         },
