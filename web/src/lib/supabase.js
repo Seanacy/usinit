@@ -8,7 +8,7 @@ export const supabase = createClient(SUPABASE_URL, KEY, {
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
 })
 
-// Public site address used inside QR codes. Set VITE_SITE_URL=https://usinit.com once the domain is live.
+// Public site address used inside QR codes. Set in web/.env.production (https://usinit.com).
 export const SITE_URL = (import.meta.env.VITE_SITE_URL || window.location.origin).replace(/\/$/, '')
 export const IS_FINAL_DOMAIN = /(^|\.)usinit\.com$/i.test(new URL(SITE_URL).hostname)
 
