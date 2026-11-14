@@ -1,4 +1,9 @@
 import { useEffect, useState } from 'react'
+
+function CopyLink({ link, className = '' }) {
+  const [done, setDone] = useState(false)
+  return <button type="button" className={className} onClick={() => { navigator.clipboard?.writeText(link); setDone(true); setTimeout(() => setDone(false), 1500) }}>{done ? 'Copied!' : 'Copy link'}</button>
+}
 import { KEY, SUPABASE_URL, money, supabase } from '../lib/supabase'
 import { Notice, Spinner } from './Layout'
 
@@ -44,7 +49,8 @@ export default function GiftCashout() {
           <p className="font-extrabold">Your {money(fresh.amount_cents)} cash-out link is ready.</p>
           <p className="rounded-lg bg-white p-2 text-sm dark:bg-neutral-900"><b>💚 Good for Cash App:</b> pick <b>Instant Debit Transfer</b> and enter your Cash App Card number, or pick <b>Bank Transfer</b> and use the account and routing numbers in the Money tab of Cash App.</p>
           <a className="btn-black w-full" href={fresh.link} target="_blank" rel="noreferrer">Open my cash-out link</a>
-          <p className="text-sm">It stays saved below, so you can come back to it anytime. Keep it private. It works like cash.</p>
+          <CopyLink link={fresh.link} className="btn-outline w-full" />
+          <p className="text-sm">It stays saved below, so you can come back to it anytime. <b>Only share this link with someone you trust. Whoever opens it gets the money.</b></p>
         </div>
       )}
       {err && <Notice kind="error">{err}</Notice>}
@@ -55,7 +61,7 @@ export default function GiftCashout() {
             {d.recent.map((r) => (
               <li key={r.id} className="flex items-center justify-between gap-2 py-2">
                 <span>{new Date(r.created_at).toLocaleDateString()} · {money(r.amount_cents)}</span>
-                {r.status === 'sent' && r.link ? <a className="font-bold underline" href={r.link} target="_blank" rel="noreferrer">Open link</a>
+                {r.status === 'sent' && r.link ? <span className="flex gap-3"><CopyLink link={r.link} className="font-bold underline" /><a className="font-bold underline" href={r.link} target="_blank" rel="noreferrer">Open link</a></span>
                   : <span className="muted">{r.status === 'failed' ? 'didn\'t go through, money returned' : 'making…'}</span>}
               </li>
             ))}
