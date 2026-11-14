@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { money, startCheckout, useStats } from '../lib/supabase'
+import { SITE_URL, money, startCheckout, useStats } from '../lib/supabase'
+import ShareQR from '../components/ShareQR'
 import { GoalTracker } from './Home'
 import { Notice } from '../components/Layout'
 
@@ -72,6 +73,11 @@ export default function Support({ embedded = false, onBack }) {
       <button className="mt-5 w-full text-center font-bold underline" onClick={() => setMode(mode === 'weekly' ? 'once' : 'weekly')}>
         {mode === 'weekly' ? 'Prefer to give once?' : 'Back to weekly support'}
       </button>
+
+      <div className="mt-6">
+        <ShareQR url={`${SITE_URL}/support${ref ? `?ref=${encodeURIComponent(ref)}` : ''}`} title="Support Us In It" label="Show QR code for this page" />
+        <p className="muted mt-1 text-center text-sm">Pull it up on your phone so people can scan it, or share it.</p>
+      </div>
 
       <div className="muted mt-6 space-y-2 text-sm">
         <p>Every scan costs {money(price)}: {money(share)} goes to the holder, {money(price - share)} keeps Us In It running.</p>
