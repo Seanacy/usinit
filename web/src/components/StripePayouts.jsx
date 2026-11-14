@@ -29,7 +29,7 @@ export default function StripePayouts({ kind, title = 'Cash out', handNote }) {
       {st && <p className="text-2xl font-extrabold">{money(st.balance_cents)} <span className="muted text-sm font-normal">ready to cash out</span></p>}
       {st && !st.has_account && (
         <>
-          <p className="muted text-sm">Get paid straight to your bank account or debit card (a Cash App or other prepaid debit card works). Stripe charges a small payout fee (up to $2 + 0.25% + 25¢ per month), taken from your cash-out and shown before you tap. Stripe, our payment company, asks for your name, birthday, last 4 of your SSN, and address one time. Us In It never sees your card or bank numbers.</p>
+          <p className="muted text-sm">Get paid straight to your bank account or debit card (a Cash App or other prepaid debit card works). Stripe charges us to pay you, and that fee comes out of your cash-out: $2.00 on your first cash-out each month, plus 0.25% + 25¢ every cash-out. You always see the exact amount before you tap. Stripe, our payment company, asks for your name, birthday, last 4 of your SSN, and address one time. Us In It never sees your card or bank numbers.</p>
           <button className="btn-orange w-full" disabled={busy} onClick={() => go('onboard')}>{busy ? 'Opening Stripe…' : 'Set up cash-outs with Stripe'}</button>
         </>
       )}

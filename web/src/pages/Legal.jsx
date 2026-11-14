@@ -30,6 +30,14 @@ export function Terms() {
       <li>Weekly supporter plans charge the amount you chose once a week and end on their own after the length you chose. You can cancel anytime using the link in your receipt email.</li>
       <li>Payments are processed by Stripe. Us In It never stores full card or bank numbers.</li>
       <li>Payments are generally non-refundable once a scan has been paid out. Contact us if something went wrong.</li>
+      <h2>Cashing out with Stripe</h2>
+      <li>Holders, creators, businesses, and nonprofits who cash out to a bank account or debit card are paid through Stripe, our payment company.</li>
+      <li>Stripe charges Us In It for every person it pays out to. We pass those fees on to you, taken out of your cash-out. We never add our own markup to them.</li>
+      <li><b>Monthly fee:</b> $2.00, taken from your first cash-out each calendar month. If you don't cash out that month, you pay nothing.</li>
+      <li><b>Per cash-out fee:</b> 0.25% of the amount plus $0.25, every time you cash out.</li>
+      <li>Example: your first cash-out of the month is $20.00. Fees are $2.00 + $0.05 + $0.25 = $2.30, so you get $17.70. A second $20.00 cash-out that month costs only $0.30, so you get $19.70.</li>
+      <li>The exact fee and the amount you'll get are always shown before you tap Cash out. If Stripe changes what it charges us, we will update these numbers here and on the cash-out screen before the new fees apply.</li>
+      <li>Some payout methods, like Instant Debit (Cash App Card), need at least $10.00.</li>
       <h2>Holders</h2>
       <p>Holders must create their own account and accept the <a className="underline" href="/holder-agreement">Holder Agreement</a>. Holders are independent people using the platform, not employees of Us In It.</p>
       <h2>Champions</h2>
@@ -77,7 +85,7 @@ export function HolderAgreement() {
       <li>Right now each verified scan pays you the holder share shown on the site (currently $0.40). Scans can be paid by local advertisers or by the Community Fund.</li>
       <li>Tips go to you after card fees and the Us In It fee.</li>
       <li>There may be a daily limit on scan earnings. Tips don't count toward it.</li>
-      <li>Your earnings show in your account. For now, Us In It or a partner organization pays you out by hand (for example Cash App or cash). Instant cash-out to a debit card is coming. Any fees will always be shown before you confirm.</li>
+      <li>Your earnings show in your account. For now, Us In It or a partner organization pays you out by hand (for example Cash App or cash). When cash-out to a bank account or debit card is turned on for you, Stripe’s payout fees come out of your cash-out ($2.00 on your first cash-out each month, plus 0.25% + $0.25 each time). See "Cashing out with Stripe" in the <a className="underline" href="/terms">Terms</a>. Any fees will always be shown before you confirm.</li>
       <li>You are not an employee of Us In It. You choose when and where you hold your code.</li>
       <h2>Standing and walking rules</h2>
       <li>You can stand or walk wherever it's legal. Stay on sidewalks.</li>
