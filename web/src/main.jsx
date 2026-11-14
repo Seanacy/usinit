@@ -13,6 +13,7 @@ import ChampionPage, { Directory } from './pages/Champion'
 import { KindnessPage, SchoolPage } from './pages/Schools'
 import CreatorPage, { DigitalScan } from './pages/Digital'
 import Support from './pages/Support'
+import SupportQR from './pages/SupportQR'
 import Fund from './pages/Fund'
 import Thanks from './pages/Thanks'
 import { Login, Signup } from './pages/Start'
@@ -66,6 +67,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/creator" element={<CreatorPage />} />
           <Route path="/kindness/:slug" element={<KindnessPage />} />
           <Route path="/support" element={<Support />} />
+          <Route path="/qr" element={<SupportQR />} />
           <Route path="/fund" element={<Fund />} />
           <Route path="/thanks" element={<Thanks />} />
           <Route path="/holder" element={<Suspense fallback={<Spinner />}><Holder /></Suspense>} />

@@ -75,8 +75,8 @@ export default function Support({ embedded = false, onBack }) {
       </button>
 
       <div className="mt-6">
-        <ShareQR url={`${SITE_URL}/support${ref ? `?ref=${encodeURIComponent(ref)}` : ''}`} title="Support Us In It" label="Show QR code for this page" />
-        <p className="muted mt-1 text-center text-sm">Pull it up on your phone so people can scan it, or share it.</p>
+        <ShareQR inline url={`${SITE_URL}/support${ref ? `?ref=${encodeURIComponent(ref)}` : ''}`} title="Support Us In It" label="Full screen" />
+        <p className="muted mt-1 text-center text-sm">Show it so people can scan it, or share it with anyone.</p>
       </div>
 
       <div className="muted mt-6 space-y-2 text-sm">
