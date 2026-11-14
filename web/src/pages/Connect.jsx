@@ -20,7 +20,6 @@ export default function Connect() {
   const [params] = useSearchParams()
   const id = params.get('authorization_id')
   const session = useSession()
-  const [app, setApp] = useState(null)
   const [err, setErr] = useState(null)
 
   useEffect(() => {
@@ -31,7 +30,6 @@ export default function Connect() {
       if (gone) return
       if (error) return setErr('This sign-in link expired. Go back to the site you came from and tap "Sign in with your Us In It account" again.')
       if (data?.redirect_url) return window.location.assign(data.redirect_url)
-      setApp(data?.client?.name || 'the site')
       // Only our own sites are registered, so approve right away. No extra "Allow" screen.
       const { error: e2 } = await supabase.auth.oauth.approveAuthorization(id)
       if (e2 && !gone) setErr('Something went wrong. Go back and try again.')
@@ -46,7 +44,7 @@ export default function Connect() {
     return (
       <div className="mx-auto max-w-md px-4 py-16 text-center">
         <Spinner />
-        <p className="mt-4 font-bold">Signing you in{app ? ` to ${app}` : ''}…</p>
+        <p className="mt-4 font-bold">Signing you in… taking you back now.</p>
       </div>
     )
   }
