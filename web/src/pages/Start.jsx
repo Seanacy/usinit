@@ -27,6 +27,7 @@ export function Signup() {
     return (
       <div className="px-4 py-8">
         <AuthBox {...role.box} redirectPath={role.path} role={role.key} allowSignup={false} startMode="signup" />
+        <p className="muted mt-3 text-center text-sm">Already have a TentCity, BridgeWork, or OSAAT account? Log in with the same email and password.</p>
         <div className="mt-4 text-center">
           <button className="text-sm font-bold underline" onClick={() => setRole(null)}>Go back and pick a different choice</button>
         </div>
@@ -79,6 +80,7 @@ export function Login() {
     <div className="px-4 py-8">
       <AuthBox title="Log in" allowSignup={false} redirectPath="/login" />
       <p className="muted mt-4 text-center text-sm">New here? <Link to="/signup" className="font-bold underline">Sign up</Link></p>
+      <p className="muted mt-2 text-center text-sm">Your Us In It account also works on TentCity, BridgeWork, and OSAAT. Same email, same password.</p>
     </div>
   )
 }

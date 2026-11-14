@@ -16,6 +16,7 @@ import Support from './pages/Support'
 import Fund from './pages/Fund'
 import Thanks from './pages/Thanks'
 import { Login, Signup } from './pages/Start'
+import Connect from './pages/Connect'
 const Holder = lazy(() => import('./pages/Holder'))
 const Advertise = lazy(() => import('./pages/Advertise'))
 const Admin = lazy(() => import('./pages/Admin'))
@@ -72,6 +73,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/admin" element={<Suspense fallback={<Spinner />}><Admin /></Suspense>} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/oauth/consent" element={<Connect />} />
           <Route path="/account" element={<Login />} />
           <Route path="/me" element={<MyStars />} />
           <Route path="/reset" element={<Reset />} />
