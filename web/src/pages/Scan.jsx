@@ -13,7 +13,7 @@ function getLocation() {
   return new Promise((resolve) => {
     if (!navigator.geolocation) return resolve(null)
     navigator.geolocation.getCurrentPosition(
-      (p) => resolve({ lat: p.coords.latitude, lng: p.coords.longitude }),
+      (p) => resolve({ lat: p.coords.latitude, lng: p.coords.longitude, acc: p.coords.accuracy }),
       () => resolve(null),
       { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 },
     )
@@ -147,7 +147,7 @@ export default function Scan() {
     started.current = true
     setStep('loading')
     const loc = await getLocation()
-    const { data, error: e } = await supabase.rpc('process_scan', { p_code: code, p_lat: loc?.lat ?? null, p_lng: loc?.lng ?? null, p_device: deviceId(), p_champ: champ || null })
+    const { data, error: e } = await supabase.rpc('process_scan', { p_code: code, p_lat: loc?.lat ?? null, p_lng: loc?.lng ?? null, p_device: deviceId(), p_champ: champ || null, p_acc: loc?.acc ?? null })
     if (e || !data) { setError('Something went wrong. Please try again.'); started.current = false; setStep('intro'); return }
     if (data.error === 'not_found') { setStep('notfound'); return }
     setRes(data)
