@@ -126,7 +126,7 @@ export default function CreatorPage() {
               <StripePayouts kind="creator" />
               <div className="card space-y-3">
                 <h2 className="h2">Your own code</h2>
-                <p className="muted text-sm">Put this on your screen. Viewers who scan it see a short business message, and you earn $0.20 per scan (one per phone per day). The page tells viewers: "This code supports {d.name}, the creator."</p>
+                <p className="muted text-sm">Put this on your screen. Viewers who scan it see a short business message, and you earn $0.04 per scan (one per phone per day, up to 2,000 paid scans a day). The page tells viewers: "This code supports {d.name}, the creator."</p>
                 <p className="font-bold">{d.own.scans_today} scans today · {d.own.scans_total} total · you earned {money(d.own.earned_cents)}</p>
                 <ScreenQR code={d.own_code} label={d.name} />
               </div>
@@ -165,7 +165,7 @@ export function AdminCreators() {
   if (!d) return <Spinner />
   return (
     <div className="space-y-6">
-      <p className="muted">Digital scans: online viewers scan creator codes or holders' online codes. Paid only by businesses that turned on digital scans ($0.25 per scan; holder $0.20, creator $0.02 cut or $0.20 for their own code). One paid scan per phone per code per day; max 200 paid scans per code per day. Never the Community Fund.</p>
+      <p className="muted">Digital scans: online viewers scan creator codes or holders' online codes. Paid only by businesses that turned on digital scans. Holder online codes and collabs: $0.25 per scan (holder $0.20, creator $0.02 cut). Creator's own code: $0.05 per scan (creator $0.04, Us In It $0.01). One paid scan per phone per code per day; max 200 paid scans per holder or collab code a day, 2,000 per creator code. Never the Community Fund.</p>
       <div className="space-y-3">
         <h2 className="h2">Creators</h2>
         {d.creators.length === 0 && <p className="muted">None yet.</p>}

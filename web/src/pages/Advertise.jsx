@@ -138,12 +138,12 @@ function AdForm({ advertiser, existing, onDone }) {
       </div>
       <div className="space-y-2">
         <label className="flex items-start gap-3"><input type="checkbox" className="mt-1 h-5 w-5 accent-[#FF6A00]" checked={f.digital_on} onChange={(e) => setF({ ...f, digital_on: e.target.checked })} />
-          <span><b>Also show online (digital scans)</b><span className="muted block text-sm">People watching videos or livestreams scan a code and see your ad, anywhere. $0.25 per scan.</span></span></label>
+          <span><b>Also show online (digital scans)</b><span className="muted block text-sm">People watching videos or livestreams scan a code and see your ad, anywhere. $0.25 per scan from holders' online codes, $0.05 per scan from content creators' codes.</span></span></label>
         {f.digital_on && (
           <div className="space-y-2 rounded-xl bg-neutral-100 p-3 dark:bg-neutral-800">
             <p className="text-sm font-bold">Who should your online scans help?</p>
             <div className="flex flex-wrap gap-2">
-              {[['holder', 'People in hard times (holders)'], ['creator', 'Content creators']].map(([k, l]) => (
+              {[['holder', 'People in hard times (holders) · $0.25'], ['creator', 'Content creators · $0.05']].map(([k, l]) => (
                 <button type="button" key={k} onClick={() => setF({ ...f, digital_kinds: f.digital_kinds.includes(k) ? f.digital_kinds.filter((x) => x !== k) : [...f.digital_kinds, k] })}
                   className={`rounded-lg px-3 py-2 text-sm font-bold ${f.digital_kinds.includes(k) ? 'bg-orange text-ink' : 'border border-neutral-300 dark:border-neutral-600'}`}>{l}</button>
               ))}
