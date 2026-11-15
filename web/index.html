@@ -1,6 +1,10 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <script>
+      // One address only: send usinit.vercel.app visitors to usinit.com (keeps badges, logins and QR links on one site)
+      if (location.hostname === 'usinit.vercel.app') location.replace('https://www.usinit.com' + location.pathname + location.search + location.hash)
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#111111" />
