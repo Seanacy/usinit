@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { money, supabase, uploadPhoto, useSession } from '../lib/supabase'
 import { Notice, Spinner } from './Layout'
+import AdminGiftRequests from './AdminGiftRequests'
 
 const EMPTY = { label: '', wishes: '', goal: '', sort: 0, partner: '' }
 
@@ -65,8 +66,10 @@ export default function AdminGiftTree() {
       </div>
       <button className={pub.on ? 'btn-outline w-full' : 'btn-orange w-full'} onClick={toggleOn}>{pub.on ? 'Gift Tree is ON (tap to close it)' : 'Gift Tree is OFF (tap to open it)'}</button>
 
+      <AdminGiftRequests onChange={load} />
+
       <form onSubmit={save} className="card space-y-3">
-        <h2 className="h2">{editing ? 'Edit tag' : 'Add a tag'}</h2>
+        <h2 className="h2">{editing ? 'Edit tag' : 'Add a tag by hand'}</h2>
         <p className="muted text-sm">Never a child's name or photo. Use age and boy/girl, like the paper tags.</p>
         <label className="block"><span className="label">Label</span><input className="input" value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} placeholder="Boy, 7" maxLength={60} /></label>
         <label className="block"><span className="label">Wish list (one item per line, with sizes)</span><textarea className="input min-h-28" value={form.wishes} onChange={(e) => setForm({ ...form, wishes: e.target.value })} placeholder={'Winter coat (size 8)\nLego set\nSneakers (size 2)'} /></label>

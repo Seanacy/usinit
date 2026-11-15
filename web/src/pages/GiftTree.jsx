@@ -17,7 +17,19 @@ function TagCard({ t, onGive }) {
         <p className="text-xl font-extrabold">🎁 {t.label}</p>
         {done && <span className="pill bg-green-100 text-green-800">{t.status === 'delivered' ? 'Delivered' : 'Shopped'}</span>}
       </div>
-      <ul className="list-disc pl-5">{t.wishes.split('\n').filter(Boolean).map((w, i) => <li key={i}>{w}</li>)}</ul>
+      {t.items?.length > 0 ? (
+        <div className="space-y-2">
+          {t.store && <p className="muted text-sm">Shopping at {t.store === 'target' ? 'Target' : 'Walmart'}</p>}
+          {t.items.map((it, i) => (
+            <div key={i} className="flex items-center gap-3">
+              <img src={it.image} alt={it.name} className="h-16 w-16 flex-none rounded-lg object-cover" loading="lazy" />
+              <p className="text-sm"><b>{it.name}</b>{it.note ? ` (${it.note})` : ''}<br />{money(it.price_cents)}</p>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <ul className="list-disc pl-5">{t.wishes.split('\n').filter(Boolean).map((w, i) => <li key={i}>{w}</li>)}</ul>
+      )}
       {done ? (
         <div className="space-y-2">
           <p className="text-sm font-bold">Spent {money(t.spent_cents)} on {new Date(t.shopped_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
@@ -97,7 +109,7 @@ export default function GiftTree() {
 
       <div className="space-y-3">
         <h2 className="h2">Wish lists</h2>
-        <p className="muted text-sm">Each tag has its own code, so a whole team (a church, a class, friends) can work on one child or one big goal. Money for the whole tree fills tags in order. Kids are picked with a partner and their parents' OK. We never share names or photos.</p>
+        <p className="muted text-sm">Each tag has its own code, so a whole team (a church, a class, friends) can work on one child or one big goal. Money for the whole tree fills tags in order. Kids are picked with a partner (like a church) and their parents' OK. Parents sign up with a private link from us. We never share names or photos.</p>
         {d.tags.length === 0 && <p className="muted">Tags are coming soon.</p>}
         {open.map((t) => <TagCard key={t.id} t={t} onGive={d.on ? pickGive : null} />)}
         {done.map((t) => <TagCard key={t.id} t={t} />)}

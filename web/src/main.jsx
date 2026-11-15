@@ -19,6 +19,7 @@ import News, { NewsPost } from './pages/News'
 import Spotlight from './pages/Spotlight'
 import ImInHome, { ImInBadge } from './pages/ImIn'
 import GiftTree, { GiftTreeScan } from './pages/GiftTree'
+import GiftSignup from './pages/GiftSignup'
 import About from './pages/About'
 import Fund from './pages/Fund'
 import Thanks from './pages/Thanks'
@@ -80,6 +81,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/spotlight" element={<Spotlight />} />
           <Route path="/about" element={<About />} />
           <Route path="/gifttree" element={<GiftTree />} />
+          <Route path="/gifttree/signup/:code" element={<GiftSignup />} />
           <Route path="/gt" element={<GiftTreeScan />} />
           <Route path="/gt/:code" element={<GiftTreeScan />} />
           <Route path="/in" element={<ImInHome />} />
