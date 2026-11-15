@@ -102,7 +102,7 @@ export default function ImInClaim({ kind, sid, compact = false }) {
         </div>
       </div>
       <label className="block">
-        <span className="label">Your neighborhood (for the neighborhood leaderboard)</span>
+        <span className="label">Your neighborhood (shows on your badge)</span>
         <select className="input" value={hood} onChange={(e) => setHood(e.target.value)}>
           <option value="">Skip</option>
           {HOODS.map((h) => <option key={h} value={h}>{h}</option>)}
