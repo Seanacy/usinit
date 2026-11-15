@@ -41,9 +41,18 @@ export default function AdminGiftTree() {
     try { const url = await uploadPhoto(f, session.user.id); setShop({ ...shop, [t.id]: { ...(shop[t.id] || {}), receipt: url } }) } catch (err) { setMsg({ kind: 'error', text: err.message }) }
     setBusy(false)
   }
+  const pubTagMap = () => Object.fromEntries((pub?.tags || []).map((x) => [x.id, x]))
   async function shopped(t) {
+    const pubTag = pubTagMap()
     const s = shop[t.id] || {}
     const cents = Math.round(Number(s.spent) * 100)
+    const raised = pubTag[t.id]?.raised_cents || 0
+    if (!(cents > 0)) return setMsg({ kind: 'error', text: 'Type the amount you spent first.' })
+    if (cents > raised) {
+      if (!window.confirm(`This tag only has ${money(raised)}. You typed ${money(cents)}, so you'd pay the other ${money(cents - raised)} yourself. Mark it shopped anyway?`)) return
+    } else if (raised < t.goal_cents) {
+      if (!window.confirm(`This tag isn't full yet (${money(raised)} of ${money(t.goal_cents)}). Mark it shopped anyway?`)) return
+    }
     const { error } = await supabase.rpc('admin_gift_tag_shopped', { p_tag: t.id, p_spent_cents: cents, p_receipt: s.receipt || null })
     if (error) return setMsg({ kind: 'error', text: error.message })
     setMsg({ kind: 'ok', text: `Marked "${t.label}" shopped. Post the shopping trip on News as an Event!` }); load()
