@@ -82,7 +82,7 @@ export function BookingSign({ url, title }) {
         <div className="aspect-square w-[68%] shrink-0 bg-white"><img src={qr} alt={`QR code for ${url}`} className="h-full w-full" /></div>
         <div className="flex h-full flex-1 flex-col justify-between">
           <p className="text-[5.6cqw] font-black leading-[0.95]">Scan<br />to book.</p>
-          <p className="text-[2.8cqw] font-extrabold leading-tight">{title}</p>
+          <p className="break-words font-black leading-[0.95]" style={{ fontSize: `${(title || '').length <= 14 ? 5.2 : (title || '').length <= 24 ? 4 : 3}cqw` }}>{title}</p>
           <img src="/logo-print-bw.svg" alt="Us In It" className="w-full" />
           <Verified className="text-[2.3cqw] leading-tight" />
         </div>
