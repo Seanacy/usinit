@@ -68,6 +68,12 @@ function MoreMenu({ session }) {
 
 export default function Layout() {
   const session = useSession()
+  const navTo = useNavigate()
+  // After logging out, go to the home page.
+  useEffect(() => {
+    const { data } = supabase.auth.onAuthStateChange((event) => { if (event === 'SIGNED_OUT') navTo('/', { replace: true }) })
+    return () => data.subscription.unsubscribe()
+  }, []) // eslint-disable-line
   // Hide the tab that just leads to the person's own page (Holders for holders, Advertise for businesses).
   const [home, setHome] = useState(null)
   useEffect(() => { if (!session) { setHome(null); return } homeFor(session.user).then(setHome).catch(() => setHome(null)) }, [session?.user?.id]) // eslint-disable-line
