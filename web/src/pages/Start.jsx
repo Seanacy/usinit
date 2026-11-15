@@ -79,7 +79,7 @@ export function Login() {
   return (
     <div className="px-4 py-8">
       <AuthBox title="Log in" allowSignup={false} redirectPath="/login" />
-      <p className="muted mt-4 text-center text-sm">New here? <Link to="/signup" className="font-bold underline">Sign up</Link></p>
+      <div className="mt-6 space-y-2 text-center"><p className="font-bold">New here?</p><Link to="/signup" className="btn-outline block w-full py-3">Sign up</Link></div>
       <p className="muted mt-2 text-center text-sm">Your Us In It account also works on TentCity, BridgeWork, and OSAAT. Same email, same password.</p>
     </div>
   )

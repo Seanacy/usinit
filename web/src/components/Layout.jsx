@@ -7,15 +7,15 @@ export function Logo({ className = 'h-9', variant = 'black' }) {
   return <img src={src} alt="Us In It" className={className} />
 }
 
-function ThemeToggle() {
+function ThemeToggle({ wide }) {
   const [dark, setDark] = useState(document.documentElement.classList.contains('dark'))
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark)
     try { localStorage.setItem('theme', dark ? 'dark' : 'light') } catch { /* ignore */ }
   }, [dark])
   return (
-    <button onClick={() => setDark(!dark)} className="rounded-lg px-2 py-1 text-sm text-neutral-300 hover:text-white" aria-label="Switch light or dark mode">
-      {dark ? 'Light' : 'Dark'}
+    <button type="button" onClick={() => setDark(!dark)} className={wide ? 'block w-full rounded-lg px-3 py-2 text-left font-bold text-neutral-300 hover:bg-neutral-800' : 'rounded-lg px-2 py-1 text-sm text-neutral-300 hover:text-white'} aria-label="Switch light or dark mode">
+      {wide ? (dark ? 'Light mode' : 'Dark mode') : (dark ? 'Light' : 'Dark')}
     </button>
   )
 }
@@ -35,6 +35,38 @@ function ConfirmedBanner({ session }) {
   )
 }
 
+// Desktop "More" menu: the things returning visitors look for.
+function MoreMenu({ session }) {
+  const [open, setOpen] = useState(false)
+  const loc = useLocation()
+  useEffect(() => { setOpen(false) }, [loc.pathname])
+  useEffect(() => {
+    if (!open) return
+    const close = (e) => { if (!e.target.closest?.('[data-more]')) setOpen(false) }
+    const esc = (e) => { if (e.key === 'Escape') setOpen(false) }
+    document.addEventListener('click', close); document.addEventListener('keydown', esc)
+    return () => { document.removeEventListener('click', close); document.removeEventListener('keydown', esc) }
+  }, [open])
+  const item = ({ isActive }) => `block rounded-lg px-3 py-2 font-bold ${isActive ? 'bg-orange text-ink' : 'text-white hover:bg-neutral-800'}`
+  return (
+    <div className="relative" data-more>
+      <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} aria-haspopup="true" className="rounded-lg px-3 py-2 font-bold text-white hover:text-orange">
+        More ☰
+      </button>
+      {open && (
+        <div className="absolute right-0 mt-2 w-56 space-y-1 rounded-xl border border-neutral-800 bg-ink p-2 shadow-xl">
+          <NavLink to="/fund" className={item}>Community Fund</NavLink>
+          <NavLink to="/directory" className={item}>Directory</NavLink>
+          <NavLink to="/in" className={item}>I'm In</NavLink>
+          <NavLink to="/news" className={item}>News</NavLink>
+          <div className="border-t border-neutral-800 pt-1"><ThemeToggle wide /></div>
+          {session && <button type="button" onClick={() => supabase.auth.signOut()} className="block w-full rounded-lg px-3 py-2 text-left font-bold text-neutral-300 hover:bg-neutral-800">Log out</button>}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function Layout() {
   const session = useSession()
   // Hide the tab that just leads to the person's own page (Holders for holders, Advertise for businesses).
@@ -47,20 +79,14 @@ export default function Layout() {
       <header className="no-print sticky top-0 z-40 bg-ink">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
           <Link to="/" aria-label="Us In It home"><Logo className="h-9 sm:h-10" /></Link>
-          <nav className="hidden items-center gap-1 md:flex">
+          <nav className="hidden items-center gap-1 whitespace-nowrap md:flex">
             <NavLink to="/support" className={link}>Support</NavLink>
-            {home !== '/advertise' && <NavLink to="/advertise" className={link}>Advertise</NavLink>}
-            {home !== '/holder' && <NavLink to="/holder" className={link}>Holders</NavLink>}
-            <NavLink to="/fund" className={link}>Community Fund</NavLink>
-            <NavLink to="/directory" className={link}>Directory</NavLink>
             <NavLink to="/gifttree" className={link}>Gift Tree 🎄</NavLink>
-            <NavLink to="/in" className={link}>I'm In</NavLink>
-            <NavLink to="/news" className={link}>News</NavLink>
-            {session && <NavLink to={home || '/account'} className={link}>My account</NavLink>}
-            {session && <button onClick={() => supabase.auth.signOut()} className="px-3 py-2 font-bold text-neutral-300 hover:text-white">Log out</button>}
-            {session === null && <NavLink to="/login" className={link}>Log in</NavLink>}
-            {session === null && <Link to="/signup" className="ml-1 rounded-lg bg-orange px-3 py-2 font-bold text-ink">Sign up</Link>}
-            <ThemeToggle />
+            {home !== '/holder' && <NavLink to="/holder" className={link}>Holders</NavLink>}
+            {home !== '/advertise' && <NavLink to="/advertise" className={link}>Advertise</NavLink>}
+            <MoreMenu session={session} />
+            {session && <NavLink to={home || '/account'} className="ml-1 rounded-lg bg-orange px-3 py-2 font-bold text-ink">My account</NavLink>}
+            {session === null && <Link to="/login" className="ml-1 rounded-lg bg-orange px-3 py-2 font-bold text-ink">Log in</Link>}
           </nav>
           <button className="rounded-lg px-3 py-2 font-bold text-white md:hidden" onClick={() => setOpen(!open)} aria-expanded={open}>
             {open ? 'Close' : 'Menu'}
@@ -78,8 +104,7 @@ export default function Layout() {
             <NavLink to="/news" className={link}>News and thoughts</NavLink>
             {session && <NavLink to={home || '/account'} className={link}>My account</NavLink>}
             {session && <button onClick={() => supabase.auth.signOut()} className="block px-3 py-2 font-bold text-neutral-300">Log out</button>}
-            {session === null && <NavLink to="/login" className={link}>Log in</NavLink>}
-            {session === null && <NavLink to="/signup" className={link}>Sign up</NavLink>}
+            {session === null && <NavLink to="/login" className={link}>Log in or sign up</NavLink>}
             <ThemeToggle />
           </nav>
         )}
