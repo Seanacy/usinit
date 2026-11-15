@@ -234,6 +234,8 @@ export function HolderShares({ code }) {
 export function BusinessShares() {
   const [d, setD] = useState(null)
   const [printing, setPrinting] = useState(null)
+  const [q, setQ] = useState('')
+  const [more, setMore] = useState(false)
   useEffect(() => { supabase.rpc('business_booking_shares').then(({ data }) => setD(data || null)) }, [])
   if (!d || !d.code) return null
   if (printing) return (
@@ -247,7 +249,14 @@ export function BusinessShares() {
       <h2 className="h2">The Plug: carry other businesses' codes</h2>
       <p className="muted text-sm">Post another local business's code at your place (like a nail tech's code at your booth). When someone books through it, you earn their cut from the deposit as soon as the customer pays it. Your share code: <b>{d.code}</b></p>
       {d.pages.length === 0 && <p className="muted text-sm">No other businesses are open for sharing yet.</p>}
-      {d.pages.map((r) => {
+      {d.pages.length > 0 && <input className="input" placeholder="Search businesses (name or area, like nails or Uptown)" value={q} onChange={(e) => setQ(e.target.value)} />}
+      {(() => {
+        const t = q.trim().toLowerCase()
+        const hits = t ? d.pages.filter((r) => `${r.title} ${r.area || ''} ${r.slug}`.toLowerCase().includes(t)) : d.pages
+        const shown = t || more ? hits : hits.slice(0, 5)
+        return <>
+          {t && hits.length === 0 && <p className="muted text-sm">No businesses match "{q}".</p>}
+          {shown.map((r) => {
         const link = bookingUrl(r.slug, d.code)
         return (
           <div key={r.slug} className="space-y-1 rounded-xl border border-neutral-200 p-3 dark:border-neutral-700">
@@ -258,6 +267,9 @@ export function BusinessShares() {
           </div>
         )
       })}
+          {!t && !more && hits.length > 5 && <button type="button" className="text-sm font-bold underline" onClick={() => setMore(true)}>Show all {hits.length} businesses</button>}
+        </>
+      })()}
     </div>
   )
 }
