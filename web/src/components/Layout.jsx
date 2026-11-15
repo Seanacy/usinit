@@ -56,6 +56,7 @@ export default function Layout() {
             <NavLink to="/gifttree" className={link}>Gift Tree 🎄</NavLink>
             <NavLink to="/in" className={link}>I'm In</NavLink>
             <NavLink to="/news" className={link}>News</NavLink>
+            <NavLink to="/about" className={link}>About</NavLink>
             {session && <NavLink to={home || '/account'} className={link}>My account</NavLink>}
             {session && <button onClick={() => supabase.auth.signOut()} className="px-3 py-2 font-bold text-neutral-300 hover:text-white">Log out</button>}
             {session === null && <NavLink to="/login" className={link}>Log in</NavLink>}
@@ -76,6 +77,7 @@ export default function Layout() {
             <NavLink to="/gifttree" className={link}>Gift Tree 🎄</NavLink>
             <NavLink to="/in" className={link}>I'm In (badges and leaderboard)</NavLink>
             <NavLink to="/news" className={link}>News and thoughts</NavLink>
+            <NavLink to="/about" className={link}>About: mission, vision, where the money goes</NavLink>
             {session && <NavLink to={home || '/account'} className={link}>My account</NavLink>}
             {session && <button onClick={() => supabase.auth.signOut()} className="block px-3 py-2 font-bold text-neutral-300">Log out</button>}
             {session === null && <NavLink to="/login" className={link}>Log in</NavLink>}
@@ -89,6 +91,7 @@ export default function Layout() {
         <div className="mx-auto flex max-w-5xl flex-col gap-3 px-4 py-8 text-sm sm:flex-row sm:items-center sm:justify-between">
           <div>© {new Date().getFullYear()} Us In It · A Many Ways Up LLC project · Minneapolis</div>
           <div className="flex flex-wrap gap-4">
+            <Link to="/about" className="hover:text-white">About</Link>
             <Link to="/terms" className="hover:text-white">Terms</Link>
             <Link to="/privacy" className="hover:text-white">Privacy</Link>
             <Link to="/holder-agreement" className="hover:text-white">Holder Agreement</Link>

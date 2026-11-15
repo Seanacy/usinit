@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { SITE_URL, money, startCheckout, useStats } from '../lib/supabase'
 import ShareQR from '../components/ShareQR'
 import { GoalTracker } from './Home'
@@ -80,7 +80,7 @@ export default function Support({ embedded = false, onBack }) {
       </div>
 
       <div className="muted mt-6 space-y-2 text-sm">
-        <p>Every scan costs {money(price)}: {money(share)} goes to the holder, {money(price - share)} keeps Us In It running.</p>
+        <p>Every scan costs {money(price)}: {money(share)} goes to the holder, {money(price - share)} keeps Us In It running and growing. <Link to="/about" className="font-bold underline">See where it goes</Link></p>
         <p>Your support goes into the Us In It Community Fund, which pays holders for scans when no paid messages are running. Us In It is a business, not a charity. Support is not tax-deductible. Card processing fees come out first. You can cancel anytime from your email receipt.</p>
       </div>
     </div>
