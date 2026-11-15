@@ -8,6 +8,7 @@ export default function SupportQR() {
     <QRFullScreen
       url={`${SITE_URL}/support`}
       title="Support Us In It"
+      printTo="/support/print"
       extra={<Link to="/support" className="mt-2 font-bold underline">Open the Support page</Link>}
     />
   )

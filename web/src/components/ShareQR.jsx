@@ -37,7 +37,7 @@ function Buttons({ url, title, qr, children }) {
 }
 
 // Full-screen white QR. Used by the pop-up and by the /qr page.
-export function QRFullScreen({ url, title, onClose, extra }) {
+export function QRFullScreen({ url, title, onClose, extra, printTo }) {
   const qr = useQR(url)
   const shown = url.replace(/^https?:\/\//, '')
   return (
@@ -46,6 +46,7 @@ export function QRFullScreen({ url, title, onClose, extra }) {
       {qr ? <img src={qr} alt={`QR code for ${shown}`} className="w-full max-w-sm" /> : <p>Loading…</p>}
       <p className="text-lg font-bold">{shown}</p>
       <Buttons url={url} title={title} qr={qr}>
+        {printTo && <a className="btn-outline w-full" href={printTo}>🖨️ Print</a>}
         {onClose && <button type="button" className="mt-2 font-bold underline" onClick={onClose}>Close</button>}
         {extra}
       </Buttons>
@@ -55,7 +56,7 @@ export function QRFullScreen({ url, title, onClose, extra }) {
 
 // A QR code you can pull up on your phone, show someone, and share.
 // inline: shows the QR right on the page, with a Full screen button.
-export default function ShareQR({ url, title, label = 'Show QR code', inline = false }) {
+export default function ShareQR({ url, title, label = 'Show QR code', inline = false, printTo }) {
   const [open, setOpen] = useState(false)
   const qr = useQR(url)
   const shown = url.replace(/^https?:\/\//, '')
@@ -70,13 +71,14 @@ export default function ShareQR({ url, title, label = 'Show QR code', inline = f
           </button>
           <p className="font-bold">{shown}</p>
           <Buttons url={url} title={title} qr={qr}>
+            {printTo && <a className="btn-outline w-full" href={printTo}>🖨️ Print</a>}
             <button type="button" className="btn-black w-full" onClick={() => setOpen(true)}>📱 {label}</button>
           </Buttons>
         </div>
       ) : (
         <button type="button" className="btn-black w-full" onClick={() => setOpen(true)}>📱 {label}</button>
       )}
-      {open && <QRFullScreen url={url} title={title} onClose={() => setOpen(false)} />}
+      {open && <QRFullScreen url={url} title={title} printTo={printTo} onClose={() => setOpen(false)} />}
     </>
   )
 }
