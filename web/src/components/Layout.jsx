@@ -57,7 +57,6 @@ function MoreMenu({ session }) {
         <div className="absolute right-0 mt-2 w-56 space-y-1 rounded-xl border border-neutral-800 bg-ink p-2 shadow-xl">
           <NavLink to="/fund" className={item}>Community Fund</NavLink>
           <NavLink to="/directory" className={item}>Directory</NavLink>
-          <NavLink to="/in" className={item}>I'm In</NavLink>
           <NavLink to="/news" className={item}>News</NavLink>
           <div className="border-t border-neutral-800 pt-1"><ThemeToggle wide /></div>
           {session && <button type="button" onClick={() => supabase.auth.signOut()} className="block w-full rounded-lg px-3 py-2 text-left font-bold text-neutral-300 hover:bg-neutral-800">Log out</button>}
@@ -100,7 +99,6 @@ export default function Layout() {
             <NavLink to="/fund" className={link}>Community Fund</NavLink>
             <NavLink to="/directory" className={link}>Holder directory</NavLink>
             <NavLink to="/gifttree" className={link}>Gift Tree 🎄</NavLink>
-            <NavLink to="/in" className={link}>I'm In (badges and leaderboard)</NavLink>
             <NavLink to="/news" className={link}>News and thoughts</NavLink>
             {session && <NavLink to={home || '/account'} className={link}>My account</NavLink>}
             {session && <button onClick={() => supabase.auth.signOut()} className="block px-3 py-2 font-bold text-neutral-300">Log out</button>}

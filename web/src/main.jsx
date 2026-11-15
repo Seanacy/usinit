@@ -1,6 +1,6 @@
 import React, { Suspense, lazy, useState } from 'react'
 import ReactDOM from 'react-dom/client'
-import { BrowserRouter, Link, Route, Routes, useNavigate } from 'react-router-dom'
+import { BrowserRouter, Link, Route, Routes, useNavigate, Navigate } from 'react-router-dom'
 import './index.css'
 import Layout, { Notice, Spinner } from './components/Layout'
 import Home from './pages/Home'
@@ -17,7 +17,7 @@ import SupportQR from './pages/SupportQR'
 import SupportPrint from './pages/SupportPrint'
 import News, { NewsPost } from './pages/News'
 import Spotlight from './pages/Spotlight'
-import ImInHome, { ImInBadge } from './pages/ImIn'
+import { ImInBadge } from './pages/ImIn'
 import GiftTree, { GiftTreeScan } from './pages/GiftTree'
 import GiftSignup from './pages/GiftSignup'
 import About from './pages/About'
@@ -85,7 +85,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/gifttree/signup/:code" element={<GiftSignup />} />
           <Route path="/gt" element={<GiftTreeScan />} />
           <Route path="/gt/:code" element={<GiftTreeScan />} />
-          <Route path="/in" element={<ImInHome />} />
+          <Route path="/in" element={<Navigate to="/support" replace />} />
           <Route path="/in/:code" element={<ImInBadge />} />
           <Route path="/news/:id" element={<NewsPost />} />
           <Route path="/thanks" element={<Thanks />} />

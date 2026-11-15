@@ -32,7 +32,7 @@ export function ImInBadge() {
     })
   }, [code])
   if (b === undefined) return <Spinner />
-  if (!b) return <div className="mx-auto max-w-md px-4 py-16 text-center"><p className="h2">That badge isn't here</p><Link to="/in" className="mt-4 inline-block font-bold underline">See the I'M IN movement</Link></div>
+  if (!b) return <div className="mx-auto max-w-md px-4 py-16 text-center"><p className="h2">That badge isn't here</p><Link to="/support" className="mt-4 inline-block font-bold underline">Support Us In It</Link></div>
   return (
     <div className="mx-auto max-w-2xl space-y-8 px-4 py-8">
       <div className="rounded-3xl border-4 border-orange bg-ink p-6 text-center text-white">
@@ -52,7 +52,6 @@ export function ImInBadge() {
       ) : (
         <HowToJoin refCode={b.code} />
       )}
-      <Link to="/in" className="block text-center font-bold underline">See the neighborhood leaderboard</Link>
     </div>
   )
 }
