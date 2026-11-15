@@ -34,7 +34,7 @@ export function ImInBadge() {
     <div className="mx-auto max-w-2xl space-y-8 px-4 py-8">
       <div className="rounded-3xl border-4 border-orange bg-ink p-6 text-center text-white">
         <p className="font-bold text-orange">[ Us In It ]</p>
-        <p className="text-6xl font-black">I'M IN</p>
+        <p className="text-6xl font-black">I'M IN!</p>
         <p className="mt-1 text-xl font-extrabold text-orange">Supporter {num(b.number)}</p>
         <p className="mt-4 text-2xl font-extrabold">{IMIN_MESSAGES[b.message_key]}</p>
         <p className="mt-3 text-neutral-300">{impactLine(b)}</p>
@@ -66,7 +66,7 @@ export default function ImInHome() {
   return (
     <div className="mx-auto max-w-2xl space-y-8 px-4 py-8">
       <div className="rounded-3xl bg-ink p-6 text-center text-white">
-        <p className="text-6xl font-black">I'M IN</p>
+        <p className="text-6xl font-black">I'M IN!</p>
         <p className="mt-2 text-xl font-extrabold text-orange">Not a handout. A paycheck.</p>
         <p className="mt-3 text-neutral-300">People on our streets earn money every time someone scans their code. Local businesses pay for it. Join the movement and wear the badge.</p>
         <p className="mt-4 text-4xl font-black">{d.total.toLocaleString()}</p>

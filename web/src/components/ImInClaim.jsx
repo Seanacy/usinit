@@ -20,15 +20,15 @@ export function BadgeShare({ badge }) {
     const text = shareText(badge)
     try {
       const file = blob && new File([blob], `im-in-${badge.code}.png`, { type: 'image/png' })
-      if (file && navigator.canShare?.({ files: [file] })) return await navigator.share({ files: [file], text, title: "I'm in" })
-      if (navigator.share) return await navigator.share({ text, url: badgeUrl(badge.code), title: "I'm in" })
+      if (file && navigator.canShare?.({ files: [file] })) return await navigator.share({ files: [file], text, title: "I'm In!" })
+      if (navigator.share) return await navigator.share({ text, url: badgeUrl(badge.code), title: "I'm In!" })
       copy()
     } catch { /* closed */ }
   }
   function copy() { navigator.clipboard?.writeText(shareText(badge)); setCopied(true); setTimeout(() => setCopied(false), 1500) }
   return (
     <div className="space-y-3">
-      {img ? <img src={img} alt={`I'm In badge ${num(badge.number)}`} className="mx-auto w-full max-w-xs rounded-2xl" /> : <p className="muted">Making your badge…</p>}
+      {img ? <img src={img} alt={`I'm In! badge ${num(badge.number)}`} className="mx-auto w-full max-w-xs rounded-2xl" /> : <p className="muted">Making your badge…</p>}
       <div className="mx-auto grid max-w-xs gap-2">
         <button type="button" className="btn-orange w-full" onClick={share}>Share my badge</button>
         {img && <a className="btn-outline w-full text-center" href={img} download={`im-in-${badge.code}.png`}>Save picture</a>}
@@ -83,8 +83,8 @@ export default function ImInClaim({ kind, sid, compact = false }) {
   if (!open) {
     return (
       <button type="button" onClick={() => setOpen(true)} className={`mt-6 block w-full rounded-2xl border-2 border-orange bg-ink p-4 text-left text-white ${compact ? '' : 'max-w-sm mx-auto'}`}>
-        <p className="text-3xl font-black">I'M IN</p>
-        <p className="font-bold text-orange">{existing ? `Update your badge ${num(existing.number)}` : 'Get your free I’M IN badge →'}</p>
+        <p className="text-3xl font-black">I'M IN!</p>
+        <p className="font-bold text-orange">{existing ? `Update your badge ${num(existing.number)}` : 'Get your free I’M IN! badge →'}</p>
         <p className="text-sm text-neutral-300">Show you're part of it. Share it and see who joins because of you.</p>
       </button>
     )
@@ -92,7 +92,7 @@ export default function ImInClaim({ kind, sid, compact = false }) {
 
   return (
     <div className="mx-auto mt-6 max-w-sm space-y-4 rounded-2xl border-2 border-orange p-4 text-left">
-      <p className="text-3xl font-black">I'M IN</p>
+      <p className="text-3xl font-black">I'M IN!</p>
       <div>
         <p className="label">Pick your message</p>
         <div className="grid gap-2">

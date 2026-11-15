@@ -22,7 +22,7 @@ export function impactLine(b) {
 }
 
 export function shareText(b) {
-  return `I'm in. ${IMIN_MESSAGES[b.message_key]} Who's next? Get yours: ${badgeUrl(b.code)} #ImIn #UsInIt`
+  return `I'm In! ${IMIN_MESSAGES[b.message_key]} Who's next? Get yours: ${badgeUrl(b.code)} #ImIn #UsInIt`
 }
 
 function wrap(ctx, text, maxW) {
@@ -52,7 +52,7 @@ export async function badgeImage(b) {
   ctx.fillText('[ Us In It ]', W / 2, 200)
 
   ctx.fillStyle = '#FFFFFF'; ctx.font = font(900, 260)
-  ctx.fillText("I'M IN", W / 2, 520)
+  ctx.fillText("I'M IN!", W / 2, 520, W - 200)
 
   ctx.fillStyle = '#FF6A00'; ctx.font = font(800, 72)
   ctx.fillText(`Supporter ${num(b.number)}`, W / 2, 640)
