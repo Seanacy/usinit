@@ -261,7 +261,7 @@ export function BusinessShares() {
             <label className="label">Type a business name</label>
             <input className="input" placeholder="Start typing, like Test Nails" value={q} onFocus={() => setMore(true)} onBlur={() => setTimeout(() => setMore(false), 150)}
               onChange={(e) => { setQ(e.target.value); setPick(null); setMore(true) }} />
-            {more && (
+            {more && !r && (
               <div className="absolute z-20 mt-1 max-h-64 w-full overflow-y-auto rounded-xl border border-neutral-200 bg-white shadow-lg dark:border-neutral-700 dark:bg-neutral-900">
                 {hits.length === 0 && <p className="muted p-3 text-sm">No businesses match "{q}".</p>}
                 {hits.map((x) => (
