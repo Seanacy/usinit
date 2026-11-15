@@ -39,12 +39,6 @@ function TagCard({ t, onGive }) {
         <>
           <div className="h-3 w-full overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-700"><div className="h-3 rounded-full bg-orange" style={{ width: `${pct}%` }} /></div>
           <p className="text-sm font-bold">{money(t.raised_cents)} of {money(t.goal_cents)}{pct >= 100 ? ' · Ready to shop! 🎉' : ''}{t.scans ? ` · ${t.scans} sponsor scans` : ''}</p>
-          {t.team?.length > 0 && (
-            <div className="rounded-xl border border-neutral-200 p-3 dark:border-neutral-700">
-              <p className="text-sm font-bold">Team board</p>
-              {t.team.map((m, i) => <p key={m.name} className="text-sm">{i + 1}. {m.name} · {m.scans} scan{m.scans === 1 ? '' : 's'}</p>)}
-            </div>
-          )}
           {pct < 100 && (
             <div className="grid gap-2">
               <GiftTagTeam t={t} />
@@ -125,7 +119,7 @@ export default function GiftTree() {
 
       <div className="space-y-3">
         <h2 className="h2">Wish lists</h2>
-        <p className="muted text-sm">Each tag has its own code, so a whole team (a church, a class, friends) can work on one child or one big goal. Money for the whole tree fills tags in order. Kids are picked with a partner (like a church) and their parents' OK. Parents sign up below, and we check every list. We never share names or photos.</p>
+        <p className="muted text-sm">Each tag has its own QR code. Anyone can get it, share it, or print it, and every scan helps that child. Money for the whole tree fills tags in order. Kids are picked with a partner (like a church) and their parents' OK. Parents sign up below, and we check every list. We never share names or photos.</p>
         {d.tags.length === 0 && <p className="muted">Tags are coming soon.</p>}
         {open.map((t) => <TagCard key={t.id} t={t} onGive={d.on ? pickGive : null} />)}
         {done.map((t) => <TagCard key={t.id} t={t} />)}
@@ -173,8 +167,7 @@ export function GiftTreeScan() {
       {next && (
         <div className="card text-left">
           <p className="font-extrabold">{res.tag_id ? 'Your scan helped' : 'Now filling'}: 🎁 {next.label}</p>
-          {res.champ && res.earned && <p className="text-sm">Counted for {res.champ}'s team score. 🙌</p>}
-          <div className="mt-2 h-3 w-full overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-700"><div className="h-3 rounded-full bg-orange" style={{ width: `${Math.min(100, (next.raised_cents / next.goal_cents) * 100)}%` }} /></div>
+                    <div className="mt-2 h-3 w-full overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-700"><div className="h-3 rounded-full bg-orange" style={{ width: `${Math.min(100, (next.raised_cents / next.goal_cents) * 100)}%` }} /></div>
           <p className="mt-1 text-sm font-bold">{money(next.raised_cents)} of {money(next.goal_cents)}</p>
         </div>
       )}
