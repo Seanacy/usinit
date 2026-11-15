@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { SITE_URL, deviceId, money, startCheckout, supabase, useStats, withCardFee } from '../lib/supabase'
 import ShareQR from '../components/ShareQR'
+import GiftTagTeam from '../components/GiftTagTeam'
 import { ContentCard } from './Scan'
 import { Notice, Spinner } from '../components/Layout'
 
 const GIVE = [1000, 2500, 5000, 10000]
 
-function TagCard({ t }) {
+function TagCard({ t, onGive }) {
   const pct = Math.min(100, Math.round((t.raised_cents / t.goal_cents) * 100))
   const done = t.status !== 'open'
   return (
@@ -25,14 +26,26 @@ function TagCard({ t }) {
       ) : (
         <>
           <div className="h-3 w-full overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-700"><div className="h-3 rounded-full bg-orange" style={{ width: `${pct}%` }} /></div>
-          <p className="text-sm font-bold">{money(t.raised_cents)} of {money(t.goal_cents)}{pct >= 100 ? ' · Ready to shop! 🎉' : ''}</p>
+          <p className="text-sm font-bold">{money(t.raised_cents)} of {money(t.goal_cents)}{pct >= 100 ? ' · Ready to shop! 🎉' : ''}{t.scans ? ` · ${t.scans} sponsor scans` : ''}</p>
+          {t.team?.length > 0 && (
+            <div className="rounded-xl border border-neutral-200 p-3 dark:border-neutral-700">
+              <p className="text-sm font-bold">Team board</p>
+              {t.team.map((m, i) => <p key={m.name} className="text-sm">{i + 1}. {m.name} · {m.scans} scan{m.scans === 1 ? '' : 's'}</p>)}
+            </div>
+          )}
+          {pct < 100 && (
+            <div className="grid gap-2">
+              <GiftTagTeam t={t} />
+              {onGive && <button type="button" className="btn-outline w-full" onClick={() => onGive(t)}>Give to this tag</button>}
+            </div>
+          )}
         </>
       )}
     </div>
   )
 }
 
-function GiveBox() {
+function GiveBox({ tag, onClear }) {
   const stats = useStats()
   const [amt, setAmt] = useState(2500)
   const [name, setName] = useState('')
@@ -40,11 +53,13 @@ function GiveBox() {
   const [err, setErr] = useState(null)
   async function give() {
     setBusy(true); setErr(null)
-    try { await startCheckout({ kind: 'gift_tree', amount_cents: amt, donor_name: name }) } catch (e) { setErr(e.message); setBusy(false) }
+    try { await startCheckout({ kind: 'gift_tree', amount_cents: amt, donor_name: name, tag_code: tag?.code || null }) } catch (e) { setErr(e.message); setBusy(false) }
   }
   return (
-    <div className="card space-y-3">
-      <h2 className="h2">Give to the Gift Tree</h2>
+    <div id="give" className="card space-y-3">
+      <h2 className="h2">{tag ? `Give to 🎁 ${tag.label}` : 'Give to the Gift Tree'}</h2>
+      {tag ? <p className="text-sm">Your gift goes to this tag first. If it fills up, the rest helps the next tag. <button type="button" className="font-bold underline" onClick={onClear}>Give to the whole tree instead</button></p>
+        : <p className="text-sm">Your gift fills tags in order, top to bottom.</p>}
       <div className="grid grid-cols-4 gap-2">
         {GIVE.map((a) => <button key={a} type="button" onClick={() => setAmt(a)} className={amt === a ? 'btn-orange py-3' : 'btn-outline py-3'}>${a / 100}</button>)}
       </div>
@@ -59,6 +74,8 @@ function GiveBox() {
 // usinit.com/gifttree
 export default function GiftTree() {
   const [d, setD] = useState(null)
+  const [giveTag, setGiveTag] = useState(null)
+  const pickGive = (t) => { setGiveTag(t); setTimeout(() => document.getElementById('give')?.scrollIntoView({ behavior: 'smooth' }), 50) }
   useEffect(() => { supabase.rpc('gift_tree_public').then(({ data }) => setD(data)) }, [])
   if (!d) return <Spinner />
   const open = d.tags.filter((t) => t.status === 'open')
@@ -80,19 +97,19 @@ export default function GiftTree() {
 
       <div className="space-y-3">
         <h2 className="h2">Wish lists</h2>
-        <p className="muted text-sm">Money fills tags in order, top to bottom. Kids are picked with a partner organization and their parents' OK. We never share names or photos.</p>
+        <p className="muted text-sm">Each tag has its own code, so a whole team (a church, a class, friends) can work on one child or one big goal. Money for the whole tree fills tags in order. Kids are picked with a partner and their parents' OK. We never share names or photos.</p>
         {d.tags.length === 0 && <p className="muted">Tags are coming soon.</p>}
-        {open.map((t) => <TagCard key={t.id} t={t} />)}
+        {open.map((t) => <TagCard key={t.id} t={t} onGive={d.on ? pickGive : null} />)}
         {done.map((t) => <TagCard key={t.id} t={t} />)}
       </div>
 
-      {d.on && <GiveBox />}
+      {d.on && <GiveBox tag={giveTag} onClear={() => setGiveTag(null)} />}
 
       {d.on && (
         <div className="card space-y-3">
           <h2 className="h2">Help by scanning (free)</h2>
           <p>Scan this code. A local business sponsor pays {money(d.price_cents)} and {money(d.fund_cents)} goes straight to the Gift Tree. One scan per phone per day. Show it to friends, family, and coworkers.</p>
-          <ShareQR inline url={`${SITE_URL}/gt`} title="Scan for the Us In It Gift Tree" label="Full screen" />
+          <ShareQR inline url={`${SITE_URL}/gt`} title="Scan for the Us In It Gift Tree" heading="Scan for the whole Gift Tree" label="Full screen" />
         </div>
       )}
 
@@ -107,16 +124,18 @@ export default function GiftTree() {
 
 // usinit.com/gt — what a scanner sees
 export function GiftTreeScan() {
+  const { code } = useParams()
+  const [qs] = useSearchParams()
   const [res, setRes] = useState(null)
   const started = useRef(false)
   useEffect(() => {
     if (started.current) return
     started.current = true
-    supabase.rpc('process_gift_tree_scan', { p_device: deviceId() }).then(({ data }) => setRes(data || { tree: null }))
-  }, [])
+    supabase.rpc('process_gift_tree_scan', { p_device: deviceId(), p_tag: code || null, p_champ: qs.get('by') || null }).then(({ data }) => setRes(data || { tree: null }))
+  }, []) // eslint-disable-line
   if (!res) return <Spinner label="Opening the Gift Tree" />
   const t = res.tree
-  const next = t?.tags?.find((x) => x.status === 'open' && x.raised_cents < x.goal_cents)
+  const next = (res.tag_id && t?.tags?.find((x) => x.id === res.tag_id)) || t?.tags?.find((x) => x.status === 'open' && x.raised_cents < x.goal_cents)
   return (
     <div className="mx-auto max-w-md space-y-6 px-4 py-8 text-center">
       <p className="text-5xl">🎄</p>
@@ -125,7 +144,8 @@ export function GiftTreeScan() {
       {res.content && <div className="text-left"><ContentCard content={res.content} /></div>}
       {next && (
         <div className="card text-left">
-          <p className="font-extrabold">Now filling: 🎁 {next.label}</p>
+          <p className="font-extrabold">{res.tag_id ? 'Your scan helped' : 'Now filling'}: 🎁 {next.label}</p>
+          {res.champ && res.earned && <p className="text-sm">Counted for {res.champ}'s team score. 🙌</p>}
           <div className="mt-2 h-3 w-full overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-700"><div className="h-3 rounded-full bg-orange" style={{ width: `${Math.min(100, (next.raised_cents / next.goal_cents) * 100)}%` }} /></div>
           <p className="mt-1 text-sm font-bold">{money(next.raised_cents)} of {money(next.goal_cents)}</p>
         </div>

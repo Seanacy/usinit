@@ -65,7 +65,7 @@ Deno.serve(async (req) => {
       } else if (m.kind === "gift_tree") {
         // Gift Tree: payer covers the card fee; every dollar they chose goes to gifts (no platform cut)
         const base = m.fee_on_top === "1" ? Number(m.base_cents) : gross - stripeFee(gross);
-        await db.from("gift_tree_ledger").insert({ amount_cents: base, source: "gift", stripe_ref: obj.id, donor_name: m.donor_name || name });
+        await db.from("gift_tree_ledger").insert({ amount_cents: base, source: "gift", stripe_ref: obj.id, donor_name: m.donor_name || name, tag_id: m.tag_id || null });
       } else if (m.kind === "supporter") {
         if (obj.mode === "subscription") {
           await db.from("supporter_plans").update({ status: "active", email, first_name: name, stripe_session_id: obj.id, stripe_subscription_id: obj.subscription, stripe_customer_id: obj.customer }).eq("id", m.plan_id);

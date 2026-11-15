@@ -79,6 +79,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/spotlight" element={<Spotlight />} />
           <Route path="/gifttree" element={<GiftTree />} />
           <Route path="/gt" element={<GiftTreeScan />} />
+          <Route path="/gt/:code" element={<GiftTreeScan />} />
           <Route path="/in" element={<ImInHome />} />
           <Route path="/in/:code" element={<ImInBadge />} />
           <Route path="/news/:id" element={<NewsPost />} />

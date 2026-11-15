@@ -62,10 +62,15 @@ Deno.serve(async (req) => {
       };
     } else if (kind === "gift_tree") {
       if (!(amt >= 100 && amt <= 500000)) return json({ error: "Gift must be between $1 and $5,000." }, 400);
+      let tagId = "";
+      if (body.tag_code) {
+        const { data: t } = await admin.from("gift_tags").select("id").eq("code", String(body.tag_code).toUpperCase()).eq("status", "open").maybeSingle();
+        tagId = t?.id ?? "";
+      }
       session = {
         mode: "payment",
         line_items: { 0: { quantity: 1, price_data: { currency: "usd", unit_amount: amt, product_data: { name: "Us In It Gift Tree: gifts for local kids" } } }, 1: feeLine(amt) },
-        metadata: { kind: "gift_tree", donor_name: String(body.donor_name ?? "").slice(0, 40), base_cents: amt, fee_on_top: "1" },
+        metadata: { kind: "gift_tree", donor_name: String(body.donor_name ?? "").slice(0, 40), base_cents: amt, fee_on_top: "1", tag_id: tagId },
         success_url: `${site}/thanks?type=gifttree&sid={CHECKOUT_SESSION_ID}`,
         cancel_url: `${site}/gifttree`,
       };

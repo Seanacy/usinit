@@ -88,6 +88,8 @@ export default function AdminGiftTree() {
           <div key={t.id} className="card space-y-2">
             <p className="text-lg font-extrabold">{t.label} <span className="muted text-sm font-normal">· order {t.sort} · {t.status}{t.partner ? ` · from ${t.partner}` : ''}</span></p>
             <p className="whitespace-pre-line text-sm">{t.wishes}</p>
+            {t.code && <p className="text-sm">Tag code for the team (give it to the pastor or group leader): <b>usinit.com/gt/{t.code}</b></p>}
+            {pubTag[t.id]?.team?.length > 0 && <p className="text-sm">Team: {pubTag[t.id].team.map((m) => `${m.name} (${m.scans})`).join(', ')}</p>}
             {t.status === 'open' && <p className="text-sm font-bold">{money(pubTag[t.id]?.raised_cents || 0)} of {money(t.goal_cents)}</p>}
             {t.status !== 'open' && <p className="text-sm">Spent {money(t.spent_cents)}{t.receipt_url ? ' · receipt posted' : ''}</p>}
             <div className="flex flex-wrap gap-2">

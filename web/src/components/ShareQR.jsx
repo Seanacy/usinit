@@ -56,7 +56,7 @@ export function QRFullScreen({ url, title, onClose, extra, printTo }) {
 
 // A QR code you can pull up on your phone, show someone, and share.
 // inline: shows the QR right on the page, with a Full screen button.
-export default function ShareQR({ url, title, label = 'Show QR code', inline = false, printTo }) {
+export default function ShareQR({ url, title, label = 'Show QR code', inline = false, printTo, heading = 'Scan to support Us In It' }) {
   const [open, setOpen] = useState(false)
   const qr = useQR(url)
   const shown = url.replace(/^https?:\/\//, '')
@@ -65,7 +65,7 @@ export default function ShareQR({ url, title, label = 'Show QR code', inline = f
     <>
       {inline ? (
         <div className="card flex flex-col items-center gap-3 text-center">
-          <p className="text-lg font-extrabold">Scan to support Us In It</p>
+          <p className="text-lg font-extrabold">{heading}</p>
           <button type="button" onClick={() => setOpen(true)} className="w-full max-w-[16rem] rounded-xl bg-white p-2" aria-label="Show QR code full screen">
             {qr ? <img src={qr} alt={`QR code for ${shown}`} className="w-full" /> : <span className="block py-16">Loading…</span>}
           </button>
