@@ -90,7 +90,7 @@ export default function Layout() {
             {home !== '/holder' && <NavLink to="/holder" className={link}>Holders</NavLink>}
             {home !== '/advertise' && <NavLink to="/advertise" className={link}>Advertise</NavLink>}
             <MoreMenu session={session} />
-            {session && <NavLink to={home || '/account'} className="ml-1 rounded-lg bg-orange px-3 py-2 font-bold text-ink">My account</NavLink>}
+            {session && <NavLink to="/account" className="ml-1 rounded-lg bg-orange px-3 py-2 font-bold text-ink">My account</NavLink>}
             {session === null && <Link to="/login" className="ml-1 rounded-lg bg-orange px-3 py-2 font-bold text-ink">Log in</Link>}
           </nav>
           <button className="rounded-lg px-3 py-2 font-bold text-white md:hidden" onClick={() => setOpen(!open)} aria-expanded={open}>
@@ -106,7 +106,7 @@ export default function Layout() {
             <NavLink to="/directory" className={link}>Holder directory</NavLink>
             <NavLink to="/gifttree" className={link}>Gift Tree 🎄</NavLink>
             <NavLink to="/news" className={link}>News and thoughts</NavLink>
-            {session && <NavLink to={home || '/account'} className={link}>My account</NavLink>}
+            {session && <NavLink to="/account" className={link}>My account</NavLink>}
             {session && <button onClick={() => supabase.auth.signOut()} className="block px-3 py-2 font-bold text-neutral-300">Log out</button>}
             {session === null && <NavLink to="/login" className={link}>Log in or sign up</NavLink>}
             <ThemeToggle />
