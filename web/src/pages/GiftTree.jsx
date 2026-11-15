@@ -105,11 +105,19 @@ export default function GiftTree() {
         </div>
       </div>
 
+      {d.on && (
+        <div className="card space-y-2 border-2 border-orange">
+          <h2 className="h2">Need help with gifts for your child?</h2>
+          <p>Make a wish list with items from Walmart or Target. If it's approved, it goes on the tree and the community helps fill it. You never pay anything.</p>
+          <Link to="/gifttree/signup" className="btn-orange block w-full py-3 text-center">Sign up for help</Link>
+        </div>
+      )}
+
       {!d.on && <Notice>The Gift Tree is closed right now. Thank you to everyone who helped!</Notice>}
 
       <div className="space-y-3">
         <h2 className="h2">Wish lists</h2>
-        <p className="muted text-sm">Each tag has its own code, so a whole team (a church, a class, friends) can work on one child or one big goal. Money for the whole tree fills tags in order. Kids are picked with a partner (like a church) and their parents' OK. Parents sign up with a private link from us. We never share names or photos.</p>
+        <p className="muted text-sm">Each tag has its own code, so a whole team (a church, a class, friends) can work on one child or one big goal. Money for the whole tree fills tags in order. Kids are picked with a partner (like a church) and their parents' OK. Parents sign up below, and we check every list. We never share names or photos.</p>
         {d.tags.length === 0 && <p className="muted">Tags are coming soon.</p>}
         {open.map((t) => <TagCard key={t.id} t={t} onGive={d.on ? pickGive : null} />)}
         {done.map((t) => <TagCard key={t.id} t={t} />)}

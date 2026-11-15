@@ -6,7 +6,7 @@ import { Notice, Spinner } from '../components/Layout'
 const STORES = { walmart: 'Walmart', target: 'Target' }
 const blank = () => ({ name: '', note: '', url: '', price: '', image: '', uploading: false })
 
-// usinit.com/gifttree/signup/:code — private link a parent gets from Us In It or a pastor
+// usinit.com/gifttree/signup — open to anyone. /gifttree/signup/:code — private link from Us In It or a pastor
 export default function GiftSignup() {
   const code = (useParams().code || '').toUpperCase()
   const [info, setInfo] = useState(null)
@@ -29,7 +29,7 @@ export default function GiftSignup() {
     const f = e.target.files?.[0]; if (!f) return
     set(i, { uploading: true }); setErr(null)
     const ext = (f.name.split('.').pop() || 'jpg').toLowerCase()
-    const path = `giftreq/${code}/${Date.now()}-${i}.${ext}`
+    const path = `giftreq/${code || 'public'}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
     const { error } = await supabase.storage.from('photos').upload(path, f, { upsert: false })
     if (error) { set(i, { uploading: false }); return setErr('That picture did not upload. Use a JPG or PNG under 5 MB.') }
     set(i, { uploading: false, image: supabase.storage.from('photos').getPublicUrl(path).data.publicUrl })
@@ -40,7 +40,7 @@ export default function GiftSignup() {
     if (!kid.age) return setErr("Add the child's age.")
     setBusy(true)
     const { data, error } = await supabase.rpc('submit_gift_request', {
-      p_code: code, p_parent_name: parent.name, p_parent_phone: parent.phone,
+      p_code: code || null, p_parent_name: parent.name, p_parent_phone: parent.phone,
       p_child_label: `${kid.who}, ${kid.age}`, p_store: store,
       p_items: items.map((x) => ({ name: x.name, note: x.note, url: x.url.trim(), price_cents: Math.round((Number(x.price) || 0) * 100), image: x.image })),
       p_consent: consent, p_in_store: inStore,
@@ -55,15 +55,15 @@ export default function GiftSignup() {
     <div className="mx-auto max-w-md space-y-4 px-4 py-10 text-center">
       <p className="text-5xl">🎄</p>
       <h1 className="h1">Got it! Thank you.</h1>
-      <p>We'll look at the list and call or text you. Once it's approved, it goes on the Gift Tree so people can help fill it.</p>
+      <p>We'll look at the list and call or text you. Once it's approved, it goes on the Gift Tree so people can help fill it. Have more kids? Go back and fill out one list for each child.</p>
       <Link to="/gifttree" className="btn-orange block w-full py-4">See the Gift Tree</Link>
     </div>
   )
   if (!info.ok) return (
     <div className="mx-auto max-w-md space-y-4 px-4 py-10 text-center">
       <p className="text-5xl">🎄</p>
-      <h1 className="h1">This link doesn't work</h1>
-      <p>It was already used, or it isn't a real sign-up link. Ask the person who sent it to you for a new one.</p>
+      <h1 className="h1">{info.public ? 'Sign-ups are closed right now' : "This link doesn't work"}</h1>
+      <p>{info.public ? 'The Gift Tree is not taking wish lists right now. Check back soon.' : "It was already used, or it isn't a real sign-up link. Ask the person who sent it to you for a new one."}</p>
       <Link to="/gifttree" className="btn-outline block w-full py-3">See the Gift Tree</Link>
     </div>
   )
@@ -128,7 +128,7 @@ export default function GiftSignup() {
 
       {err && <Notice kind="error">{err}</Notice>}
       <button className="btn-orange w-full py-4 text-lg" disabled={busy || !store || items.some((x) => x.uploading)}>{busy ? 'Sending…' : 'Send my wish list'}</button>
-      <p className="muted text-center text-xs">This link works one time. We call or text you before anything goes on the tree.</p>
+      <p className="muted text-center text-xs">One list per child. We look at every list and call or text you before anything goes on the tree. Sending a list does not promise gifts.</p>
     </form>
   )
 }

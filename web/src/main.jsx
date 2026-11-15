@@ -81,6 +81,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/spotlight" element={<Spotlight />} />
           <Route path="/about" element={<About />} />
           <Route path="/gifttree" element={<GiftTree />} />
+          <Route path="/gifttree/signup" element={<GiftSignup />} />
           <Route path="/gifttree/signup/:code" element={<GiftSignup />} />
           <Route path="/gt" element={<GiftTreeScan />} />
           <Route path="/gt/:code" element={<GiftTreeScan />} />

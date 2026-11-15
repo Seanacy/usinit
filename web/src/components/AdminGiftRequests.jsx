@@ -44,10 +44,10 @@ export default function AdminGiftRequests({ onChange }) {
       {msg && <Notice kind={msg.kind}>{msg.text}</Notice>}
 
       <div className="card space-y-3">
-        <h2 className="h2">Parent sign-up links</h2>
-        <p className="muted text-sm">Each link works one time. Make one per child. Give it to the parent, or to the pastor to give to the parent. The public can't sign up without a link.</p>
+        <h2 className="h2">Sign-ups</h2>
+        <p className="muted text-sm">Anyone can sign up at <b>usinit.com/gifttree/signup</b> while the Gift Tree is ON. You approve every list. Want to mark a list as coming from a church? Make a one-time link below and give it to the pastor. Those lists say "from link" here.</p>
         <input className="input" placeholder="Who is this for? (only you see this, like: Pastor Mike's church)" maxLength={80} value={note} onChange={(e) => setNote(e.target.value)} />
-        <button type="button" className="btn-orange w-full" onClick={makeInvite}>Make a sign-up link</button>
+        <button type="button" className="btn-outline w-full" onClick={makeInvite}>Make a one-time link (for a church or partner)</button>
         {invites.map((i) => (
           <div key={i.id} className="flex flex-wrap items-center justify-between gap-2 border-t border-neutral-200 pt-2 text-sm dark:border-neutral-700">
             <span><b>{i.code}</b>{i.note ? ` · ${i.note}` : ''} · {i.used_at ? (used(i) ? `used (${used(i).status})` : 'used') : 'not used yet'}</span>
@@ -62,8 +62,9 @@ export default function AdminGiftRequests({ onChange }) {
         {pending.map((r) => (
           <div key={r.id} className="card space-y-3">
             <p className="text-lg font-extrabold">{r.child_label} · {STORES[r.store]} · {money(r.total_cents)}</p>
+            <p className="muted text-sm">{r.invite_id ? `From link${invites.find((i) => i.id === r.invite_id)?.note ? `: ${invites.find((i) => i.id === r.invite_id).note}` : ''}` : 'Signed up on the website'} · {new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
             <p className="text-sm">Parent: <b>{r.parent_name}</b> · <a className="underline" href={`tel:${r.parent_phone}`}>{r.parent_phone}</a> (private)</p>
-            <Notice>Before you approve, check: no child's name or photo anywhere, every link opens a real {STORES[r.store]} item, every item is sold in the store, and the prices match.</Notice>
+            <Notice>Before you approve, call or text the parent. Then check: no child's name or photo anywhere, every link opens a real {STORES[r.store]} item, every item is sold in the store, and the prices match.</Notice>
             {r.items.map((it, n) => (
               <div key={n} className="flex gap-3 rounded-xl border border-neutral-200 p-2 dark:border-neutral-700">
                 <a href={it.image} target="_blank" rel="noopener noreferrer"><img src={it.image} alt="" className="h-20 w-20 rounded object-cover" /></a>
