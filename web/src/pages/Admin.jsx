@@ -9,9 +9,10 @@ import { AdminSchools } from './Schools'
 import { AdminCreators } from './Digital'
 import Printables from '../components/Printables'
 import LocationData from '../components/LocationData'
+import AdminPosts from '../components/AdminPosts'
 import { Notice, Spinner } from '../components/Layout'
 
-const TABS = ['Overview', 'Holders', 'Champions', 'Creators', 'Updates', 'Zones', 'Ads', 'Nonprofits', 'Workplaces', 'Schools', 'Fund', 'House messages', 'Openers', 'Payouts', 'Scans', 'Location data', 'Supporters', 'Settings']
+const TABS = ['Overview', 'Holders', 'Champions', 'Creators', 'Posts', 'Updates', 'Zones', 'Ads', 'Nonprofits', 'Workplaces', 'Schools', 'Fund', 'House messages', 'Openers', 'Payouts', 'Scans', 'Location data', 'Supporters', 'Settings']
 const when = (t) => new Date(t).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
 
 function useTable(table, order = 'created_at', deps = []) {
@@ -531,7 +532,7 @@ export default function Admin() {
       </div>
     </div>
   )
-  const C = { Overview, Holders, Champions: AdminChampions, Creators: AdminCreators, Updates, Zones, Ads, Nonprofits, Workplaces: AdminWorkplaces, Schools: AdminSchools, Fund, 'House messages': HouseMessages, Openers, Payouts, Scans, 'Location data': LocationData, Supporters, Settings }[tab]
+  const C = { Overview, Holders, Champions: AdminChampions, Creators: AdminCreators, Posts: AdminPosts, Updates, Zones, Ads, Nonprofits, Workplaces: AdminWorkplaces, Schools: AdminSchools, Fund, 'House messages': HouseMessages, Openers, Payouts, Scans, 'Location data': LocationData, Supporters, Settings }[tab]
   return (
     <div className="mx-auto max-w-5xl px-4 py-6">
       <div className="no-print mb-5 flex gap-2 overflow-x-auto pb-1">
