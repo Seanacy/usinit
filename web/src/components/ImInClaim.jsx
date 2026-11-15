@@ -11,6 +11,8 @@ export function BadgeShare({ badge }) {
   const [img, setImg] = useState(null)
   const [blob, setBlob] = useState(null)
   const [copied, setCopied] = useState(false)
+  const [open, setOpen] = useState(false)
+  const [igTip, setIgTip] = useState(false)
   useEffect(() => {
     let url
     badgeImage(badge).then((b) => { setBlob(b); url = URL.createObjectURL(b); setImg(url) })
@@ -25,17 +27,40 @@ export function BadgeShare({ badge }) {
       copy()
     } catch { /* closed */ }
   }
+  const openWin = (u) => window.open(u, '_blank', 'noopener,noreferrer')
+  const toX = () => openWin(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText(badge))}`)
+  const toFacebook = () => openWin(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(badgeUrl(badge.code))}`)
+  async function toInstagram() {
+    // Instagram doesn't let websites post. Phones: open the share sheet with the picture (pick Instagram). Otherwise save it.
+    try {
+      const file = blob && new File([blob], `im-in-${badge.code}.png`, { type: 'image/png' })
+      if (file && navigator.canShare?.({ files: [file] })) { await navigator.share({ files: [file] }); return }
+    } catch { /* closed */ }
+    if (img) { const a = document.createElement('a'); a.href = img; a.download = `im-in-${badge.code}.png`; a.click() }
+    setIgTip(true)
+  }
   function copy() { navigator.clipboard?.writeText(shareText(badge)); setCopied(true); setTimeout(() => setCopied(false), 1500) }
   return (
     <div className="space-y-3">
       {img ? <img src={img} alt={`I'm In! badge ${num(badge.number)}`} className="mx-auto w-full max-w-xs rounded-2xl" /> : <p className="muted">Making your badge…</p>}
       <div className="mx-auto grid max-w-xs gap-2">
-        <button type="button" className="btn-orange w-full" onClick={share}>Share my badge</button>
+        <button type="button" className="btn-orange w-full" onClick={() => setOpen(!open)}>Share my badge</button>
+        {open && (
+          <div className="space-y-2 rounded-xl border border-neutral-200 p-3 dark:border-neutral-700">
+            <div className="grid grid-cols-3 gap-2">
+              <button type="button" className="btn-black py-3" onClick={toX}>X</button>
+              <button type="button" className="btn-black py-3" onClick={toFacebook}>Facebook</button>
+              <button type="button" className="btn-black py-3" onClick={toInstagram}>Instagram</button>
+            </div>
+            {igTip && <p className="text-sm">Picture saved. Open Instagram, tap <b>+</b>, pick <b>Story</b> or <b>Post</b>, and choose the badge picture.</p>}
+            <button type="button" className="btn-outline w-full" onClick={share}>More ways to share</button>
+          </div>
+        )}
         {img && <a className="btn-outline w-full text-center" href={img} download={`im-in-${badge.code}.png`}>Save picture</a>}
         <button type="button" className="btn-outline w-full" onClick={copy}>{copied ? 'Copied!' : 'Copy post text'}</button>
         <Link to={`/in/${badge.code}`} className="text-center text-sm font-bold underline">See my badge page and my ripple</Link>
       </div>
-      <p className="muted text-center text-xs">Tag a friend: "I'm in. @___ your turn. #ImIn"</p>
+      <p className="muted text-center text-xs">Tag a friend: "I'm In! @___ your turn. #ImIn"</p>
     </div>
   )
 }
