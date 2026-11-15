@@ -9,11 +9,8 @@ function HowToJoin({ refCode }) {
   return (
     <div className="space-y-3">
       <h2 className="h2">Get your own badge</h2>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div className="card"><p className="font-extrabold">Scan a holder (free)</p><p className="muted text-sm">See someone with an Us In It code? Scan it with location on. Your badge button shows after the scan.</p></div>
-        <div className="card"><p className="font-extrabold">Support or give</p><p className="muted text-sm">Every gift pays people on our streets for scans. Your badge shows your impact.</p>
-          <Link to={`/support${refCode ? `?ref=${refCode}` : ''}`} className="btn-orange mt-3 block w-full text-center">Support Us In It</Link></div>
-      </div>
+      <div className="card"><p className="muted text-sm">Support Us In It (one time or $5 a week), tip a holder, or give to the Community Fund or Gift Tree. Your badge shows up right after.</p>
+        <Link to={`/support${refCode ? `?ref=${refCode}` : ''}`} className="btn-orange mt-3 block w-full text-center">Support Us In It</Link></div>
     </div>
   )
 }
