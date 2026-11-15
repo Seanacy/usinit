@@ -9,6 +9,7 @@ export default function Thanks() {
     : type === 'supporter' ? "You're in! 🎉 Thank you, Founding Supporter."
     : type === 'note' ? 'Thank you! 💛 Us In It reads every note, then posts it for the team.'
     : type === 'campaign' ? 'Paid! 🎉 The campaign starts once the school and Us In It approve it.'
+    : type === 'gifttree' ? 'Thank you! 🎄 Your gift is on the Gift Tree. Watch the tags fill up.'
     : type === 'booking' ? 'Deposit paid! 🧡 Your booking request is in. They\'ll confirm with you by email or phone.'
     : 'Thank you! 🎉 Your gift is in the Community Fund.'
   async function share() {
@@ -19,8 +20,9 @@ export default function Thanks() {
     <div className="mx-auto max-w-md px-4 py-16 text-center">
       <h1 className="h1">{title}</h1>
       <p className="muted mt-3">A receipt is on its way to your email.</p>
-      {['tip', 'gift', 'supporter'].includes(type) && p.get('sid') && <ImInClaim kind="give" sid={p.get('sid')} />}
+      {['tip', 'gift', 'supporter', 'gifttree'].includes(type) && p.get('sid') && <ImInClaim kind="give" sid={p.get('sid')} />}
       <button className="btn-orange mt-6 w-full" onClick={share}>Share Us In It</button>
+      {type === 'gifttree' && <Link to="/gifttree" className="btn-outline mt-3 w-full">See the Gift Tree</Link>}
       <Link to="/" className="btn-outline mt-3 w-full">Back to home</Link>
     </div>
   )

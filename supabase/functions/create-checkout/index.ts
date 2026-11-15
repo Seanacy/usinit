@@ -60,6 +60,15 @@ Deno.serve(async (req) => {
         success_url: `${site}/thanks?type=gift&sid={CHECKOUT_SESSION_ID}`,
         cancel_url: `${site}/fund`,
       };
+    } else if (kind === "gift_tree") {
+      if (!(amt >= 100 && amt <= 500000)) return json({ error: "Gift must be between $1 and $5,000." }, 400);
+      session = {
+        mode: "payment",
+        line_items: { 0: { quantity: 1, price_data: { currency: "usd", unit_amount: amt, product_data: { name: "Us In It Gift Tree: gifts for local kids" } } }, 1: feeLine(amt) },
+        metadata: { kind: "gift_tree", donor_name: String(body.donor_name ?? "").slice(0, 40), base_cents: amt, fee_on_top: "1" },
+        success_url: `${site}/thanks?type=gifttree&sid={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${site}/gifttree`,
+      };
     } else if (kind === "supporter") {
       const weekly: number[] = s.supporter_weekly_amounts ?? [500, 1000, 2000, 5000];
       const once: number[] = s.supporter_onetime_amounts ?? [5000, 10000, 20000];

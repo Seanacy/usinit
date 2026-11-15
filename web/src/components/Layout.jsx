@@ -53,6 +53,7 @@ export default function Layout() {
             {home !== '/holder' && <NavLink to="/holder" className={link}>Holders</NavLink>}
             <NavLink to="/fund" className={link}>Community Fund</NavLink>
             <NavLink to="/directory" className={link}>Directory</NavLink>
+            <NavLink to="/gifttree" className={link}>Gift Tree 🎄</NavLink>
             <NavLink to="/in" className={link}>I'm In</NavLink>
             <NavLink to="/news" className={link}>News</NavLink>
             {session && <NavLink to={home || '/account'} className={link}>My account</NavLink>}
@@ -72,6 +73,7 @@ export default function Layout() {
             {home !== '/holder' && <NavLink to="/holder" className={link}>Holders: sign up or log in</NavLink>}
             <NavLink to="/fund" className={link}>Community Fund</NavLink>
             <NavLink to="/directory" className={link}>Holder directory</NavLink>
+            <NavLink to="/gifttree" className={link}>Gift Tree 🎄</NavLink>
             <NavLink to="/in" className={link}>I'm In (badges and leaderboard)</NavLink>
             <NavLink to="/news" className={link}>News and thoughts</NavLink>
             {session && <NavLink to={home || '/account'} className={link}>My account</NavLink>}

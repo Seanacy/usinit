@@ -25,7 +25,7 @@ function AdForm({ advertiser, existing, prefill, onDone }) {
     ad_type: e0.ad_type || 'standard', headline: e0.headline || '', body: e0.body || '', image_url: e0.image_url || '',
     button_text: e0.button_text ?? 'Learn more', button_url: e0.button_url || '',
     champion_scans: e0.champion_scans || false, crowd_types: e0.crowd_types || [],
-    digital_on: e0.digital_on || false, digital_kinds: e0.digital_kinds || ['holder'], digital_cap: existing ? (e0.digital_daily_cap_cents / 100) : 10,
+    gift_tree: e0.gift_tree || false, digital_on: e0.digital_on || false, digital_kinds: e0.digital_kinds || ['holder'], digital_cap: existing ? (e0.digital_daily_cap_cents / 100) : 10,
     days: e0.days || [0, 1, 2, 3, 4, 5, 6], start_hour: e0.start_hour ?? 7, end_hour: e0.end_hour ?? 21,
     daily_budget: existing ? e0.daily_budget_cents / 100 : 10,
     event_name: e0.event_name || '', event_start: toLocalInput(e0.event_start), event_end: toLocalInput(e0.event_end), event_address: e0.event_address || '', ticket_url: e0.ticket_url || '',
@@ -45,7 +45,7 @@ function AdForm({ advertiser, existing, prefill, onDone }) {
   async function save(e) {
     e.preventDefault(); setErr(null)
     if (!f.headline.trim()) return setErr('Add a headline.')
-    if (!zoneIds.length && !f.digital_on) return setErr('Pick at least one zone where your ad should show, or turn on online (digital) scans.')
+    if (!zoneIds.length && !f.digital_on && !f.gift_tree) return setErr('Pick at least one zone where your ad should show, or turn on online scans or the Gift Tree.')
     if (f.button_url && !/^https?:\/\//i.test(f.button_url)) return setErr('The button link must start with https://')
     if (f.ad_type === 'event' && (!f.event_name || !f.event_start || !f.event_end)) return setErr('Add the event name, start, and end time.')
     if (f.ad_type === 'political' && (!f.political_committee || !f.political_address)) return setErr('Political ads need the committee name and address for the Minnesota disclaimer.')
@@ -55,7 +55,7 @@ function AdForm({ advertiser, existing, prefill, onDone }) {
     setBusy(true)
     const row = {
       advertiser_id: advertiser.id, ad_type: f.ad_type, headline: f.headline.trim(), body: f.body.trim() || null, image_url: f.image_url.trim() || null,
-      button_text: f.button_text.trim() || null, button_url: f.button_url.trim() || null, zone_ids: zoneIds,
+      button_text: f.button_text.trim() || null, button_url: f.button_url.trim() || null, zone_ids: zoneIds, gift_tree: f.gift_tree,
       days: f.days, start_hour: Number(f.start_hour), end_hour: Number(f.end_hour), daily_budget_cents: Math.round(Number(f.daily_budget) * 100),
     }
     if (f.ad_type === 'event') Object.assign(row, { event_name: f.event_name, event_start: new Date(f.event_start).toISOString(), event_end: new Date(f.event_end).toISOString(), event_address: f.event_address || null, ticket_url: f.ticket_url || null })
@@ -139,6 +139,8 @@ function AdForm({ advertiser, existing, prefill, onDone }) {
           </div>
         )}
       </div>
+      <label className="flex items-start gap-3 rounded-xl border-2 border-green-600 p-3"><input type="checkbox" className="mt-1 h-5 w-5 accent-[#FF6A00]" checked={f.gift_tree} onChange={(e) => setF({ ...f, gift_tree: e.target.checked })} />
+        <span><b>🎄 Sponsor the Gift Tree</b><span className="muted block text-sm">Show your ad when people scan the Us In It Gift Tree code. $0.30 per scan, and $0.25 of it buys Christmas gifts for local kids. Your daily max still applies.</span></span></label>
       <div className="space-y-2">
         <label className="flex items-start gap-3"><input type="checkbox" className="mt-1 h-5 w-5 accent-[#FF6A00]" checked={f.digital_on} onChange={(e) => setF({ ...f, digital_on: e.target.checked })} />
           <span><b>Also show online (digital scans)</b><span className="muted block text-sm">People watching videos or livestreams scan a code and see your ad, anywhere. $0.25 per scan from holders' online codes, $0.05 per scan from content creators' codes.</span></span></label>

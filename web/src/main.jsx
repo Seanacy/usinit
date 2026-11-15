@@ -18,6 +18,7 @@ import SupportPrint from './pages/SupportPrint'
 import News, { NewsPost } from './pages/News'
 import Spotlight from './pages/Spotlight'
 import ImInHome, { ImInBadge } from './pages/ImIn'
+import GiftTree, { GiftTreeScan } from './pages/GiftTree'
 import Fund from './pages/Fund'
 import Thanks from './pages/Thanks'
 import { Login, Signup } from './pages/Start'
@@ -76,6 +77,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/fund" element={<Fund />} />
           <Route path="/news" element={<News />} />
           <Route path="/spotlight" element={<Spotlight />} />
+          <Route path="/gifttree" element={<GiftTree />} />
+          <Route path="/gt" element={<GiftTreeScan />} />
           <Route path="/in" element={<ImInHome />} />
           <Route path="/in/:code" element={<ImInBadge />} />
           <Route path="/news/:id" element={<NewsPost />} />
