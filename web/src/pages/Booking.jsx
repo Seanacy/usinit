@@ -236,6 +236,7 @@ export function BusinessShares() {
   const [printing, setPrinting] = useState(null)
   const [q, setQ] = useState('')
   const [more, setMore] = useState(false)
+  const [pick, setPick] = useState(null)
   useEffect(() => { supabase.rpc('business_booking_shares').then(({ data }) => setD(data || null)) }, [])
   if (!d || !d.code) return null
   if (printing) return (
@@ -249,25 +250,37 @@ export function BusinessShares() {
       <h2 className="h2">The Plug: carry other businesses' codes</h2>
       <p className="muted text-sm">Post another local business's code at your place (like a nail tech's code at your booth). When someone books through it, you earn their cut from the deposit as soon as the customer pays it. Your share code: <b>{d.code}</b></p>
       {d.pages.length === 0 && <p className="muted text-sm">No other businesses are open for sharing yet.</p>}
-      {d.pages.length > 0 && <input className="input" placeholder="Search businesses (name or area, like nails or Uptown)" value={q} onChange={(e) => setQ(e.target.value)} />}
-      {(() => {
+      {d.pages.length > 0 && (() => {
+        const sorted = [...d.pages].sort((x, y) => x.title.localeCompare(y.title))
         const t = q.trim().toLowerCase()
-        const hits = t ? d.pages.filter((r) => `${r.title} ${r.area || ''} ${r.slug}`.toLowerCase().includes(t)) : d.pages
-        const shown = t || more ? hits : hits.slice(0, 5)
+        const hits = t ? sorted.filter((r) => `${r.title} ${r.area || ''}`.toLowerCase().includes(t)) : sorted
+        const r = d.pages.find((x) => x.slug === pick)
+        const link = r && bookingUrl(r.slug, d.code)
         return <>
-          {t && hits.length === 0 && <p className="muted text-sm">No businesses match "{q}".</p>}
-          {shown.map((r) => {
-        const link = bookingUrl(r.slug, d.code)
-        return (
-          <div key={r.slug} className="space-y-1 rounded-xl border border-neutral-200 p-3 dark:border-neutral-700">
-            <p className="font-bold">{r.title}{r.area ? <span className="muted text-sm font-normal"> · {r.area}</span> : null}</p>
-            <p className="text-sm">You earn {money(r.cut_cents)} per booking · {r.referred} booking{r.referred === 1 ? '' : 's'} sent · {money(r.earned_cents)} earned</p>
-            <p className="break-all text-xs">{link}</p>
-            <div className="flex flex-wrap gap-2"><Copy text={link} /><button className="btn-black py-2" onClick={() => setPrinting(r)}>Print their code</button></div>
+          <div className="relative">
+            <label className="label">Type a business name</label>
+            <input className="input" placeholder="Start typing, like Test Nails" value={q} onFocus={() => setMore(true)} onBlur={() => setTimeout(() => setMore(false), 150)}
+              onChange={(e) => { setQ(e.target.value); setPick(null); setMore(true) }} />
+            {more && (
+              <div className="absolute z-20 mt-1 max-h-64 w-full overflow-y-auto rounded-xl border border-neutral-200 bg-white shadow-lg dark:border-neutral-700 dark:bg-neutral-900">
+                {hits.length === 0 && <p className="muted p-3 text-sm">No businesses match "{q}".</p>}
+                {hits.map((x) => (
+                  <button key={x.slug} type="button" className="block w-full px-3 py-2 text-left hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                    onMouseDown={(e) => e.preventDefault()} onClick={() => { setPick(x.slug); setQ(x.title); setMore(false) }}>
+                    <span className="font-bold">{x.title}</span>{x.area ? <span className="muted text-sm"> · {x.area}</span> : null}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
-        )
-      })}
-          {!t && !more && hits.length > 5 && <button type="button" className="text-sm font-bold underline" onClick={() => setMore(true)}>Show all {hits.length} businesses</button>}
+          {r && (
+            <div className="space-y-1 rounded-xl border border-neutral-200 p-3 dark:border-neutral-700">
+              <p className="font-bold">{r.title}{r.area ? <span className="muted text-sm font-normal"> · {r.area}</span> : null}</p>
+              <p className="text-sm">You earn {money(r.cut_cents)} per booking · {r.referred} booking{r.referred === 1 ? '' : 's'} sent · {money(r.earned_cents)} earned</p>
+              <p className="break-all text-xs">{link}</p>
+              <div className="flex flex-wrap gap-2"><Copy text={link} /><button className="btn-black py-2" onClick={() => setPrinting(r)}>Print their code</button></div>
+            </div>
+          )}
         </>
       })()}
     </div>
