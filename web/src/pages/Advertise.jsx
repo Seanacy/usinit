@@ -294,19 +294,28 @@ export default function Advertise() {
               {params.get('paid') && <Notice kind="ok">Payment received. Your balance updates in a few seconds. Refresh if you don't see it.</Notice>}
               {adv.status === 'pending' && <Notice>Your business account is waiting for approval. You can add funds and create ads now. They start running once approved.</Notice>}
               <SpotlightPanel adv={adv} onBoost={(s) => { setBoosting(s); window.scrollTo({ top: 0, behavior: 'smooth' }) }} />
-              <div className="grid grid-cols-2 gap-3">
-                <div className="card"><p className="muted text-sm">Ad balance</p><p className="text-3xl font-extrabold">{money(adv.balance_cents)}</p><p className="muted text-xs">≈ {Math.floor(adv.balance_cents / price)} scans</p></div>
-                <div className="card"><p className="muted text-sm">Total scans</p><p className="text-3xl font-extrabold">{ads.reduce((a, x) => a + x.views, 0)}</p><p className="muted text-xs">{ads.reduce((a, x) => a + x.clicks, 0)} button taps (ads + outreach)</p></div>
-              </div>
               <div className="card flex items-center justify-between gap-2">
                 <span><b>{adv.business_name}</b>{adv.contact_name ? ` · ${adv.contact_name}` : ''}{adv.phone ? ` · ${adv.phone}` : ''}</span>
                 <button className="btn-black py-2" onClick={startBizEdit}>Edit</button>
               </div>
-              <AddFunds stats={stats} />
+              <h2 className="h2 pt-2">Your money</h2>
+              <p className="muted -mt-2 text-sm"><b>Ad balance</b> is money you put in to pay for scans. <b>Earnings</b> is money you made from bookings and The Plug, and you can cash it out.</p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-3">
+                  <div className="card"><p className="muted text-sm">Ad balance (pays for scans)</p><p className="text-3xl font-extrabold">{money(adv.balance_cents)}</p><p className="muted text-xs">≈ {Math.floor(adv.balance_cents / price)} scans · {ads.reduce((a, x) => a + x.views, 0)} scans so far · {ads.reduce((a, x) => a + x.clicks, 0)} button taps</p></div>
+                  <AddFunds stats={stats} />
+                </div>
+                <div>
+                  {adv.status === 'approved'
+                    ? <StripePayouts kind="business" title="Earnings (bookings and The Plug)" handNote="Booking deposits and Plug hosting earnings land here. Card fees for your deposits come out of your share." />
+                    : <div className="card"><p className="muted text-sm">Earnings (bookings and The Plug)</p><p className="text-3xl font-extrabold">$0.00</p><p className="muted text-xs">Cash-outs open once Us In It approves your business.</p></div>}
+                </div>
+              </div>
+              <h2 className="h2 pt-2">Bookings and The Plug</h2>
               <BookingManager adv={adv} />
               <BusinessShares />
-              {adv.status === 'approved' && <StripePayouts kind="business" title="Your earnings (bookings and The Plug)" handNote="Booking deposits and Plug hosting earnings land here. Card fees for your deposits come out of your share." />}
               <PlugPanel adv={adv} ads={ads} reloadAds={load} />
+              <h2 className="h2 pt-2">Ads and zones</h2>
               <div className="card flex flex-wrap items-center justify-between gap-2">
                 <span><b>Your zones:</b> {zoneCount}<span className="muted block text-sm">The areas where your ads show, with live scan counts.</span></span>
                 <button className="btn-black py-2" onClick={() => setManagingZones(true)}>{zoneCount ? 'Add or edit zones' : 'Draw your first zone'}</button>
