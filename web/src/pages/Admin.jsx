@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { money, supabase, useSession } from '../lib/supabase'
+import { Link, useNavigate } from 'react-router-dom'
+import { homeFor, money, supabase, useSession } from '../lib/supabase'
 import AuthBox from '../components/AuthBox'
 import ZoneManager from '../components/ZoneManager'
 import { AdminWorkplaces } from './Workplace'
@@ -519,7 +519,10 @@ export default function Admin() {
   const session = useSession()
   const [isAdmin, setIsAdmin] = useState(undefined)
   const [tab, setTab] = useState('Overview')
+  const nav = useNavigate()
   useEffect(() => { if (session) supabase.rpc('is_admin').then(({ data }) => setIsAdmin(!!data)) }, [session])
+  // Not an admin? Send them straight to their own page (business, holder, etc.).
+  useEffect(() => { if (session && isAdmin === false) homeFor(session.user).then((p) => p && p !== '/admin' && nav(p, { replace: true })).catch(() => {}) }, [session, isAdmin]) // eslint-disable-line
   if (session === undefined) return <Spinner />
   if (!session) return <div className="px-4 py-8"><AuthBox title="Admin log in" redirectPath="/admin" allowSignup={false} /></div>
   if (isAdmin === undefined) return <Spinner />
