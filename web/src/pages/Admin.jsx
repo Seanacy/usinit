@@ -196,18 +196,31 @@ function Nonprofits() {
 function Ads() {
   const [ads, loadAds] = useTable('ads')
   const [advs, loadAdvs] = useTable('advertisers')
+  const [q, setQ] = useState('')
+  const [only, setOnly] = useState(null) // advertiser id: show just their ads
   if (!ads || !advs) return <Spinner />
   const advName = (id) => advs.find((a) => a.id === id)?.business_name || '?'
   async function adStatus(a, status) { await supabase.from('ads').update({ status }).eq('id', a.id); loadAds() }
   async function advStatus(a, status) { await supabase.from('advertisers').update({ status }).eq('id', a.id); loadAdvs() }
+  const t = q.trim().toLowerCase()
+  const waitingFirst = (x, y) => (x.status === 'pending' ? 0 : 1) - (y.status === 'pending' ? 0 : 1)
+  const advHits = [...advs].sort(waitingFirst).filter((a) => !t || `${a.business_name} ${a.contact_name || ''} ${a.phone || ''} ${a.status}`.toLowerCase().includes(t))
+  const adHits = [...ads].sort(waitingFirst).filter((a) => (only ? a.advertiser_id === only : true)
+    && (!t || only || `${a.headline} ${a.body || ''} ${advName(a.advertiser_id)} ${a.status}`.toLowerCase().includes(t)))
+  const countAds = (id) => ads.filter((x) => x.advertiser_id === id).length
+  function showAds(a) { setOnly(a.id); setTimeout(() => document.getElementById('admin-ads')?.scrollIntoView({ behavior: 'smooth' }), 50) }
   return (
     <div className="space-y-6">
+      <input className="input" placeholder="Search businesses or ads (name, phone, headline, waiting…)" value={q} onChange={(e) => { setQ(e.target.value); setOnly(null) }} />
       <div className="space-y-3">
-        <h2 className="h2">Advertisers</h2>
-        {advs.length === 0 && <p className="muted">No advertisers yet.</p>}
-        {advs.map((a) => (
+        <h2 className="h2">Advertisers <span className="muted text-base font-normal">({advHits.length}{t ? ` of ${advs.length}` : ''})</span></h2>
+        {advHits.length === 0 && <p className="muted">{t ? `No businesses match "${q}".` : 'No advertisers yet.'}</p>}
+        {advHits.map((a) => (
           <div key={a.id} className="card flex flex-wrap items-center justify-between gap-2">
-            <span><b>{a.business_name}</b> · {a.contact_name} {a.phone} · balance {money(a.balance_cents)} · <i>{a.status}</i></span>
+            <span className="flex flex-wrap items-center gap-2">
+              <span><b>{a.business_name}</b> · {a.contact_name} {a.phone} · balance {money(a.balance_cents)} · <i>{a.status}</i></span>
+              <button className="btn-black py-1 text-sm" onClick={() => showAds(a)}>Ads ({countAds(a.id)})</button>
+            </span>
             <span className="flex gap-2">
               {a.status !== 'approved' && <button className="btn-orange py-2" onClick={() => advStatus(a, 'approved')}>Approve</button>}
               {a.status !== 'suspended' && <button className="btn-outline py-2" onClick={() => advStatus(a, 'suspended')}>Suspend</button>}
@@ -215,10 +228,11 @@ function Ads() {
           </div>
         ))}
       </div>
-      <div className="space-y-3">
-        <h2 className="h2">Ads</h2>
-        {ads.length === 0 && <p className="muted">No ads yet.</p>}
-        {ads.map((a) => (
+      <div id="admin-ads" className="space-y-3">
+        <h2 className="h2">Ads <span className="muted text-base font-normal">({adHits.length})</span></h2>
+        {only && <p className="text-sm">Showing ads for <b>{advName(only)}</b> · <button className="font-bold underline" onClick={() => setOnly(null)}>Show all ads</button></p>}
+        {adHits.length === 0 && <p className="muted">{only ? 'This business has no ads yet.' : t ? `No ads match "${q}".` : 'No ads yet.'}</p>}
+        {adHits.map((a) => (
           <div key={a.id} className="card">
             <p className="font-extrabold">{a.headline} <span className="pill bg-neutral-200 text-neutral-800">{a.ad_type}</span> <span className="pill bg-orange/20">{a.status}</span></p>
             <p className="text-sm">{a.body}</p>
