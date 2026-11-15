@@ -48,7 +48,7 @@ function TagCard({ t, onGive }) {
           {pct < 100 && (
             <div className="grid gap-2">
               <GiftTagTeam t={t} />
-              {onGive && <button type="button" className="btn-outline w-full" onClick={() => onGive(t)}>Give to this tag</button>}
+              {onGive && <button type="button" className="btn-orange w-full" onClick={() => onGive(t)}>Give money to this tag</button>}
             </div>
           )}
         </>
@@ -57,9 +57,11 @@ function TagCard({ t, onGive }) {
   )
 }
 
-function GiveBox({ tag, onClear }) {
+export function GiveBox({ tag, onClear }) {
   const stats = useStats()
-  const [amt, setAmt] = useState(2500)
+  const rest = tag ? Math.max(0, tag.goal_cents - tag.raised_cents) : 0
+  const [amt, setAmt] = useState(rest >= 100 ? rest : 2500)
+  const [other, setOther] = useState('')
   const [name, setName] = useState('')
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState(null)
@@ -70,15 +72,21 @@ function GiveBox({ tag, onClear }) {
   return (
     <div id="give" className="card space-y-3">
       <h2 className="h2">{tag ? `Give to 🎁 ${tag.label}` : 'Give to the Gift Tree'}</h2>
-      {tag ? <p className="text-sm">Your gift goes to this tag first. If it fills up, the rest helps the next tag. <button type="button" className="font-bold underline" onClick={onClear}>Give to the whole tree instead</button></p>
+      {tag ? <p className="text-sm">Your gift goes to this tag first. If it fills up, the rest helps the next tag.{onClear && <> <button type="button" className="font-bold underline" onClick={onClear}>Give to the whole tree instead</button></>}</p>
         : <p className="text-sm">Your gift fills tags in order, top to bottom.</p>}
+      {rest >= 100 && (
+        <button type="button" onClick={() => { setAmt(rest); setOther('') }} className={`w-full py-4 text-lg ${amt === rest && !other ? 'btn-orange' : 'btn-outline'}`}>
+          Pay for the rest of this list: {money(rest)}
+        </button>
+      )}
       <div className="grid grid-cols-4 gap-2">
-        {GIVE.map((a) => <button key={a} type="button" onClick={() => setAmt(a)} className={amt === a ? 'btn-orange py-3' : 'btn-outline py-3'}>${a / 100}</button>)}
+        {GIVE.map((a) => <button key={a} type="button" onClick={() => { setAmt(a); setOther('') }} className={amt === a && !other && a !== rest ? 'btn-orange py-3' : 'btn-outline py-3'}>${a / 100}</button>)}
       </div>
+      <input className="input" inputMode="decimal" placeholder="Other amount ($)" value={other} onChange={(e) => { const v = e.target.value.replace(/[^0-9.]/g, ''); setOther(v); setAmt(Math.round((Number(v) || 0) * 100)) }} />
       <input className="input" placeholder="Your first name (optional, for the thank-you list)" maxLength={40} value={name} onChange={(e) => setName(e.target.value)} />
       <p className="text-sm font-bold">Gift {money(amt)} + card fee {money(withCardFee(amt, stats || {}) - amt)} = {money(withCardFee(amt, stats || {}))}. All {money(amt)} goes to gifts.</p>
       {err && <Notice kind="error">{err}</Notice>}
-      <button type="button" className="btn-orange w-full py-4 text-lg" onClick={give} disabled={busy}>{busy ? 'Opening checkout…' : `Give ${money(amt)}`}</button>
+      <button type="button" className="btn-orange w-full py-4 text-lg" onClick={give} disabled={busy || amt < 100 || amt > 500000}>{busy ? 'Opening checkout…' : `Give ${money(amt)}`}</button>
     </div>
   )
 }
@@ -123,7 +131,7 @@ export default function GiftTree() {
         {done.map((t) => <TagCard key={t.id} t={t} />)}
       </div>
 
-      {d.on && <GiveBox tag={giveTag} onClear={() => setGiveTag(null)} />}
+      {d.on && <GiveBox key={giveTag?.id || "all"} tag={giveTag} onClear={() => setGiveTag(null)} />}
 
       {d.on && (
         <div className="card space-y-3">
@@ -170,7 +178,23 @@ export function GiftTreeScan() {
           <p className="mt-1 text-sm font-bold">{money(next.raised_cents)} of {money(next.goal_cents)}</p>
         </div>
       )}
-      <Link to="/gifttree" className="btn-orange block w-full py-4 text-lg">See the wish lists</Link>
+      {t?.on && next && next.status === 'open' && next.raised_cents < next.goal_cents && (
+        <div className="text-left">
+          <GiveBox tag={next} />
+          {next.items?.length > 0 && (
+            <div className="card mt-3 space-y-2">
+              <p className="font-bold">What's on this list</p>
+              {next.items.map((it, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <img src={it.image} alt={it.name} className="h-14 w-14 flex-none rounded-lg object-cover" loading="lazy" />
+                  <p className="text-sm"><b>{it.name}</b>{it.note ? ` (${it.note})` : ''} · {money(it.price_cents)}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+      <Link to="/gifttree" className="btn-outline block w-full py-4 text-lg">See all the wish lists</Link>
       <p className="muted text-xs">Do not use your phone while driving.</p>
     </div>
   )
