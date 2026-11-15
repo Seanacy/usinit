@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
           ? { 0: { quantity: 1, price_data: { currency: "usd", unit_amount: amt, product_data: { name: `Tip for ${h.first_name}` } } }, 1: feeLine(amt) }
           : { 0: { quantity: 1, price_data: { currency: "usd", unit_amount: amt, product_data: { name: `Tip for ${h.first_name}` } } } },
         metadata: { kind: "tip", holder_id: h.id, scan_id: body.scan_id ?? "", base_cents: amt, fee_on_top: s.tip_fee_model === "added_on_top" ? "1" : "0" },
-        success_url: `${site}/thanks?type=tip&name=${encodeURIComponent(h.first_name)}`,
+        success_url: `${site}/thanks?type=tip&name=${encodeURIComponent(h.first_name)}&sid={CHECKOUT_SESSION_ID}`,
         cancel_url: `${site}/s/${body.holder_code}`,
       };
     } else if (kind === "gift") {
@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
           ? { 0: { quantity: 1, price_data: { currency: "usd", unit_amount: amt, product_data: { name: "Us In It Community Fund gift" } } }, 1: feeLine(amt) }
           : { 0: { quantity: 1, price_data: { currency: "usd", unit_amount: amt, product_data: { name: "Us In It Community Fund gift" } } } },
         metadata: { kind: "gift", donor_name: String(body.donor_name ?? "").slice(0, 40), base_cents: amt, fee_on_top: s.gift_fee_on_top !== false ? "1" : "0" },
-        success_url: `${site}/thanks?type=gift`,
+        success_url: `${site}/thanks?type=gift&sid={CHECKOUT_SESSION_ID}`,
         cancel_url: `${site}/fund`,
       };
     } else if (kind === "supporter") {
@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
           line_items: { 0: { quantity: 1, price_data: { currency: "usd", unit_amount: amt, recurring: { interval: "week" }, product_data: { name: `Us In It Founding Supporter: $${amt / 100}/week for ${weeks} weeks` } } } },
           metadata: { kind: "supporter", plan_id: plan!.id },
           subscription_data: { metadata: { kind: "supporter", plan_id: plan!.id, weeks } },
-          success_url: `${site}/thanks?type=supporter`,
+          success_url: `${site}/thanks?type=supporter&sid={CHECKOUT_SESSION_ID}`,
           cancel_url: `${site}/support`,
         };
       } else {
@@ -83,7 +83,7 @@ Deno.serve(async (req) => {
           mode: "payment",
           line_items: { 0: { quantity: 1, price_data: { currency: "usd", unit_amount: amt, product_data: { name: "Us In It Founding Supporter (one-time)" } } } },
           metadata: { kind: "supporter", plan_id: plan!.id },
-          success_url: `${site}/thanks?type=supporter`,
+          success_url: `${site}/thanks?type=supporter&sid={CHECKOUT_SESSION_ID}`,
           cancel_url: `${site}/support`,
         };
       }

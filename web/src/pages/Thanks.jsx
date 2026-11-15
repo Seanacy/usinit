@@ -1,4 +1,5 @@
 import { Link, useSearchParams } from 'react-router-dom'
+import ImInClaim from '../components/ImInClaim'
 
 export default function Thanks() {
   const [p] = useSearchParams()
@@ -18,6 +19,7 @@ export default function Thanks() {
     <div className="mx-auto max-w-md px-4 py-16 text-center">
       <h1 className="h1">{title}</h1>
       <p className="muted mt-3">A receipt is on its way to your email.</p>
+      {['tip', 'gift', 'supporter'].includes(type) && p.get('sid') && <ImInClaim kind="give" sid={p.get('sid')} />}
       <button className="btn-orange mt-6 w-full" onClick={share}>Share Us In It</button>
       <Link to="/" className="btn-outline mt-3 w-full">Back to home</Link>
     </div>

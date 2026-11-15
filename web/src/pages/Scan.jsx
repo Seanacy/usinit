@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { deviceId, money, startCheckout, supabase, useStats, withCardFee } from '../lib/supabase'
 import { recordScan } from '../lib/impact'
+import ImInClaim from '../components/ImInClaim'
 import { CampaignCard } from './Schools'
 import { Notice, Spinner } from '../components/Layout'
 import Support from './Support'
@@ -264,6 +265,7 @@ export default function Scan() {
             <p className="text-3xl font-extrabold">Thank you for scanning. 🧡</p>
           )}
           {impact && <ImpactCard impact={impact} />}
+          {res?.verified && <ImInClaim kind="scan" />}
           <button className="btn-black mt-6 w-full" onClick={() => { setStep('next'); setPanel('meet') }}>See {name}'s story</button>
           <p className="muted mt-6 text-xs">Do not use your phone while driving.</p>
         </div>
