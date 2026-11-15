@@ -4,6 +4,7 @@ import { money, supabase, uploadPhoto, useSession } from '../lib/supabase'
 import AuthBox from '../components/AuthBox'
 import { Notice, Spinner } from '../components/Layout'
 import Printables, { scanUrl, useQR } from '../components/Printables'
+import { QR_STYLES } from '../lib/qrstyle'
 import { HolderShares } from './Booking'
 import { HolderDigital } from './Digital'
 import GiftCashout from '../components/GiftCashout'
@@ -233,11 +234,39 @@ function TodayIm({ h, reload }) {
   )
 }
 
+function QRStylePicker({ h, reload }) {
+  const [open, setOpen] = useState(false)
+  const [busy, setBusy] = useState(false)
+  async function pick(style) {
+    setBusy(true)
+    await supabase.rpc('set_my_qr_style', { p_style: style })
+    setBusy(false); setOpen(false); reload()
+  }
+  if (!open) return <button type="button" className="btn-outline w-full" onClick={() => setOpen(true)}>{h.qr_style ? 'Change the picture in my QR code' : 'Add a picture to my QR code'}</button>
+  return (
+    <div className="card space-y-3">
+      <p className="font-bold">Pick a picture for the middle of your QR code</p>
+      <p className="muted text-sm">It shows on your code, signs, vest, and wallet card. Your code still scans the same. If you already printed signs, print new ones to show the picture.</p>
+      <div className="grid grid-cols-4 gap-2">
+        {QR_STYLES.map(([k, e, label]) => (
+          <button key={k} type="button" disabled={busy} onClick={() => pick(k)} className={`rounded-xl border-2 p-2 text-center ${h.qr_style === k ? 'border-orange' : 'border-neutral-200 dark:border-neutral-700'}`}>
+            <span className="block text-3xl">{e}</span><span className="text-xs font-bold">{label}</span>
+          </button>
+        ))}
+      </div>
+      <div className="flex gap-2">
+        {h.qr_style && <button type="button" className="btn-outline flex-1" disabled={busy} onClick={() => pick(null)}>No picture</button>}
+        <button type="button" className="btn-outline flex-1" onClick={() => setOpen(false)}>Cancel</button>
+      </div>
+    </div>
+  )
+}
+
 function Dashboard({ d, session, reload }) {
   const h = d.holder
   const [edit, setEdit] = useState(false)
   const [print, setPrint] = useState(false)
-  const qr = useQR(h.holder_code ? scanUrl(h.holder_code) : 'https://usinit.com')
+  const qr = useQR(h.holder_code ? scanUrl(h.holder_code) : 'https://usinit.com', h.qr_style)
   if (edit) return <ProfileForm session={session} existing={h} onSaved={() => { setEdit(false); reload() }} />
   if (print) return <div><button className="no-print mb-4 font-bold underline" onClick={() => setPrint(false)}>← Back to dashboard</button><Printables holder={h} /></div>
 
@@ -264,6 +293,7 @@ function Dashboard({ d, session, reload }) {
           <Stars code={h.holder_code} />
         </div>
       </div>
+      <QRStylePicker h={h} reload={reload} />
       <div className="grid grid-cols-2 gap-3">
         <div className="card"><p className="muted text-sm">Balance</p><p className="text-3xl font-extrabold">{money(d.balance_cents)}</p></div>
         <div className="card"><p className="muted text-sm">Earned today</p><p className="text-3xl font-extrabold">{money(d.earned_today_cents)}</p></div>

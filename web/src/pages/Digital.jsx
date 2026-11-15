@@ -31,7 +31,8 @@ export function DigitalScan() {
   const { code } = useParams()
   const [r, setR] = useState(undefined)
   useEffect(() => {
-    supabase.rpc('process_digital_scan', { p_code: code, p_device: deviceId() }).then(({ data }) => {
+    const geo = fetch('/api/geo').then((r) => r.json()).then((j) => j.token || null).catch(() => null)
+    geo.then((p_geo) => supabase.rpc('process_digital_scan', { p_code: code, p_device: deviceId(), p_geo })).then(({ data }) => {
       setR(data || { error: 'not_found' })
       if (data?.who?.code) recordScan(data.who.code)
     })

@@ -25,7 +25,7 @@ function AdForm({ advertiser, existing, prefill, onDone }) {
     ad_type: e0.ad_type || 'standard', headline: e0.headline || '', body: e0.body || '', image_url: e0.image_url || '',
     button_text: e0.button_text ?? 'Learn more', button_url: e0.button_url || '',
     champion_scans: e0.champion_scans || false, crowd_types: e0.crowd_types || [],
-    gift_tree: e0.gift_tree || false, digital_on: e0.digital_on || false, digital_kinds: e0.digital_kinds || ['holder'], digital_cap: existing ? (e0.digital_daily_cap_cents / 100) : 10,
+    gift_tree: e0.gift_tree || false, digital_on: e0.digital_on || false, digital_kinds: e0.digital_kinds || ['holder'], digital_cap: existing ? (e0.digital_daily_cap_cents / 100) : 10, digital_mn_only: e0.digital_mn_only || false,
     days: e0.days || [0, 1, 2, 3, 4, 5, 6], start_hour: e0.start_hour ?? 7, end_hour: e0.end_hour ?? 21,
     daily_budget: existing ? e0.daily_budget_cents / 100 : 10,
     event_name: e0.event_name || '', event_start: toLocalInput(e0.event_start), event_end: toLocalInput(e0.event_end), event_address: e0.event_address || '', ticket_url: e0.ticket_url || '',
@@ -56,6 +56,8 @@ function AdForm({ advertiser, existing, prefill, onDone }) {
     const row = {
       advertiser_id: advertiser.id, ad_type: f.ad_type, headline: f.headline.trim(), body: f.body.trim() || null, image_url: f.image_url.trim() || null,
       button_text: f.button_text.trim() || null, button_url: f.button_url.trim() || null, zone_ids: zoneIds, gift_tree: f.gift_tree,
+      champion_scans: f.champion_scans, crowd_types: f.champion_scans ? f.crowd_types : [],
+      digital_on: f.digital_on, digital_kinds: f.digital_kinds, digital_daily_cap_cents: Math.round(Number(f.digital_cap || 0) * 100), digital_mn_only: f.digital_on && f.digital_mn_only,
       days: f.days, start_hour: Number(f.start_hour), end_hour: Number(f.end_hour), daily_budget_cents: Math.round(Number(f.daily_budget) * 100),
     }
     if (f.ad_type === 'event') Object.assign(row, { event_name: f.event_name, event_start: new Date(f.event_start).toISOString(), event_end: new Date(f.event_end).toISOString(), event_address: f.event_address || null, ticket_url: f.ticket_url || null })
@@ -153,6 +155,8 @@ function AdForm({ advertiser, existing, prefill, onDone }) {
                   className={`rounded-lg px-3 py-2 text-sm font-bold ${f.digital_kinds.includes(k) ? 'bg-orange text-ink' : 'border border-neutral-300 dark:border-neutral-600'}`}>{l}</button>
               ))}
             </div>
+            <label className="flex items-start gap-3 text-sm"><input type="checkbox" className="mt-1 h-5 w-5 accent-[#FF6A00]" checked={f.digital_mn_only} onChange={(e) => setF({ ...f, digital_mn_only: e.target.checked })} />
+              <span><b>Minnesota viewers only</b><span className="muted block">You only pay for online scans from people in Minnesota. Scans from other states don't show your ad and don't cost you anything.</span></span></label>
             <label className="text-sm font-bold">Online daily max ($)<input className="input w-32" inputMode="decimal" value={f.digital_cap} onChange={(e) => setF({ ...f, digital_cap: e.target.value.replace(/[^0-9.]/g, '') })} /></label>
           </div>
         )}

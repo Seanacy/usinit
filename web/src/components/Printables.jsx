@@ -1,13 +1,11 @@
 import { useEffect, useState } from 'react'
-import QRCode from 'qrcode'
+import { makeQR } from '../lib/qrstyle'
 import { IS_FINAL_DOMAIN, SITE_URL } from '../lib/supabase'
 import { Notice } from './Layout'
 
-export function useQR(url) {
+export function useQR(url, style) {
   const [src, setSrc] = useState(null)
-  useEffect(() => {
-    QRCode.toDataURL(url, { errorCorrectionLevel: 'H', margin: 1, width: 900, color: { dark: '#111111', light: '#FFFFFF' } }).then(setSrc)
-  }, [url])
+  useEffect(() => { makeQR(url, style).then(setSrc) }, [url, style])
   return src
 }
 
@@ -125,7 +123,7 @@ export function Verified({ className = '' }) {
 
 export default function Printables({ holder, champCode, crowd }) {
   const url = scanUrl(holder.holder_code) + (champCode ? `?c=${champCode}&t=${crowd || 'other'}` : '')
-  const qr = useQR(url)
+  const qr = useQR(url, champCode ? null : holder.qr_style)
   const [kind, setKind] = useState('sign')
   const [showName, setShowName] = useState(false)
   const label = showName && holder.first_name ? `${holder.first_name} · #${holder.holder_code}` : `#${holder.holder_code}`
