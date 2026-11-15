@@ -16,6 +16,7 @@ import Support from './pages/Support'
 import SupportQR from './pages/SupportQR'
 import SupportPrint from './pages/SupportPrint'
 import News, { NewsPost } from './pages/News'
+import Spotlight from './pages/Spotlight'
 import Fund from './pages/Fund'
 import Thanks from './pages/Thanks'
 import { Login, Signup } from './pages/Start'
@@ -73,6 +74,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/support/print" element={<SupportPrint />} />
           <Route path="/fund" element={<Fund />} />
           <Route path="/news" element={<News />} />
+          <Route path="/spotlight" element={<Spotlight />} />
           <Route path="/news/:id" element={<NewsPost />} />
           <Route path="/thanks" element={<Thanks />} />
           <Route path="/holder" element={<Suspense fallback={<Spinner />}><Holder /></Suspense>} />

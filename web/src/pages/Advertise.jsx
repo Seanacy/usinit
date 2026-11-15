@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { money, startCheckout, supabase, useSession, useStats } from '../lib/supabase'
 import AuthBox from '../components/AuthBox'
 import ZoneManager from '../components/ZoneManager'
@@ -9,6 +9,7 @@ import StripePayouts from '../components/StripePayouts'
 import { BookingManager, BusinessShares } from './Booking'
 import { describeRadius } from '../components/MapPicker'
 import { Notice, Spinner } from '../components/Layout'
+import SpotlightPanel from '../components/SpotlightPanel'
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
@@ -18,8 +19,8 @@ const toLocalInput = (iso) => {
   return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
 }
 
-function AdForm({ advertiser, existing, onDone }) {
-  const e0 = existing || {}
+function AdForm({ advertiser, existing, prefill, onDone }) {
+  const e0 = existing || prefill || {}
   const [f, setF] = useState({
     ad_type: e0.ad_type || 'standard', headline: e0.headline || '', body: e0.body || '', image_url: e0.image_url || '',
     button_text: e0.button_text ?? 'Learn more', button_url: e0.button_url || '',
@@ -59,17 +60,19 @@ function AdForm({ advertiser, existing, onDone }) {
     }
     if (f.ad_type === 'event') Object.assign(row, { event_name: f.event_name, event_start: new Date(f.event_start).toISOString(), event_end: new Date(f.event_end).toISOString(), event_address: f.event_address || null, ticket_url: f.ticket_url || null })
     if (f.ad_type === 'political') Object.assign(row, { political_committee: f.political_committee, political_address: f.political_address, political_registration: f.political_registration || null })
+    let newId = null
     const { error } = existing
       ? await supabase.from('ads').update((({ advertiser_id, ...rest }) => rest)(row)).eq('id', existing.id)
-      : await supabase.from('ads').insert(row)
+      : await supabase.from('ads').insert(row).select('id').single().then((r) => { newId = r.data?.id; return r })
     setBusy(false)
     if (error) return setErr(error.message)
-    onDone()
+    onDone(newId)
   }
 
   return (
     <form onSubmit={save} className="card space-y-4">
-      <h2 className="h2">{existing ? 'Edit ad' : 'New ad'}</h2>
+      <h2 className="h2">{existing ? 'Edit ad' : prefill ? '🚀 Boost your spotlight' : 'New ad'}</h2>
+      {prefill && <Notice>We filled this in from your spotlight. Pick the zone where it should show and your daily max, then save. Ads are shorter than spotlights, so check your headline (60 letters) and line of text (150 letters).</Notice>}
       {existing && <Notice>Changing the words, picture, or link sends the ad back for a quick approval. Changing the zones, days, hours, or daily max does not.</Notice>}
       <div className="grid grid-cols-3 gap-2">
         {[['standard', 'Business'], ['event', 'Event'], ['political', 'Political']].map(([k, l]) => (
@@ -168,7 +171,7 @@ function AdForm({ advertiser, existing, onDone }) {
       </div>
       {err && <Notice kind="error">{err}</Notice>}
       <div className="grid grid-cols-2 gap-2">
-        <button type="button" className="btn-outline" onClick={onDone}>Cancel</button>
+        <button type="button" className="btn-outline" onClick={() => onDone(null)}>Cancel</button>
         <button className="btn-orange" disabled={busy}>{busy ? 'Saving…' : existing ? 'Save changes' : 'Send for approval'}</button>
       </div>
     </form>
@@ -210,6 +213,7 @@ export default function Advertise() {
   const [ads, setAds] = useState([])
   const [creating, setCreating] = useState(false)
   const [editingAd, setEditingAd] = useState(null)
+  const [boosting, setBoosting] = useState(null)
   const [editingBiz, setEditingBiz] = useState(false)
   const [managingZones, setManagingZones] = useState(false)
   const [zoneCount, setZoneCount] = useState(0)
@@ -243,6 +247,13 @@ export default function Advertise() {
     <div className="mx-auto max-w-2xl px-4 py-8">
       <h1 className="h1">Advertise with Us In It</h1>
       <p className="muted mt-2">Draw the zone around your business. Pay {money(price)} only for real scans by real people standing in your zone. No bidding, same price for everyone.</p>
+      {(session === null || adv === null) && (
+        <Link to="/spotlight" className="mt-5 block rounded-2xl border-2 border-orange p-4">
+          <p className="text-xs font-bold uppercase tracking-wide text-orange">New · Free</p>
+          <p className="text-lg font-extrabold">Get your business in the Community Spotlight</p>
+          <p className="muted text-sm">Show off a special product or service for free. Boost it later if you want more views. See how →</p>
+        </Link>
+      )}
       <div className="mt-6">
         {session === undefined ? <Spinner /> : !session ? <AuthBox title="Business account" intro="Create an account to set up your ads." redirectPath="/advertise" role="business" />
           : adv === undefined ? <Spinner />
@@ -265,10 +276,18 @@ export default function Advertise() {
               <ZoneManager advertiser={adv} />
               <button className="btn-outline w-full" onClick={() => { setManagingZones(false); load() }}>← Back to my ads</button>
             </div>
-          ) : (creating || editingAd) ? <AdForm advertiser={adv} existing={editingAd} onDone={() => { setCreating(false); setEditingAd(null); load() }} /> : (
+          ) : (creating || editingAd || boosting) ? (
+            <AdForm advertiser={adv} existing={editingAd}
+              prefill={boosting ? { headline: (boosting.headline || '').slice(0, 60), body: (boosting.body || '').slice(0, 150), image_url: boosting.image_url || '', button_text: boosting.button_text || 'Learn more', button_url: boosting.button_url || '' } : null}
+              onDone={async (newId) => {
+                if (boosting && newId) await supabase.rpc('link_spotlight_boost', { p_id: boosting.id, p_ad: newId })
+                setCreating(false); setEditingAd(null); setBoosting(null); load()
+              }} />
+          ) : (
             <div className="space-y-4">
               {params.get('paid') && <Notice kind="ok">Payment received. Your balance updates in a few seconds. Refresh if you don't see it.</Notice>}
               {adv.status === 'pending' && <Notice>Your business account is waiting for approval. You can add funds and create ads now. They start running once approved.</Notice>}
+              <SpotlightPanel adv={adv} onBoost={(s) => { setBoosting(s); window.scrollTo({ top: 0, behavior: 'smooth' }) }} />
               <div className="grid grid-cols-2 gap-3">
                 <div className="card"><p className="muted text-sm">Ad balance</p><p className="text-3xl font-extrabold">{money(adv.balance_cents)}</p><p className="muted text-xs">≈ {Math.floor(adv.balance_cents / price)} scans</p></div>
                 <div className="card"><p className="muted text-sm">Total scans</p><p className="text-3xl font-extrabold">{ads.reduce((a, x) => a + x.views, 0)}</p><p className="muted text-xs">{ads.reduce((a, x) => a + x.clicks, 0)} button taps (ads + outreach)</p></div>
