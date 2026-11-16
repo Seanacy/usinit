@@ -15,6 +15,9 @@ export default function Support({ embedded = false, onBack }) {
   const [amount, setAmount] = useState(500)
   const [weeks, setWeeks] = useState(8)
   const [once, setOnce] = useState(5000)
+  const [custom, setCustom] = useState(false)
+  const [other, setOther] = useState('')
+  const onceBad = mode === 'once' && custom && (once < 500 || once > 1000000)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState(null)
   const price = stats?.price_per_scan_cents || 50
@@ -59,13 +62,26 @@ export default function Support({ embedded = false, onBack }) {
         <div className="mt-6">
           <p className="label">Give once</p>
           <div className="grid grid-cols-3 gap-2">
-            {onceAmts.map((a) => <button key={a} className={choice(once === a)} onClick={() => setOnce(a)}>${a / 100}</button>)}
+            {onceAmts.map((a) => <button key={a} className={choice(!custom && once === a)} onClick={() => { setCustom(false); setOnce(a) }}>${a / 100}</button>)}
           </div>
+          <button className={`${choice(custom)} mt-2 w-full`} onClick={() => { setCustom(true); setOnce(Math.round((Number(other) || 0) * 100)) }}>
+            A different amount
+          </button>
+          {custom && (
+            <div className="mt-3">
+              <label className="label" htmlFor="other-amt">Type your amount ($5 to $10,000)</label>
+              <div className="flex items-center gap-2 rounded-xl border-2 border-orange px-4 py-3">
+                <span className="text-2xl font-extrabold">$</span>
+                <input id="other-amt" autoFocus inputMode="numeric" className="w-full bg-transparent text-2xl font-extrabold outline-none" placeholder="25"
+                  value={other} onChange={(e) => { const v = e.target.value.replace(/[^0-9]/g, '').slice(0, 5); setOther(v); setOnce(Number(v || 0) * 100) }} />
+              </div>
+            </div>
+          )}
         </div>
       )}
 
-      <button className="btn-orange mt-6 w-full py-4 text-lg" onClick={pay} disabled={busy}>
-        {busy ? 'Opening checkout…' : mode === 'weekly' ? `Pay ${money(amount)} a week` : `Pay ${money(once)} once`}
+      <button className="btn-orange mt-6 w-full py-4 text-lg" onClick={pay} disabled={busy || onceBad}>
+        {busy ? 'Opening checkout…' : mode === 'weekly' ? `Pay ${money(amount)} a week` : onceBad ? 'Type $5 to $10,000' : `Pay ${money(once)} once`}
       </button>
       <p className="muted mt-2 text-center text-sm">Apple Pay, Google Pay, Cash App Pay, or card. No account needed.</p>
       {err && <div className="mt-3"><Notice kind="error">{err}</Notice></div>}

@@ -91,7 +91,9 @@ Deno.serve(async (req) => {
           cancel_url: `${site}/support`,
         };
       } else {
-        if (!once.includes(amt)) return json({ error: "Pick an amount." }, 400);
+        // Preset amounts, or any whole-dollar amount from $5 to $10,000.
+        const customOk = Number.isInteger(amt) && amt % 100 === 0 && amt >= 500 && amt <= 1000000;
+        if (!once.includes(amt) && !customOk) return json({ error: "Pick an amount from $5 to $10,000." }, 400);
         const { data: plan } = await admin.from("supporter_plans").insert({ plan_type: "one_time", amount_cents: amt, referral_code: ref || null }).select("id").single();
         session = {
           mode: "payment",
