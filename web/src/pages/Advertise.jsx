@@ -254,10 +254,13 @@ export default function Advertise() {
       <h1 className="h1">Advertise with Us In It</h1>
       <p className="muted mt-2">Draw the zone around your business. Pay {money(price)} only for real scans by real people standing in your zone. No bidding, same price for everyone.</p>
       {(session === null || adv === null) && (
-        <Link to="/spotlight" className="mt-5 block rounded-2xl border-2 border-orange p-4">
-          <p className="text-xs font-bold uppercase tracking-wide text-orange">New · Free</p>
-          <p className="text-lg font-extrabold">Get your business in the Community Spotlight</p>
-          <p className="muted text-sm">Show off a special product or service for free. Boost it later if you want more views. See how →</p>
+        <Link to="/spotlight" className="group mt-5 flex flex-col gap-3 rounded-2xl border-2 border-orange bg-orange/10 p-4 shadow-sm transition hover:-translate-y-0.5 hover:bg-orange/20 hover:shadow-md sm:flex-row sm:items-center">
+          <div className="flex-1">
+            <p className="text-xs font-bold uppercase tracking-wide text-orange">New · Free</p>
+            <p className="text-lg font-extrabold">Get your business in the Community Spotlight</p>
+            <p className="muted text-sm">Show off a special product or service for free. Boost it later if you want more views.</p>
+          </div>
+          <span className="inline-flex shrink-0 items-center justify-center rounded-xl bg-orange px-5 py-3 font-extrabold text-black group-hover:brightness-110">See how →</span>
         </Link>
       )}
       <div className="mt-6">
