@@ -30,25 +30,21 @@ export async function makeTwoPost(kind, url) {
   ctx.textAlign = 'center'
 
   // Headline
-  y += story ? 250 : 145
+  y += story ? 270 : 160
   ctx.fillStyle = '#FFFFFF'; ctx.font = font(900, story ? 170 : 130)
   ctx.fillText('$2.', w / 2, y)
   y += story ? 160 : 120
   ctx.fillStyle = '#FF6A00'; ctx.font = font(900, story ? 130 : 108)
   ctx.fillText('4 scans paid.', w / 2, y)
-  y += story ? 110 : 82
-  ctx.fillStyle = '#FFFFFF'; ctx.font = font(900, story ? 84 : 62)
-  ctx.fillText("That's it.", w / 2, y)
-
   // Subline
-  y += story ? 90 : 58
+  y += story ? 120 : 85
   ctx.fillStyle = '#DDDDDD'; ctx.font = font(700, story ? 44 : 34)
   ctx.fillText("It's small on purpose.", w / 2, y)
   y += story ? 58 : 42
   ctx.fillText('When a lot of people give $2, it adds up.', w / 2, y)
 
   // QR on a white card
-  const q = story ? 520 : 290
+  const q = story ? 560 : 320
   y += story ? 80 : 46
   const qx = w / 2 - q / 2
   ctx.fillStyle = '#FFFFFF'
