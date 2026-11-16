@@ -55,6 +55,7 @@ function MoreMenu({ session }) {
       </button>
       {open && (
         <div className="absolute right-0 mt-2 w-56 space-y-1 rounded-xl border border-neutral-800 bg-ink p-2 shadow-xl">
+          <NavLink to="/how" className={item}>How it works</NavLink>
           <NavLink to="/fund" className={item}>Community Fund</NavLink>
           <NavLink to="/directory" className={item}>Directory</NavLink>
           <NavLink to="/news" className={item}>News</NavLink>
@@ -102,6 +103,7 @@ export default function Layout() {
             <NavLink to="/support" className={link}>Support the launch</NavLink>
             {home !== '/advertise' && <NavLink to="/advertise" className={link}>Advertise with us</NavLink>}
             {home !== '/holder' && <NavLink to="/holder" className={link}>Holders: sign up or log in</NavLink>}
+            <NavLink to="/how" className={link}>How it works</NavLink>
             <NavLink to="/fund" className={link}>Community Fund</NavLink>
             <NavLink to="/directory" className={link}>Holder directory</NavLink>
             <NavLink to="/gifttree" className={link}>Gift Tree 🎄</NavLink>
@@ -118,6 +120,7 @@ export default function Layout() {
         <div className="mx-auto flex max-w-5xl flex-col gap-3 px-4 py-8 text-sm sm:flex-row sm:items-center sm:justify-between">
           <div>© {new Date().getFullYear()} Us In It · A Many Ways Up LLC project · Minneapolis</div>
           <div className="flex flex-wrap gap-4">
+            <Link to="/how" className="hover:text-white">How it works</Link>
             <Link to="/about" className="hover:text-white">About Us</Link>
             <Link to="/terms" className="hover:text-white">Terms</Link>
             <Link to="/privacy" className="hover:text-white">Privacy</Link>

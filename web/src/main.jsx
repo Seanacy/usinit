@@ -17,6 +17,7 @@ import SupportQR from './pages/SupportQR'
 import SupportPrint from './pages/SupportPrint'
 import News, { NewsPost } from './pages/News'
 import Spotlight from './pages/Spotlight'
+import HowItWorks from './pages/HowItWorks'
 import { ImInBadge } from './pages/ImIn'
 import GiftTree, { GiftTreeScan } from './pages/GiftTree'
 import GiftSignup from './pages/GiftSignup'
@@ -79,6 +80,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/fund" element={<Fund />} />
           <Route path="/news" element={<News />} />
           <Route path="/spotlight" element={<Spotlight />} />
+          <Route path="/how" element={<HowItWorks />} />
           <Route path="/about" element={<About />} />
           <Route path="/gifttree" element={<GiftTree />} />
           <Route path="/gifttree/signup" element={<GiftSignup />} />

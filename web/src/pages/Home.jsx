@@ -56,6 +56,7 @@ export default function Home() {
             <Link to="/support" className="btn bg-white text-ink hover:bg-neutral-200">Support the launch</Link>
             <Link to="/holder" className="btn border-2 border-white text-white hover:bg-neutral-800">Become a holder</Link>
           </div>
+          <Link to="/how" className="mt-4 inline-block font-bold text-white underline hover:text-orange">New here? See how it works →</Link>
         </div>
       </section>
 
