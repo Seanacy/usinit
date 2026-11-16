@@ -59,7 +59,9 @@ Deno.serve(async (req) => {
         const onTop = m.fee_on_top === "1";
         const net = onTop ? Number(m.base_cents) : gross - stripeFee(gross);
         const fee = gross - net;
-        const platform = Math.round((net * Number(s.fund_gift_fee_pct ?? 10)) / 100);
+        // The $2 Drop sends fund_pct "0" so the whole $2 pays 4 scans.
+        const pctCut = m.fund_pct !== undefined && m.fund_pct !== "" ? Number(m.fund_pct) : Number(s.fund_gift_fee_pct ?? 10);
+        const platform = Math.round((net * pctCut) / 100);
         const { error } = await db.from("community_fund_transactions").insert({ amount_cents: net - platform, source: "public_gift", gross_cents: gross, fee_cents: fee, platform_cents: platform, donor_name: m.donor_name || null, stripe_ref: obj.id });
         if (!dup(error)) await db.from("platform_ledger").insert({ amount_cents: platform, source: "gift_fee" });
       } else if (m.kind === "gift_tree") {

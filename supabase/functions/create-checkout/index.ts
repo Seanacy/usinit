@@ -60,6 +60,30 @@ Deno.serve(async (req) => {
         success_url: `${site}/thanks?type=gift&sid={CHECKOUT_SESSION_ID}`,
         cancel_url: `${site}/fund`,
       };
+    } else if (kind === "two") {
+      // The $2 Drop: exactly $2 to the Community Fund, card fee added on top, with anti-fraud limits.
+      const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || "unknown";
+      const hashBuf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`usinit2:${ip}`));
+      const ipHash = Array.from(new Uint8Array(hashBuf)).map((b) => b.toString(16).padStart(2, "0")).join("");
+      const device = String(body.device ?? "").slice(0, 64) || null;
+      const since = new Date(Date.now() - 86400000).toISOString();
+      const [{ count: ipCount }, { count: devCount }, { count: allCount }] = await Promise.all([
+        admin.from("two_dollar_attempts").select("id", { count: "exact", head: true }).eq("ip_hash", ipHash).gte("created_at", since),
+        device ? admin.from("two_dollar_attempts").select("id", { count: "exact", head: true }).eq("device", device).gte("created_at", since) : Promise.resolve({ count: 0 }),
+        admin.from("two_dollar_attempts").select("id", { count: "exact", head: true }).gte("created_at", since),
+      ]);
+      if ((ipCount ?? 0) >= Number(s.two_dollar_per_ip_day ?? 3) || (devCount ?? 0) >= Number(s.two_dollar_per_device_day ?? 3))
+        return json({ error: "Thank you! You've hit today's limit for $2 gifts. Come back tomorrow, or give any amount on the Support page." }, 429);
+      if ((allCount ?? 0) >= Number(s.two_dollar_global_day ?? 1000))
+        return json({ error: "We've hit today's limit for $2 gifts. Please try again tomorrow." }, 429);
+      await admin.from("two_dollar_attempts").insert({ ip_hash: ipHash, device });
+      session = {
+        mode: "payment",
+        line_items: { 0: { quantity: 1, price_data: { currency: "usd", unit_amount: 200, product_data: { name: "The $2 Drop: 4 paid scans for people on our streets" } } }, 1: feeLine(200) },
+        metadata: { kind: "gift", donor_name: "", base_cents: 200, fee_on_top: "1", fund_pct: "0", source: "two_dollar" },
+        success_url: `${site}/thanks?type=gift&sid={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${site}/2`,
+      };
     } else if (kind === "gift_tree") {
       if (!(amt >= 100 && amt <= 500000)) return json({ error: "Gift must be between $1 and $5,000." }, 400);
       let tagId = "";
