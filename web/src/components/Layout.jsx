@@ -59,6 +59,7 @@ function MoreMenu({ session }) {
           <NavLink to="/fund" className={item}>Community Fund</NavLink>
           <NavLink to="/directory" className={item}>Directory</NavLink>
           <NavLink to="/news" className={item}>News</NavLink>
+          <NavLink to="/contact" className={item}>Contact</NavLink>
           <div className="border-t border-neutral-800 pt-1"><ThemeToggle wide /></div>
           {session && <button type="button" onClick={() => supabase.auth.signOut()} className="block w-full rounded-lg px-3 py-2 text-left font-bold text-neutral-300 hover:bg-neutral-800">Log out</button>}
         </div>
@@ -108,6 +109,7 @@ export default function Layout() {
             <NavLink to="/directory" className={link}>Holder directory</NavLink>
             <NavLink to="/gifttree" className={link}>Gift Tree 🎄</NavLink>
             <NavLink to="/news" className={link}>News and thoughts</NavLink>
+            <NavLink to="/contact" className={link}>Contact us</NavLink>
             {session && <NavLink to="/account" className={link}>My account</NavLink>}
             {session && <button onClick={() => supabase.auth.signOut()} className="block px-3 py-2 font-bold text-neutral-300">Log out</button>}
             {session === null && <NavLink to="/login" className={link}>Log in or sign up</NavLink>}
@@ -122,6 +124,7 @@ export default function Layout() {
           <div className="flex flex-wrap gap-4">
             <Link to="/how" className="hover:text-white">How it works</Link>
             <Link to="/about" className="hover:text-white">About Us</Link>
+            <Link to="/contact" className="hover:text-white">Contact</Link>
             <Link to="/terms" className="hover:text-white">Terms</Link>
             <Link to="/privacy" className="hover:text-white">Privacy</Link>
             <Link to="/holder-agreement" className="hover:text-white">Holder Agreement</Link>
