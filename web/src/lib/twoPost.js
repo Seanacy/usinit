@@ -30,34 +30,38 @@ export async function makeTwoPost(kind, url) {
   ctx.textAlign = 'center'
 
   // Headline
-  y += story ? 230 : 150
-  ctx.fillStyle = '#FFFFFF'; ctx.font = font(900, story ? 150 : 120)
-  ctx.fillText('$2 = 4', w / 2, y)
-  y += story ? 160 : 125
-  ctx.fillStyle = '#FF6A00'; ctx.fillText('paychecks.', w / 2, y)
+  y += story ? 250 : 145
+  ctx.fillStyle = '#FFFFFF'; ctx.font = font(900, story ? 170 : 130)
+  ctx.fillText('$2.', w / 2, y)
+  y += story ? 160 : 120
+  ctx.fillStyle = '#FF6A00'; ctx.font = font(900, story ? 130 : 108)
+  ctx.fillText('4 scans paid.', w / 2, y)
+  y += story ? 110 : 82
+  ctx.fillStyle = '#FFFFFF'; ctx.font = font(900, story ? 84 : 62)
+  ctx.fillText("That's it.", w / 2, y)
 
   // Subline
-  y += story ? 110 : 75
-  ctx.fillStyle = '#DDDDDD'; ctx.font = font(700, story ? 48 : 38)
-  ctx.fillText('Give $2. 4 people on our streets', w / 2, y)
-  y += story ? 62 : 48
-  ctx.fillText('get paid for a scan.', w / 2, y)
+  y += story ? 90 : 58
+  ctx.fillStyle = '#DDDDDD'; ctx.font = font(700, story ? 44 : 34)
+  ctx.fillText("It's small on purpose.", w / 2, y)
+  y += story ? 58 : 42
+  ctx.fillText('When a lot of people give $2, it adds up.', w / 2, y)
 
   // QR on a white card
-  const q = story ? 560 : 330
-  y += story ? 80 : 40
+  const q = story ? 520 : 290
+  y += story ? 80 : 46
   const qx = w / 2 - q / 2
   ctx.fillStyle = '#FFFFFF'
-  ctx.beginPath(); ctx.roundRect(qx - 24, y - 24, q + 48, q + 48, 32); ctx.fill()
+  ctx.beginPath(); ctx.roundRect(qx - 22, y - 22, q + 44, q + 44, 30); ctx.fill()
   const qr = await loadImg(await makeQR(url))
   ctx.drawImage(qr, qx, y, q, q)
-  y += q + (story ? 130 : 95)
+  y += q + (story ? 125 : 82)
 
-  ctx.fillStyle = '#FFFFFF'; ctx.font = font(900, story ? 64 : 48)
+  ctx.fillStyle = '#FFFFFF'; ctx.font = font(900, story ? 64 : 46)
   ctx.fillText('usinit.com/2', w / 2, y)
-  y += story ? 80 : 55
-  ctx.fillStyle = '#FF6A00'; ctx.font = font(800, story ? 44 : 34)
-  ctx.fillText('Not a handout. A paycheck.', w / 2, y)
+  y += story ? 76 : 50
+  ctx.fillStyle = '#FF6A00'; ctx.font = font(800, story ? 42 : 32)
+  ctx.fillText('People on our streets, paid per scan.', w / 2, y)
 
   return await new Promise((res) => c.toBlob(res, 'image/png'))
 }

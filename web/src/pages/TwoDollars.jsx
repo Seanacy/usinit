@@ -7,7 +7,7 @@ import { TWO_SIZES, makeTwoPost } from '../lib/twoPost'
 
 // usinit.com/2 — The $2 Drop: exactly $2 to the Community Fund (card fee added on top)
 export const TWO_URL = 'https://www.usinit.com/2'
-export const TWO_MESSAGE = "$2 = 4 paychecks. Give $2 and 4 people on our streets get paid for a scan. Not a handout. A paycheck. 🧡 usinit.com/2"
+export const TWO_MESSAGE = "$2. 4 scans paid. That's it. It's small on purpose. When a lot of people give $2, it adds up. 🧡 usinit.com/2"
 
 export default function TwoDollars() {
   const [busy, setBusy] = useState(false)
@@ -26,8 +26,8 @@ export default function TwoDollars() {
     <div className="mx-auto max-w-xl space-y-6 px-4 py-8">
       <div className="rounded-3xl bg-ink p-6 text-center text-white">
         <p className="font-bold text-orange">[ The $2 Drop ]</p>
-        <h1 className="mt-2 text-6xl font-black">$2 = 4 paychecks.</h1>
-        <p className="mt-4 text-lg text-neutral-300">Give $2 and 4 people on our streets get paid for a scan. Not a handout. A paycheck.</p>
+        <h1 className="mt-2 text-6xl font-black">$2.<span className="block text-orange">4 scans paid.</span><span className="block text-4xl">That's it.</span></h1>
+        <p className="mt-4 text-lg text-neutral-300">It's small on purpose. When a lot of people give $2, it adds up. Your $2 pays for 4 scans for people on our streets.</p>
       </div>
 
       <button className="btn-orange w-full py-5 text-2xl" onClick={give} disabled={busy}>
@@ -44,7 +44,7 @@ export default function TwoDollars() {
         <button type="button" className="btn-outline w-full" onClick={copy}>{copied ? 'Copied ✓' : 'Copy this message'}</button>
       </div>
 
-      <ShareQR inline url={TWO_URL} title={TWO_MESSAGE} heading="Scan. Give $2. Pay 4 people." />
+      <ShareQR inline url={TWO_URL} title={TWO_MESSAGE} heading="Scan. Give $2. 4 scans paid." />
 
       <p className="muted text-center text-sm">Want to give more? <Link to="/support" className="underline">Go to the Support page</Link>. Us In It is a business run by Many Ways Up LLC. Payments are not tax-deductible.</p>
     </div>
