@@ -10,6 +10,7 @@ import { BookingManager, BusinessShares } from './Booking'
 import { describeRadius } from '../components/MapPicker'
 import { Notice, Spinner } from '../components/Layout'
 import SpotlightPanel from '../components/SpotlightPanel'
+import { getRef } from '../lib/ref'
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
@@ -315,7 +316,7 @@ export default function Advertise() {
     if (!biz.business_name.trim()) return setErr('Add your business name.')
     const { error } = adv
       ? await supabase.from('advertisers').update(biz).eq('id', adv.id)
-      : await supabase.from('advertisers').insert({ ...biz, user_id: session.user.id })
+      : await supabase.from('advertisers').insert({ ...biz, user_id: session.user.id, ref_code: getRef() || null })
     if (error) return setErr(error.message)
     setEditingBiz(false); load()
   }

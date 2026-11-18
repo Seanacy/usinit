@@ -4,11 +4,12 @@ import { SITE_URL, money, startCheckout, useStats } from '../lib/supabase'
 import ShareQR from '../components/ShareQR'
 import { GoalTracker } from './Home'
 import { Notice } from '../components/Layout'
+import { getRef } from '../lib/ref'
 
 export default function Support({ embedded = false, onBack }) {
   const stats = useStats()
   const [params] = useSearchParams()
-  const ref = params.get('ref') || ''
+  const ref = params.get('ref') || getRef()
   const weekly = stats?.settings?.supporter_weekly_amounts || [500, 1000, 2000, 5000]
   const onceAmts = stats?.settings?.supporter_onetime_amounts || [5000, 10000, 20000]
   const [mode, setMode] = useState('weekly')

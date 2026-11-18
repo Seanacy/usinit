@@ -10,6 +10,7 @@ import { HolderDigital } from './Digital'
 import HolderCashout from '../components/HolderCashout'
 import { FIRST, QUESTIONS } from '../lib/questions'
 import { PERSPECTIVES, PERSPECTIVE_DAYS } from '../lib/perspective'
+import { getRef } from '../lib/ref'
 
 function Question({ x, value, onChange }) {
   return (
@@ -49,7 +50,7 @@ function ProfileForm({ session, existing, onSaved }) {
     const row = { ...f, first_name: f.first_name.trim(), answers }
     const q = existing
       ? supabase.from('holders').update(row).eq('id', existing.id)
-      : supabase.from('holders').insert({ ...row, user_id: session.user.id, agreement_accepted_at: new Date().toISOString() })
+      : supabase.from('holders').insert({ ...row, user_id: session.user.id, agreement_accepted_at: new Date().toISOString(), ref_code: getRef() || null })
     const { error } = await q
     setBusy(false)
     if (error) return setErr(error.message)

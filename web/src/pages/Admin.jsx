@@ -14,9 +14,10 @@ import AdminSpotlights from '../components/AdminSpotlights'
 import AdminGiftTree from '../components/AdminGiftTree'
 import AdminMessages from '../components/AdminMessages'
 import AdminPayoutQueue from '../components/AdminPayoutQueue'
+import AdminAmbassadors from '../components/AdminAmbassadors'
 import { Notice, Spinner } from '../components/Layout'
 
-const TABS = ['Overview', 'Messages', 'Holders', 'Champions', 'Creators', 'Posts', 'Updates', 'Zones', 'Ads', 'Spotlights', 'Gift Tree', 'Nonprofits', 'Workplaces', 'Schools', 'Fund', 'House messages', 'Openers', 'Payouts', 'Scans', 'Location data', 'Supporters', 'Settings']
+const TABS = ['Overview', 'Messages', 'Ambassadors', 'Holders', 'Champions', 'Creators', 'Posts', 'Updates', 'Zones', 'Ads', 'Spotlights', 'Gift Tree', 'Nonprofits', 'Workplaces', 'Schools', 'Fund', 'House messages', 'Openers', 'Payouts', 'Scans', 'Location data', 'Supporters', 'Settings']
 const when = (t) => new Date(t).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
 
 function useTable(table, order = 'created_at', deps = []) {
@@ -559,7 +560,7 @@ export default function Admin() {
       </div>
     </div>
   )
-  const C = { Overview, Messages: AdminMessages, Holders, Champions: AdminChampions, Creators: AdminCreators, Posts: AdminPosts, Updates, Zones, Ads, Spotlights: AdminSpotlights, 'Gift Tree': AdminGiftTree, Nonprofits, Workplaces: AdminWorkplaces, Schools: AdminSchools, Fund, 'House messages': HouseMessages, Openers, Payouts, Scans, 'Location data': LocationData, Supporters, Settings }[tab]
+  const C = { Overview, Messages: AdminMessages, Ambassadors: AdminAmbassadors, Holders, Champions: AdminChampions, Creators: AdminCreators, Posts: AdminPosts, Updates, Zones, Ads, Spotlights: AdminSpotlights, 'Gift Tree': AdminGiftTree, Nonprofits, Workplaces: AdminWorkplaces, Schools: AdminSchools, Fund, 'House messages': HouseMessages, Openers, Payouts, Scans, 'Location data': LocationData, Supporters, Settings }[tab]
   return (
     <div className="mx-auto max-w-5xl px-4 py-6">
       <div className="no-print mb-5 flex gap-2 overflow-x-auto pb-1">

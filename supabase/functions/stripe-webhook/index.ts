@@ -63,7 +63,10 @@ Deno.serve(async (req) => {
         const pctCut = m.fund_pct !== undefined && m.fund_pct !== "" ? Number(m.fund_pct) : Number(s.fund_gift_fee_pct ?? 10);
         const platform = Math.round((net * pctCut) / 100);
         const { error } = await db.from("community_fund_transactions").insert({ amount_cents: net - platform, source: "public_gift", gross_cents: gross, fee_cents: fee, platform_cents: platform, donor_name: m.donor_name || null, stripe_ref: obj.id });
-        if (!dup(error)) await db.from("platform_ledger").insert({ amount_cents: platform, source: "gift_fee" });
+        if (!dup(error)) {
+          await db.from("platform_ledger").insert({ amount_cents: platform, source: "gift_fee" });
+          if (m.ref) await db.rpc("amb_credit_gift", { p_ref: m.ref, p_cents: net, p_source: obj.id });
+        }
       } else if (m.kind === "gift_tree") {
         // Gift Tree: payer covers the card fee; every dollar they chose goes to gifts (no platform cut)
         const base = m.fee_on_top === "1" ? Number(m.base_cents) : gross - stripeFee(gross);

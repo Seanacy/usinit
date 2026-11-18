@@ -4,6 +4,7 @@ import { Notice } from '../components/Layout'
 import ShareQR from '../components/ShareQR'
 import { deviceId, startCheckout } from '../lib/supabase'
 import { TWO_SIZES, makeTwoPost } from '../lib/twoPost'
+import { getRef } from '../lib/ref'
 
 // usinit.com/2 — The $2 Drop: exactly $2 to the Community Fund (card fee added on top)
 export const TWO_URL = 'https://www.usinit.com/2'
@@ -16,7 +17,7 @@ export default function TwoDollars() {
 
   async function give() {
     setErr(null); setBusy(true)
-    try { await startCheckout({ kind: 'two', device: deviceId() }) } catch (e) { setErr(e.message); setBusy(false) }
+    try { await startCheckout({ kind: 'two', device: deviceId(), ref: getRef() }) } catch (e) { setErr(e.message); setBusy(false) }
   }
   async function copy() {
     try { await navigator.clipboard.writeText(TWO_MESSAGE); setCopied(true); setTimeout(() => setCopied(false), 2000) } catch { /* ignore */ }

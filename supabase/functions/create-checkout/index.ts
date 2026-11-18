@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
         line_items: s.gift_fee_on_top !== false
           ? { 0: { quantity: 1, price_data: { currency: "usd", unit_amount: amt, product_data: { name: "Us In It Community Fund gift" } } }, 1: feeLine(amt) }
           : { 0: { quantity: 1, price_data: { currency: "usd", unit_amount: amt, product_data: { name: "Us In It Community Fund gift" } } } },
-        metadata: { kind: "gift", donor_name: String(body.donor_name ?? "").slice(0, 40), base_cents: amt, fee_on_top: s.gift_fee_on_top !== false ? "1" : "0" },
+        metadata: { kind: "gift", donor_name: String(body.donor_name ?? "").slice(0, 40), base_cents: amt, fee_on_top: s.gift_fee_on_top !== false ? "1" : "0", ref: String(body.ref ?? "").slice(0, 12) },
         success_url: `${site}/thanks?type=gift&sid={CHECKOUT_SESSION_ID}`,
         cancel_url: `${site}/fund`,
       };
@@ -80,7 +80,7 @@ Deno.serve(async (req) => {
       session = {
         mode: "payment",
         line_items: { 0: { quantity: 1, price_data: { currency: "usd", unit_amount: 200, product_data: { name: "The $2 Drop: 4 paid scans for people on our streets" } } }, 1: feeLine(200) },
-        metadata: { kind: "gift", donor_name: "", base_cents: 200, fee_on_top: "1", fund_pct: "0", source: "two_dollar" },
+        metadata: { kind: "gift", donor_name: "", base_cents: 200, fee_on_top: "1", fund_pct: "0", source: "two_dollar", ref: String(body.ref ?? "").slice(0, 12) },
         success_url: `${site}/thanks?type=gift&sid={CHECKOUT_SESSION_ID}`,
         cancel_url: `${site}/2`,
       };

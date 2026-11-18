@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { money, startCheckout, useStats, withCardFee } from '../lib/supabase'
 import { GoalTracker } from './Home'
 import { Notice } from '../components/Layout'
+import { getRef } from '../lib/ref'
 
 export default function Fund() {
   const stats = useStats()
@@ -25,7 +26,7 @@ export default function Fund() {
     setErr(null)
     if (!(cents >= 100)) return setErr('Gifts start at $1.')
     setBusy(true)
-    try { await startCheckout({ kind: 'gift', amount_cents: cents, donor_name: donor }) } catch (e) { setErr(e.message); setBusy(false) }
+    try { await startCheckout({ kind: 'gift', amount_cents: cents, donor_name: donor, ref: getRef() }) } catch (e) { setErr(e.message); setBusy(false) }
   }
 
   return (

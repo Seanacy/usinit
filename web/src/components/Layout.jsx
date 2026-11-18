@@ -1,6 +1,7 @@
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { homeFor, supabase, useSession } from '../lib/supabase'
+import { captureRef } from '../lib/ref'
 
 export function Logo({ className = 'h-9', variant = 'black' }) {
   const src = variant === 'white' ? '/logo-on-white.svg' : variant === 'orange' ? '/logo-on-orange.svg' : '/logo-on-black.svg'
@@ -58,6 +59,7 @@ function MoreMenu({ session }) {
           <NavLink to="/how" className={item}>How it works</NavLink>
           <NavLink to="/fund" className={item}>Community Fund</NavLink>
           <NavLink to="/directory" className={item}>Directory</NavLink>
+          <NavLink to="/ambassadors" className={item}>Ambassadors</NavLink>
           <NavLink to="/news" className={item}>News</NavLink>
           <NavLink to="/contact" className={item}>Contact</NavLink>
           <div className="border-t border-neutral-800 pt-1"><ThemeToggle wide /></div>
@@ -71,6 +73,8 @@ function MoreMenu({ session }) {
 export default function Layout() {
   const session = useSession()
   const navTo = useNavigate()
+  const where = useLocation()
+  useEffect(() => { captureRef(where.search) }, [where.search])
   // After logging out, go to the home page.
   useEffect(() => {
     const { data } = supabase.auth.onAuthStateChange((event) => { if (event === 'SIGNED_OUT') navTo('/', { replace: true }) })
@@ -107,6 +111,7 @@ export default function Layout() {
             <NavLink to="/how" className={link}>How it works</NavLink>
             <NavLink to="/fund" className={link}>Community Fund</NavLink>
             <NavLink to="/directory" className={link}>Holder directory</NavLink>
+            <NavLink to="/ambassadors" className={link}>Ambassadors</NavLink>
             <NavLink to="/gifttree" className={link}>Gift Tree 🎄</NavLink>
             <NavLink to="/news" className={link}>News and thoughts</NavLink>
             <NavLink to="/contact" className={link}>Contact us</NavLink>
@@ -124,6 +129,7 @@ export default function Layout() {
           <div className="flex flex-wrap gap-4">
             <Link to="/how" className="hover:text-white">How it works</Link>
             <Link to="/about" className="hover:text-white">About Us</Link>
+            <Link to="/ambassadors" className="hover:text-white">Ambassadors</Link>
             <Link to="/contact" className="hover:text-white">Contact</Link>
             <Link to="/terms" className="hover:text-white">Terms</Link>
             <Link to="/privacy" className="hover:text-white">Privacy</Link>

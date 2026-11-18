@@ -10,6 +10,7 @@ import { PlugScan } from './pages/Plug'
 import BookingPage from './pages/Booking'
 import WorkplacePage from './pages/Workplace'
 import ChampionPage, { Directory } from './pages/Champion'
+import { AmbassadorsDirectory, AmbassadorProfile, MyAmbassador, Launch } from './pages/Ambassadors'
 import { KindnessPage, SchoolPage } from './pages/Schools'
 import CreatorPage, { DigitalScan } from './pages/Digital'
 import Support from './pages/Support'
@@ -71,6 +72,10 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/b/:slug" element={<BookingPage />} />
           <Route path="/w/:slug" element={<WorkplacePage />} />
           <Route path="/directory" element={<Directory />} />
+          <Route path="/ambassadors" element={<AmbassadorsDirectory />} />
+          <Route path="/ambassadors/:slug" element={<AmbassadorProfile />} />
+          <Route path="/ambassador" element={<MyAmbassador />} />
+          <Route path="/launch" element={<Launch />} />
           <Route path="/champion" element={<ChampionPage />} />
           <Route path="/school/:slug" element={<SchoolPage />} />
           <Route path="/d/:code" element={<DigitalScan />} />
