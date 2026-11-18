@@ -1,0 +1,4 @@
+-- Applied via MCP as handsend_cashout_fee (Nov 18, 2026).
+-- Cash App/Venmo cash-outs: fee = max(ceil(1.5% of balance), 50c) (settings handsend_fee_pct, handsend_fee_min_cents).
+-- cashout_requests.fee_cents added; amount_cents = amount to send (balance - fee). Ledger debits the full balance.
+-- Cancels and undos refund amount + fee. my_cashout_info returns fee_cents, fee_pct, fee_min_cents.

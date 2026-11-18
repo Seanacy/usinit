@@ -86,8 +86,14 @@ export default function HolderCashout() {
               </label>
               <p className="muted text-xs">Check it twice. Money sent to the wrong {method === 'venmo' ? 'username' : '$cashtag'} can't be brought back.</p>
               {nearTax && <Notice>You've been paid {money(d.year_paid_cents)} this year. At {money(d.tax_cap_cents)} we need a tax form (W-9) from you before we can pay you more.</Notice>}
+              {can && (
+                <div className="rounded-xl bg-neutral-100 p-3 text-sm dark:bg-neutral-800">
+                  <p className="font-bold">Cash out {money(d.balance_cents)} − transfer fee {money(d.fee_cents)} = you get {money(d.balance_cents - d.fee_cents)}</p>
+                  <p className="muted mt-1 text-xs">The transfer fee pays for moving your money to {appName} fast: {d.fee_pct}% of your cash-out, at least {money(d.fee_min_cents)}. Bigger cash-outs lose a smaller share to the fee.</p>
+                </div>
+              )}
               <button className="btn-orange w-full py-4 text-lg" disabled={busy || !can || handle.length < 2} onClick={cashOut}>
-                {busy ? 'Sending…' : can ? `Cash out ${money(d.balance_cents)} to ${appName}` : `Cash out (from ${money(d.min_cents)})`}
+                {busy ? 'Sending…' : can ? `Cash out — you get ${money(d.balance_cents - d.fee_cents)} on ${appName}` : `Cash out (from ${money(d.min_cents)})`}
               </button>
             </>
           )}
