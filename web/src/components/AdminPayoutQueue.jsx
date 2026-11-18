@@ -17,7 +17,7 @@ function payLink(r) {
 
 function CopyBtn({ label, text }) {
   const [ok, setOk] = useState(false)
-  return <button className="btn-outline py-3" onClick={() => { navigator.clipboard?.writeText(text); setOk(true); setTimeout(() => setOk(false), 1500) }}>{ok ? 'Copied!' : label}</button>
+  return <button className="btn-outline w-full py-4 text-lg font-bold" onClick={() => { navigator.clipboard?.writeText(text); setOk(true); setTimeout(() => setOk(false), 1500) }}>{ok ? 'Copied!' : label}</button>
 }
 
 // Shrink the screenshot and turn it into a JPG (works for PNG and iPhone pictures).
@@ -103,7 +103,7 @@ function QueueCard({ r, reload }) {
       ) : (
         <>
           {r.status === 'review' && <div className="rounded-xl bg-yellow-200/70 p-2 text-sm text-black"><b>⚠️ Check this:</b> {r.review_reason}</div>}
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 gap-2">
             <CopyBtn label={`Copy ${r.method === 'venmo' ? 'username' : 'cashtag'}`} text={r.method === 'venmo' ? bare(r.handle) : `$${bare(r.handle)}`} />
             <CopyBtn label="Copy amount" text={dollars(r.amount_cents)} />
           </div>
@@ -111,13 +111,11 @@ function QueueCard({ r, reload }) {
           <p className="muted text-xs">If {app} opens without the amount or person filled in: type the amount, tap Pay, and paste the {r.method === 'venmo' ? 'username' : 'cashtag'}.</p>
           <button className="btn-black w-full py-4 text-lg" disabled={busy} onClick={() => fileRef.current?.click()}>{busy ? 'Reading receipt…' : '2. Add receipt'}</button>
           <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => upload(e.target.files?.[0])} />
-          <div className="flex flex-wrap gap-4 text-sm">
-            <button className="font-bold underline" onClick={markPaid}>{r.status === 'review' ? "It's right, mark paid" : 'Mark paid without receipt'}</button>
-            <button className="font-bold underline" onClick={cancel}>Cancel (money goes back)</button>
-          </div>
+          <button className="btn-outline w-full py-4 text-lg font-bold" onClick={markPaid}>{r.status === 'review' ? "It's right, mark paid" : 'Mark paid without receipt'}</button>
+          <button className="w-full rounded-xl border-2 border-red-500 py-4 text-lg font-bold text-red-600" onClick={cancel}>Cancel (money goes back)</button>
         </>
       )}
-      {r.receipt_path && <button className="text-sm font-bold underline" onClick={viewReceipt}>See receipt</button>}
+      {r.receipt_path && <button className="btn-outline w-full py-4 text-lg font-bold" onClick={viewReceipt}>See receipt</button>}
       {pic && <img src={pic} alt="Payment receipt" className="max-h-96 rounded-xl border" />}
       {msg && <Notice kind="error">{msg}</Notice>}
     </div>
@@ -177,7 +175,7 @@ export default function AdminPayoutQueue() {
           <p className="text-sm"><b>This week:</b> {line(sum.week)}</p>
           <p className="text-sm"><b>This month:</b> {line(sum.month)}</p>
           <p className="muted text-xs">Check these against your Cash App and Venmo statements each week. They should match.</p>
-          <button className="btn-outline py-2" onClick={download}>Download this year's payouts (spreadsheet)</button>
+          <button className="btn-outline w-full py-4 text-lg font-bold" onClick={download}>Download this year's payouts (spreadsheet)</button>
         </div>
       )}
 
@@ -186,9 +184,9 @@ export default function AdminPayoutQueue() {
           <p className="font-bold">⚠️ Tax form watch</p>
           <p className="muted text-sm">These holders are at {money(sum.tax_warn_cents)} or more this year with no W-9. At {money(sum.tax_cap_cents)} their cash-outs stop until you mark the form on file.</p>
           {sum.tax_watch.map((h) => (
-            <div key={h.id} className="flex items-center justify-between gap-2 text-sm">
+            <div key={h.id} className="space-y-2 text-base">
               <span><b>{h.first_name} #{h.holder_code}</b> · {money(h.year_paid_cents)}</span>
-              <button className="btn-outline px-3 py-1 text-sm" onClick={() => taxOnFile(h)}>W-9 on file</button>
+              <button className="btn-outline w-full py-4 text-lg font-bold" onClick={() => taxOnFile(h)}>W-9 on file</button>
             </div>
           ))}
         </div>
