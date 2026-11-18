@@ -346,7 +346,7 @@ export default function Advertise() {
               <input className="input" placeholder="Business or nonprofit name" value={biz.business_name} onChange={(e) => setBiz({ ...biz, business_name: e.target.value })} />
               <input className="input" placeholder="Your name" value={biz.contact_name} onChange={(e) => setBiz({ ...biz, contact_name: e.target.value })} />
               <input className="input" placeholder="Phone (optional)" value={biz.phone} onChange={(e) => setBiz({ ...biz, phone: e.target.value })} />
-              {!adv && <p className="muted text-sm">By continuing you agree to the Advertiser Agreement. Not allowed: payday loans, gambling, alcohol, cannabis, vape, adult content.</p>}
+              {!adv && <p className="muted text-sm">By continuing you agree to the Advertiser Agreement. Not allowed: payday loans, gambling, alcohol, cannabis, vape, adult content. Bars and breweries can promote food and events, with no alcohol in the ad.</p>}
               {err && <Notice kind="error">{err}</Notice>}
               <div className="flex gap-2">
                 {adv && <button type="button" className="btn-outline flex-1" onClick={() => setEditingBiz(false)}>Cancel</button>}

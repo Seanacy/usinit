@@ -114,6 +114,7 @@ export function AdvertiserAgreement() {
       <li>Ads pause automatically when your balance or daily maximum runs out.</li>
       <li>Every ad is reviewed before it runs. We may reject or remove any ad.</li>
       <li>Not allowed: payday loans, gambling, alcohol, cannabis, vape, adult content, and anything illegal, hateful, or misleading.</li>
+      <li><b>Bars and breweries:</b> welcome to advertise their food, events, and experiences, as long as the ad doesn't show or mention alcohol.</li>
       <li>Event ads stop automatically when the event ends.</li>
       <li>Political ads must include the committee name and address, which we show as the Minnesota disclaimer: "Prepared and paid for by the [committee], [address]." Every political ad is verified before it runs, and every candidate or side pays the same price.</li>
       <li>Unused balance can be refunded on request, minus card processing fees already paid.</li>
