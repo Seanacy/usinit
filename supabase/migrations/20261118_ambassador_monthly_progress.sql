@@ -1,0 +1,4 @@
+-- Applied via MCP as ambassador_monthly_progress (Nov 18, 2026).
+-- Table ambassador_link_visits (one per device per day per ambassador; own visits ignored), RPC log_ref_visit (anon).
+-- RPC amb_progress_all(): only active Ambassadors (or admin) get data. Monthly goal = avg of
+--   1) recruited 1 new Ambassador this month, 2) any non-ambassador credit this month, 3) weeks with link visits / weeks so far.

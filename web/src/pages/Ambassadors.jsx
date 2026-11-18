@@ -51,10 +51,25 @@ function Streak({ weeks }) {
 }
 
 // ================= /ambassadors =================
+function GoalBar({ p }) {
+  return (
+    <div className="w-full space-y-1">
+      <div className="h-2.5 w-full overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-700" role="progressbar" aria-valuenow={p.pct} aria-valuemin={0} aria-valuemax={100} aria-label="Monthly goal">
+        <div className="h-2.5 bg-orange" style={{ width: `${p.pct}%` }} />
+      </div>
+      <p className="text-xs font-bold">{p.pct}% · {p.new_amb ? '👥✅' : '👥'} {p.brought ? '💚✅' : '💚'} 🔗{p.weeks_hit}/{p.weeks}</p>
+    </div>
+  )
+}
+
 export function AmbassadorsDirectory() {
   const [list, setList] = useState(null)
   const [q, setQ] = useState('')
+  const [prog, setProg] = useState(null)
+  const session = useSession()
   useEffect(() => { supabase.rpc('ambassadors_list').then(({ data }) => setList(data || [])) }, [])
+  // Monthly goal bars: only signed-in Ambassadors get this data back
+  useEffect(() => { if (session) supabase.rpc('amb_progress_all').then(({ data }) => setProg(data || null)); else setProg(null) }, [session])
   if (!list) return <Spinner />
   const shown = list.filter((a) => !q.trim() || a.name.toLowerCase().includes(q.trim().toLowerCase()))
   return (
@@ -65,6 +80,7 @@ export function AmbassadorsDirectory() {
         <Link to="/ambassador" className="btn-orange">Become an Ambassador</Link>
         <Link to="/launch" className="btn-outline">See the launch goal</Link>
       </div>
+      {prog && <p className="mt-4 rounded-xl bg-orange/15 p-3 text-sm"><b>Monthly goal bars (only Ambassadors see these):</b> 👥 bring 1 new Ambassador · 💚 bring in 1 supporter, business, gift, or holder · 🔗 your link gets used every week.</p>}
       <input className="input mt-6" placeholder="Search Ambassadors by name" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search Ambassadors" />
       {shown.length === 0 ? <p className="muted mt-6">{list.length === 0 ? 'Be the first Ambassador!' : 'Nobody by that name.'}</p> : (
         <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
@@ -74,6 +90,7 @@ export function AmbassadorsDirectory() {
               <p className="font-extrabold">{a.name}</p>
               {(a.is_team_lead || a.nonprofit_org) && <p className="text-xs font-bold">{a.is_team_lead ? '⭐ Team Lead' : '💚 Nonprofit'}</p>}
               <p className="muted text-xs">{a.stats.weeks_active || 0} weeks active</p>
+              {prog?.[a.slug] && <GoalBar p={prog[a.slug]} />}
             </Link>
           ))}
         </div>
