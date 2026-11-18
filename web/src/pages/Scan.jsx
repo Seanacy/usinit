@@ -147,8 +147,10 @@ export default function Scan() {
     if (started.current) return
     started.current = true
     setStep('loading')
+    const geo = fetch('/api/geo').then((r) => r.json()).then((j) => j.token || null).catch(() => null)
     const loc = await getLocation()
-    const { data, error: e } = await supabase.rpc('process_scan', { p_code: code, p_lat: loc?.lat ?? null, p_lng: loc?.lng ?? null, p_device: deviceId(), p_champ: champ || null, p_acc: loc?.acc ?? null })
+    const p_geo = await geo
+    const { data, error: e } = await supabase.rpc('process_any_scan', { p_code: code, p_lat: loc?.lat ?? null, p_lng: loc?.lng ?? null, p_device: deviceId(), p_champ: champ || null, p_acc: loc?.acc ?? null, p_geo })
     if (e || !data) { setError('Something went wrong. Please try again.'); started.current = false; setStep('intro'); return }
     if (data.error === 'not_found') { setStep('notfound'); return }
     setRes(data)

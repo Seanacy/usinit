@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { SITE_URL, deviceId, money, supabase, useSession } from '../lib/supabase'
 import { Notice, Spinner } from '../components/Layout'
 import AuthBox from '../components/AuthBox'
@@ -29,8 +29,16 @@ function ScreenQR({ code, label }) {
 // ================= Digital scan page: /d/:code =================
 export function DigitalScan() {
   const { code } = useParams()
+  const nav = useNavigate()
   const [r, setR] = useState(undefined)
   useEffect(() => {
+    // One code per holder: old holder online links (H...) forward to the holder's one code
+    if (/^h/i.test(code || '')) {
+      supabase.rpc('holder_code_for_digital', { p_code: code }).then(({ data }) => {
+        if (data) nav(`/s/${data}`, { replace: true }); else setR({ error: 'not_found' })
+      })
+      return
+    }
     const geo = fetch('/api/geo').then((r) => r.json()).then((j) => j.token || null).catch(() => null)
     geo.then((p_geo) => supabase.rpc('process_digital_scan', { p_code: code, p_device: deviceId(), p_geo })).then(({ data }) => {
       setR(data || { error: 'not_found' })
@@ -60,12 +68,11 @@ export function DigitalScan() {
 export function HolderDigital() {
   const [d, setD] = useState(null)
   useEffect(() => { supabase.rpc('holder_digital').then(({ data }) => setD(data)) }, [])
-  if (!d?.digital_code) return null
+  if (!d) return null
   return (
-    <div className="card space-y-3">
-      <h2 className="h2">Your online code</h2>
-      <p className="muted text-sm">Share this on social media, in a post, or on a livestream. When someone scans it online, a business pays you. ({d.scans_today} online scans today · {d.scans_total} total)</p>
-      <ScreenQR code={d.digital_code} label="my-online-code" />
+    <div className="card space-y-2">
+      <h2 className="h2">Share your code online too</h2>
+      <p className="muted text-sm">Your one code works everywhere: on your sign, in a post, or on a livestream. Use the same QR or link from the top of this page. Scans from far away or without location are paid by online ads. ({d.scans_today} online scans today · {d.scans_total} total)</p>
       {d.creators.length > 0 && <p className="text-sm"><b>Creators sharing your code:</b> {d.creators.join(', ')}</p>}
     </div>
   )
