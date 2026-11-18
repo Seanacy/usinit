@@ -267,6 +267,8 @@ function Dashboard({ d, session, reload }) {
   const h = d.holder
   const [edit, setEdit] = useState(false)
   const [print, setPrint] = useState(false)
+  const [big, setBig] = useState(false)
+  const [copied, setCopied] = useState(false)
   const qr = useQR(h.holder_code ? scanUrl(h.holder_code) : 'https://usinit.com', h.qr_style)
   if (edit) return <ProfileForm session={session} existing={h} onSaved={() => { setEdit(false); reload() }} />
   if (print) return <div><button className="no-print mb-4 font-bold underline" onClick={() => setPrint(false)}>← Back to dashboard</button><Printables holder={h} /></div>
@@ -285,13 +287,29 @@ function Dashboard({ d, session, reload }) {
   const pct = Math.min(100, Math.round((d.count_today / d.goal) * 100))
   return (
     <div className="space-y-4">
-      <div className="card flex items-center gap-4">
-        {qr && <img src={qr} alt="Your QR code" className="h-28 w-28 rounded-lg" />}
-        <div>
-          <p className="muted text-sm">Your holder ID</p>
-          <p className="text-4xl font-extrabold">#{h.holder_code}</p>
-          <Link to={`/p/${h.holder_code}`} className="text-sm font-bold underline">See my public page</Link>
-          <Stars code={h.holder_code} />
+      {big && qr && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-white p-6" onClick={() => setBig(false)}>
+          <img src={qr} alt="Your QR code, big" className="w-full max-w-md" />
+          <p className="text-5xl font-extrabold text-black">#{h.holder_code}</p>
+          <button className="btn-black px-8 py-3">Close</button>
+        </div>
+      )}
+      <div className="card space-y-3">
+        <div className="flex items-center gap-4">
+          {qr && <button onClick={() => setBig(true)} aria-label="Make my QR code bigger"><img src={qr} alt="Your QR code" className="h-28 w-28 rounded-lg" /></button>}
+          <div>
+            <p className="muted text-sm">Your holder ID</p>
+            <p className="text-4xl font-extrabold">#{h.holder_code}</p>
+            <Link to={`/p/${h.holder_code}`} className="text-sm font-bold underline">See my public page</Link>
+            <Stars code={h.holder_code} />
+          </div>
+        </div>
+        <p className="muted text-sm">This is your one code. Use it on your sign and online.</p>
+        <div className="grid grid-cols-2 gap-2">
+          <button className="btn-orange py-2" onClick={() => setBig(true)}>Make QR bigger</button>
+          <button className="btn-black py-2" onClick={() => setPrint(true)}>Print my sign</button>
+          <button className="btn-outline py-2" onClick={() => { navigator.clipboard?.writeText(scanUrl(h.holder_code)); setCopied(true); setTimeout(() => setCopied(false), 1500) }}>{copied ? 'Copied!' : 'Copy my link'}</button>
+          {qr && <a className="btn-outline py-2 text-center" href={qr} download={`usinit-${h.holder_code}-qr.png`}>Download QR</a>}
         </div>
       </div>
       <QRStylePicker h={h} reload={reload} />
