@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { money, startCheckout, supabase, useSession, useStats } from '../lib/supabase'
+import { KEY, SUPABASE_URL, money, startCheckout, supabase, useSession, useStats } from '../lib/supabase'
 import AuthBox from '../components/AuthBox'
 import ZoneManager from '../components/ZoneManager'
 import { CROWDS } from './Champion'
@@ -186,27 +186,100 @@ function AdForm({ advertiser, existing, prefill, onDone }) {
 
 function fmtHour(h) { return h === 0 || h === 24 ? '12 AM' : h === 12 ? '12 PM' : h < 12 ? `${h} AM` : `${h - 12} PM` }
 
-function AddFunds({ stats }) {
+const MONTHLY = [5000, 10000, 25000]
+
+function AddFunds({ stats, adv }) {
+  const [mode, setMode] = useState('once')
   const [amt, setAmt] = useState('50')
+  const [pick, setPick] = useState(10000)
+  const [other, setOther] = useState('')
+  const [plan, setPlan] = useState(undefined)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState(null)
+  const [msg, setMsg] = useState(null)
   const s = stats?.settings || {}
-  const cents = Math.round(Number(amt) * 100) || 0
+  const price = stats?.price_per_scan_cents || 50
   const pct = Number(s.stripe_fee_pct ?? 2.9) / 100, fixed = Number(s.stripe_fee_fixed_cents ?? 30)
-  const total = s.advertiser_fee_on_top === false ? cents : Math.ceil((cents + fixed) / (1 - pct))
+  const withFee = (c) => (s.advertiser_fee_on_top === false ? c : Math.ceil((c + fixed) / (1 - pct)))
+  const cents = mode === 'once' ? Math.round(Number(amt) * 100) || 0 : pick === 'other' ? (Number(other) || 0) * 100 : pick
+  const total = withFee(cents)
+
+  async function loadPlan() {
+    const { data } = await supabase.from('advertiser_plans').select('*').eq('advertiser_id', adv.id).in('status', ['active', 'canceling']).order('created_at', { ascending: false }).limit(1)
+    setPlan(data?.[0] ?? null)
+  }
+  useEffect(() => { loadPlan() }, [adv.id])
+
   async function pay() {
     setErr(null)
-    if (cents < 1000) return setErr('Add at least $10.')
+    if (cents < 1000) return setErr('The smallest amount is $10.')
+    if (mode === 'monthly' && cents > 1000000) return setErr('The biggest monthly amount is $10,000.')
     setBusy(true)
-    try { await startCheckout({ kind: 'ad_deposit', amount_cents: cents }) } catch (e) { setErr(e.message); setBusy(false) }
+    try {
+      await startCheckout(mode === 'once' ? { kind: 'ad_deposit', amount_cents: cents } : { kind: 'ad_monthly', amount_cents: cents })
+    } catch (e) { setErr(e.message); setBusy(false) }
   }
+
+  async function cancelPlan() {
+    if (!window.confirm('Stop your monthly plan? Your balance stays. No more monthly charges after this month.')) return
+    setErr(null); setBusy(true)
+    const { data: ses } = await supabase.auth.getSession()
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/create-checkout`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: KEY, Authorization: `Bearer ${ses?.session?.access_token}` },
+      body: JSON.stringify({ kind: 'ad_monthly_cancel' }),
+    })
+    const out = await res.json().catch(() => ({}))
+    setBusy(false)
+    if (!res.ok) return setErr(out.error || "Couldn't cancel. Please try again.")
+    setMsg('Your monthly plan is canceled. You won\'t be charged again.')
+    loadPlan()
+  }
+
+  const tab = (id, label) => (
+    <button type="button" onClick={() => { setMode(id); setErr(null) }}
+      className={`flex-1 rounded-xl px-3 py-2 font-bold ${mode === id ? 'bg-black text-white dark:bg-white dark:text-black' : 'border border-neutral-300'}`}>{label}</button>
+  )
+
   return (
     <div className="card">
       <h2 className="h2">Add funds</h2>
-      <input className="input mt-3" inputMode="decimal" value={amt} onChange={(e) => setAmt(e.target.value.replace(/[^0-9.]/g, ''))} aria-label="Amount in dollars" />
-      {cents >= 1000 && <p className="mt-2 font-bold">Ad balance {money(cents)} + processing fee {money(total - cents)} = {money(total)}</p>}
+      {plan && (
+        <div className="mt-3 rounded-xl border-2 border-orange bg-orange/10 p-3">
+          <p className="font-bold">Monthly plan: {money(plan.amount_cents)} every month</p>
+          <p className="muted text-sm">{plan.status === 'canceling' ? 'Canceled. No more charges after this month.' : `Adds about ${Math.floor(plan.amount_cents / price)} scans to your balance each month. Payments so far: ${plan.payments_made}.`}</p>
+          {plan.status === 'active' && <button className="btn-outline mt-2 py-2" onClick={cancelPlan} disabled={busy}>Cancel monthly plan</button>}
+        </div>
+      )}
+      {msg && <div className="mt-2"><Notice kind="ok">{msg}</Notice></div>}
+      <div className="mt-3 flex gap-2">{tab('once', 'One time')}{tab('monthly', 'Every month')}</div>
+      {mode === 'once' ? (
+        <input className="input mt-3" inputMode="decimal" value={amt} onChange={(e) => setAmt(e.target.value.replace(/[^0-9.]/g, ''))} aria-label="Amount in dollars" />
+      ) : plan ? (
+        <p className="muted mt-3 text-sm">You already have a monthly plan. Cancel it first if you want a different amount.</p>
+      ) : (
+        <div className="mt-3 space-y-2">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {MONTHLY.map((c) => (
+              <button key={c} type="button" onClick={() => setPick(c)} className={`rounded-xl px-3 py-2 font-bold ${pick === c ? 'bg-orange text-black' : 'border border-neutral-300'}`}>{money(c)}</button>
+            ))}
+            <button type="button" onClick={() => setPick('other')} className={`rounded-xl px-3 py-2 font-bold ${pick === 'other' ? 'bg-orange text-black' : 'border border-neutral-300'}`}>Other</button>
+          </div>
+          {pick === 'other' && (
+            <label className="flex items-center gap-2"><span className="text-xl font-bold">$</span>
+              <input className="input" inputMode="numeric" maxLength={5} placeholder="Type an amount" value={other} onChange={(e) => setOther(e.target.value.replace(/[^0-9]/g, ''))} aria-label="Monthly amount in dollars" />
+            </label>
+          )}
+          <p className="muted text-sm">Charged on this same day every month. Cancel anytime. Your balance never expires.</p>
+        </div>
+      )}
+      {cents >= 1000 && !(mode === 'monthly' && plan) && (
+        <p className="mt-2 font-bold">Ad balance {money(cents)} + processing fee {money(total - cents)} = {money(total)}{mode === 'monthly' ? ' every month' : ''}<span className="muted block text-sm font-normal">≈ {Math.floor(cents / price)} scans{mode === 'monthly' ? ' a month' : ''}</span></p>
+      )}
       {err && <div className="mt-2"><Notice kind="error">{err}</Notice></div>}
-      <button className="btn-orange mt-3 w-full" onClick={pay} disabled={busy}>{busy ? 'Opening checkout…' : 'Add funds'}</button>
+      {!(mode === 'monthly' && plan) && (
+        <button className="btn-orange mt-3 w-full" onClick={pay} disabled={busy}>{busy ? 'Opening checkout…' : mode === 'monthly' ? 'Start monthly plan' : 'Add funds'}</button>
+      )}
     </div>
   )
 }
@@ -306,7 +379,7 @@ export default function Advertise() {
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-3">
                   <div className="card"><p className="muted text-sm">Ad balance (pays for scans)</p><p className="text-3xl font-extrabold">{money(adv.balance_cents)}</p><p className="muted text-xs">≈ {Math.floor(adv.balance_cents / price)} scans · {ads.reduce((a, x) => a + x.views, 0)} scans so far · {ads.reduce((a, x) => a + x.clicks, 0)} button taps</p></div>
-                  <AddFunds stats={stats} />
+                  <AddFunds stats={stats} adv={adv} />
                 </div>
                 <div>
                   {adv.status === 'approved'

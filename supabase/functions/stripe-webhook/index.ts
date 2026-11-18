@@ -101,9 +101,21 @@ Deno.serve(async (req) => {
         const credit = Number(m.credit_cents);
         const { error } = await db.from("advertiser_transactions").insert({ advertiser_id: m.advertiser_id, kind: "deposit", amount_cents: credit, fee_cents: Number(m.fee_cents ?? 0), stripe_session_id: obj.id });
         if (!dup(error)) await db.rpc("credit_advertiser", { p_adv: m.advertiser_id, p_cents: credit });
+      } else if (m.kind === "ad_monthly") {
+        // The money itself is credited on invoice.paid; here we just mark the plan live.
+        await db.from("advertiser_plans").update({ status: "active", stripe_subscription_id: obj.subscription, stripe_customer_id: obj.customer }).eq("id", m.plan_id).in("status", ["pending", "active"]);
       }
     } else if (event.type === "invoice.paid") {
       const meta = obj.parent?.subscription_details?.metadata ?? obj.subscription_details?.metadata ?? obj.lines?.data?.[0]?.metadata ?? {};
+      if (meta.kind === "ad_monthly" && meta.plan_id && obj.amount_paid > 0) {
+        const credit = Number(meta.credit_cents);
+        const { error } = await db.from("advertiser_transactions").insert({ advertiser_id: meta.advertiser_id, kind: "deposit", amount_cents: credit, fee_cents: Number(meta.fee_cents ?? 0), stripe_session_id: obj.id });
+        if (!dup(error)) {
+          await db.rpc("credit_advertiser", { p_adv: meta.advertiser_id, p_cents: credit });
+          const { data: p } = await db.from("advertiser_plans").select("payments_made,status").eq("id", meta.plan_id).single();
+          await db.from("advertiser_plans").update({ payments_made: (p?.payments_made ?? 0) + 1, ...(p?.status === "pending" ? { status: "active" } : {}) }).eq("id", meta.plan_id);
+        }
+      }
       if (meta.kind === "supporter" && meta.plan_id && obj.amount_paid > 0) {
         const gross = obj.amount_paid, fee = stripeFee(gross), net = gross - fee;
         const platform = Math.round((net * Number(s.supporter_fee_pct ?? 0)) / 100);
@@ -116,7 +128,9 @@ Deno.serve(async (req) => {
       }
     } else if (event.type === "customer.subscription.deleted") {
       const planId = obj.metadata?.plan_id;
-      if (planId) {
+      if (planId && obj.metadata?.kind === "ad_monthly") {
+        await db.from("advertiser_plans").update({ status: "canceled", canceled_at: new Date().toISOString() }).eq("id", planId);
+      } else if (planId) {
         const { data: plan } = await db.from("supporter_plans").select("weeks,payments_made").eq("id", planId).single();
         await db.from("supporter_plans").update({ status: (plan && plan.payments_made >= (plan.weeks ?? 0)) ? "completed" : "canceled" }).eq("id", planId);
       }

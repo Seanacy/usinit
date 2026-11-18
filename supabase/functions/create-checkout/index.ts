@@ -149,6 +149,47 @@ Deno.serve(async (req) => {
         success_url: `${site}/advertise?paid=1`,
         cancel_url: `${site}/advertise`,
       };
+    } else if (kind === "ad_monthly" || kind === "ad_monthly_cancel") {
+      // Monthly ad plan: same amount added to the ad balance every month; card fee added on top.
+      const auth = req.headers.get("Authorization") ?? "";
+      const userClient = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, { global: { headers: { Authorization: auth } } });
+      const { data: u } = await userClient.auth.getUser();
+      if (!u?.user) return json({ error: "Please log in." }, 401);
+      const { data: adv } = await admin.from("advertisers").select("id,business_name").eq("user_id", u.user.id).single();
+      if (!adv) return json({ error: "Advertiser account not found." }, 404);
+      const { data: live } = await admin.from("advertiser_plans").select("id,stripe_subscription_id,status").eq("advertiser_id", adv.id).in("status", ["active", "canceling"]).maybeSingle();
+      if (kind === "ad_monthly_cancel") {
+        if (!live?.stripe_subscription_id) return json({ error: "You don't have a monthly plan." }, 404);
+        const r = await fetch(`https://api.stripe.com/v1/subscriptions/${live.stripe_subscription_id}`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/x-www-form-urlencoded" },
+          body: "cancel_at_period_end=true",
+        });
+        if (!r.ok) return json({ error: "Couldn't cancel. Please try again." }, 400);
+        await admin.from("advertiser_plans").update({ status: "canceling" }).eq("id", live.id);
+        return json({ ok: true });
+      }
+      if (live) return json({ error: "You already have a monthly plan. Cancel it first to pick a new amount." }, 400);
+      const presets = [5000, 10000, 25000];
+      const customOk = Number.isInteger(amt) && amt % 100 === 0 && amt >= 1000 && amt <= 1000000;
+      if (!presets.includes(amt) && !customOk) return json({ error: "Pick a whole-dollar amount from $10 to $10,000." }, 400);
+      const onTop = s.advertiser_fee_on_top !== false;
+      const fee = onTop ? Math.ceil((amt + fixed) / (1 - pct)) - amt : 0;
+      const { data: plan, error: pe } = await admin.from("advertiser_plans").insert({ advertiser_id: adv.id, amount_cents: amt, fee_cents: fee }).select("id").single();
+      if (pe || !plan) return json({ error: "Couldn't start the plan." }, 500);
+      const meta = { kind: "ad_monthly", plan_id: plan.id, advertiser_id: adv.id, credit_cents: amt, fee_cents: fee };
+      const items: Record<string, unknown> = {
+        0: { quantity: 1, price_data: { currency: "usd", unit_amount: amt, recurring: { interval: "month" }, product_data: { name: `Us In It ad balance: $${amt / 100} every month` } } },
+      };
+      if (fee > 0) items[1] = { quantity: 1, price_data: { currency: "usd", unit_amount: fee, recurring: { interval: "month" }, product_data: { name: "Card processing fee" } } };
+      session = {
+        mode: "subscription",
+        line_items: items,
+        metadata: meta,
+        subscription_data: { metadata: meta },
+        success_url: `${site}/advertise?paid=1`,
+        cancel_url: `${site}/advertise`,
+      };
     } else if (kind === "love_note") {
       const { data: n } = await admin.from("workplace_notes").select("id,price_cents,paid,buyer_email,workplace_id").eq("id", body.note_id).single();
       if (!n || n.paid) return json({ error: "This note is already paid or was not found." }, 400);
