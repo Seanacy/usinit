@@ -314,9 +314,11 @@ function Dashboard({ d, session, reload }) {
       </div>
       <QRStylePicker h={h} reload={reload} />
       <div className="grid grid-cols-2 gap-3">
-        <div className="card"><p className="muted text-sm">Balance</p><p className="text-3xl font-extrabold">{money(d.balance_cents)}</p></div>
+        <div className="card"><p className="muted text-sm">Balance</p><p className="text-3xl font-extrabold">{money(d.balance_cents)}</p>
+          <button className="btn-orange mt-2 w-full py-2" onClick={() => document.getElementById('cashout')?.scrollIntoView({ behavior: 'smooth' })}>Cash out</button></div>
         <div className="card"><p className="muted text-sm">Earned today</p><p className="text-3xl font-extrabold">{money(d.earned_today_cents)}</p></div>
       </div>
+      <div id="cashout"><HolderCashout /></div>
       <div className="card">
         <p className="font-bold">{d.count_today} scans today · goal {d.goal}</p>
         <div className="mt-2 h-3 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-700"><div className="h-3 bg-orange" style={{ width: `${pct}%` }} /></div>
@@ -325,7 +327,6 @@ function Dashboard({ d, session, reload }) {
       <HolderDigital />
       <PostUpdates holder={h} session={session} />
       <HolderShares code={h.holder_code} />
-      <HolderCashout />
       <div className="grid grid-cols-2 gap-3">
         <button className="btn-orange" onClick={() => setPrint(true)}>Print my sign</button>
         <button className="btn-outline" onClick={() => setEdit(true)}>Edit profile</button>
