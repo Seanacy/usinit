@@ -13,6 +13,7 @@ import AdminPosts from '../components/AdminPosts'
 import AdminSpotlights from '../components/AdminSpotlights'
 import AdminGiftTree from '../components/AdminGiftTree'
 import AdminMessages from '../components/AdminMessages'
+import AdminPayoutQueue from '../components/AdminPayoutQueue'
 import { Notice, Spinner } from '../components/Layout'
 
 const TABS = ['Overview', 'Messages', 'Holders', 'Champions', 'Creators', 'Posts', 'Updates', 'Zones', 'Ads', 'Spotlights', 'Gift Tree', 'Nonprofits', 'Workplaces', 'Schools', 'Fund', 'House messages', 'Openers', 'Payouts', 'Scans', 'Location data', 'Supporters', 'Settings']
@@ -442,8 +443,8 @@ function Payouts() {
   if (!o) return <Spinner />
   return (
     <div className="space-y-4">
-      <p className="muted">Holders cash out by themselves with a cash-out link (gift card, Visa card, or Cash App/Venmo/PayPal). Creators and businesses cash out with Stripe. For anyone with no phone or internet, pay by hand, then record it here.</p>
-      <GiftCashouts balances={o.balances} />
+      <AdminPayoutQueue />
+      <p className="muted pt-4">Holders ask to cash out to Cash App or Venmo (they show up in the Payout Queue above) or use Stripe (sent automatically). For anyone with no phone or app, pay by hand, then record it below.</p>
       <StripeCashouts />
       {err && <Notice kind="error">{err}</Notice>}
       {o.balances.length === 0 && <p className="muted">Nobody has a balance yet.</p>}
@@ -536,6 +537,12 @@ export default function Admin() {
   const [tab, setTab] = useState('Overview')
   const nav = useNavigate()
   useEffect(() => { if (session) supabase.rpc('is_admin').then(({ data }) => setIsAdmin(!!data)) }, [session])
+  const [waitingCount, setWaitingCount] = useState(0)
+  useEffect(() => {
+    if (!isAdmin) return
+    const check = () => supabase.from('cashout_requests').select('id', { count: 'exact', head: true }).in('status', ['waiting', 'review']).then(({ count }) => setWaitingCount(count || 0))
+    check(); const t = setInterval(check, 60000); return () => clearInterval(t)
+  }, [isAdmin, tab])
   // Not an admin? Send them straight to their own page (business, holder, etc.).
   useEffect(() => { if (session && isAdmin === false) homeFor(session.user).then((p) => p && p !== '/admin' && nav(p, { replace: true })).catch(() => {}) }, [session, isAdmin]) // eslint-disable-line
   if (session === undefined) return <Spinner />
@@ -556,8 +563,9 @@ export default function Admin() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-6">
       <div className="no-print mb-5 flex gap-2 overflow-x-auto pb-1">
-        {TABS.map((t) => <button key={t} onClick={() => setTab(t)} className={`shrink-0 rounded-lg px-3 py-2 text-sm font-bold ${tab === t ? 'bg-orange text-ink' : 'bg-neutral-100 dark:bg-neutral-800'}`}>{t}</button>)}
+        {TABS.map((t) => <button key={t} onClick={() => setTab(t)} className={`shrink-0 rounded-lg px-3 py-2 text-sm font-bold ${tab === t ? 'bg-orange text-ink' : 'bg-neutral-100 dark:bg-neutral-800'}`}>{t}{t === 'Payouts' && waitingCount > 0 ? ` (${waitingCount})` : ''}</button>)}
       </div>
+      {waitingCount > 0 && tab !== 'Payouts' && <button className="no-print mb-4 w-full rounded-xl bg-orange p-3 text-left font-bold text-black" onClick={() => setTab('Payouts')}>💸 {waitingCount} cash-out{waitingCount === 1 ? '' : 's'} waiting to be paid. Tap to open.</button>}
       <C />
     </div>
   )

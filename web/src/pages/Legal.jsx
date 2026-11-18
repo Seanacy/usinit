@@ -85,7 +85,10 @@ export function HolderAgreement() {
       <li>Right now each verified scan pays you the holder share shown on the site (currently $0.40). Scans can be paid by local advertisers or by the Community Fund.</li>
       <li>Tips go to you after card fees and the Us In It fee.</li>
       <li>There may be a daily limit on scan earnings. Tips don't count toward it.</li>
-      <li>Your earnings show in your account. For now, Us In It or a partner organization pays you out by hand (for example Cash App or cash). When cash-out to a bank account or debit card is turned on for you, Stripe’s payout fees come out of your cash-out ($2.00 on your first cash-out each month, plus 0.25% + $0.25 each time). See "Cashing out with Stripe" in the <a className="underline" href="/terms">Terms</a>. Any fees will always be shown before you confirm.</li>
+      <li>Your earnings show in your account. You can cash out once you reach the minimum shown on your account page. You can only cash out money you have earned. The amount is always your balance as figured by Us In It.</li>
+      <li><b>Ways to cash out:</b> Cash App or Venmo (Us In It sends it to the $cashtag or username you give us, usually by hand), or a bank account or debit card through Stripe (Stripe's payout fees come out of your cash-out: $2.00 on your first cash-out each month, plus 0.25% + $0.25 each time; see "Cashing out with Stripe" in the <a className="underline" href="/terms">Terms</a>). Any fees are always shown before you confirm.</li>
+      <li>Check your $cashtag or username before you cash out. Money sent to the $cashtag or username you gave us can't be brought back by Us In It.</li>
+      <li><b>Tax forms:</b> if you are paid $2,000 or more in a calendar year, the law requires Us In It to have a tax form (W-9) from you. Us In It may ask you for this form at any time, and may hold your cash-outs until you fill it out. Your money stays on your balance while it's held.</li>
       <li>You are not an employee of Us In It. You choose when and where you hold your code.</li>
       <h2>Standing and walking rules</h2>
       <li>You can stand or walk wherever it's legal. Stay on sidewalks.</li>

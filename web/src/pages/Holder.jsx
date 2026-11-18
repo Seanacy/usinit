@@ -7,7 +7,7 @@ import Printables, { scanUrl, useQR } from '../components/Printables'
 import { QR_STYLES } from '../lib/qrstyle'
 import { HolderShares } from './Booking'
 import { HolderDigital } from './Digital'
-import GiftCashout from '../components/GiftCashout'
+import HolderCashout from '../components/HolderCashout'
 import { FIRST, QUESTIONS } from '../lib/questions'
 import { PERSPECTIVES, PERSPECTIVE_DAYS } from '../lib/perspective'
 
@@ -306,7 +306,7 @@ function Dashboard({ d, session, reload }) {
       <HolderDigital />
       <PostUpdates holder={h} session={session} />
       <HolderShares code={h.holder_code} />
-      <GiftCashout />
+      <HolderCashout />
       <div className="grid grid-cols-2 gap-3">
         <button className="btn-orange" onClick={() => setPrint(true)}>Print my sign</button>
         <button className="btn-outline" onClick={() => setEdit(true)}>Edit profile</button>
