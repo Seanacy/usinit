@@ -1,0 +1,5 @@
+-- Applied via MCP as cashout_fund_pause + cashout_pause_guard (Nov 18, 2026).
+-- Settings: cashout_pause_below_cents (50000), cashout_resume_at_cents (100000), cashout_paused (latch).
+-- cashouts_open(): paused -> opens at resume number; open -> pauses below pause number.
+-- Trigger on community_fund_transactions refreshes the latch. request_cashout and begin_stripe_cashout('holder') raise CASHOUTS_PAUSED.
+-- my_cashout_info returns cashouts_open, fund_cents, resume_cents.

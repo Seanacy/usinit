@@ -30,7 +30,7 @@ export default function HolderCashout() {
     const { error } = await supabase.rpc('request_cashout', { p_method: method, p_handle: handle })
     if (error) {
       if (error.message.includes('TAX_FORM_NEEDED')) setTaxStop(true)
-      else setErr(error.message)
+      else if (!error.message.includes('CASHOUTS_PAUSED')) setErr(error.message)
     }
     setBusy(false); load()
   }
@@ -52,7 +52,14 @@ export default function HolderCashout() {
       <h2 className="h2">Cash out</h2>
       <p className="text-2xl font-extrabold">{money(d.balance_cents)} <span className="muted text-sm font-normal">ready to cash out</span></p>
 
-      {open ? (
+      {!open && d.cashouts_open === false ? (
+        <div className="space-y-2 rounded-xl border-2 border-orange p-3">
+          <p className="font-extrabold">Cash-outs are paused for now</p>
+          <p className="text-sm">Your money is safe and stays on your balance. You keep earning from every scan. Cash-outs open again when the Community Fund reaches {money(d.resume_cents)}.</p>
+          <div className="h-3 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-700"><div className="h-3 bg-orange" style={{ width: `${Math.min(100, Math.round((Math.max(0, d.fund_cents) / d.resume_cents) * 100))}%` }} /></div>
+          <p className="muted text-xs">Community Fund: {money(Math.max(0, d.fund_cents))} of {money(d.resume_cents)}</p>
+        </div>
+      ) : open ? (
         <div className="space-y-2 rounded-xl bg-orange/15 p-3">
           <p className="font-extrabold">⏳ {money(open.amount_cents)} is on its way to {open.handle}</p>
           <p className="text-sm">Us In It sends it to your {open.method === 'venmo' ? 'Venmo' : 'Cash App'} by hand. You'll see it there soon.</p>

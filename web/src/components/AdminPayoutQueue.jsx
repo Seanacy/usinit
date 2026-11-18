@@ -15,6 +15,11 @@ function payLink(r) {
   return `https://cash.app/$${bare(r.handle)}/${dollars(r.amount_cents)}`
 }
 
+function CopyBtn({ label, text }) {
+  const [ok, setOk] = useState(false)
+  return <button className="btn-outline py-3" onClick={() => { navigator.clipboard?.writeText(text); setOk(true); setTimeout(() => setOk(false), 1500) }}>{ok ? 'Copied!' : label}</button>
+}
+
 // Shrink the screenshot and turn it into a JPG (works for PNG and iPhone pictures).
 function toJpegBase64(file) {
   return new Promise((resolve, reject) => {
@@ -98,7 +103,12 @@ function QueueCard({ r, reload }) {
       ) : (
         <>
           {r.status === 'review' && <div className="rounded-xl bg-yellow-200/70 p-2 text-sm text-black"><b>⚠️ Check this:</b> {r.review_reason}</div>}
-          <a className="btn-orange block w-full py-4 text-center text-lg" href={payLink(r)} target="_blank" rel="noreferrer">1. Pay in {app}</a>
+          <div className="grid grid-cols-2 gap-2">
+            <CopyBtn label={`Copy ${r.method === 'venmo' ? 'username' : 'cashtag'}`} text={r.method === 'venmo' ? bare(r.handle) : `$${bare(r.handle)}`} />
+            <CopyBtn label="Copy amount" text={dollars(r.amount_cents)} />
+          </div>
+          <a className="btn-orange block w-full py-4 text-center text-lg" href={payLink(r)} target="_blank" rel="noreferrer">1. Open {app}</a>
+          <p className="muted text-xs">If {app} opens without the amount or person filled in: type the amount, tap Pay, and paste the {r.method === 'venmo' ? 'username' : 'cashtag'}.</p>
           <button className="btn-black w-full py-4 text-lg" disabled={busy} onClick={() => fileRef.current?.click()}>{busy ? 'Reading receipt…' : '2. Add receipt'}</button>
           <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => upload(e.target.files?.[0])} />
           <div className="flex flex-wrap gap-4 text-sm">
