@@ -26,6 +26,7 @@ import GiftTree, { GiftTreeScan } from './pages/GiftTree'
 import GiftSignup from './pages/GiftSignup'
 import About from './pages/About'
 import Fund from './pages/Fund'
+import AdFund from './pages/AdFund'
 import Thanks from './pages/Thanks'
 import { Login, Signup } from './pages/Start'
 import Connect from './pages/Connect'
@@ -85,6 +86,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/qr" element={<SupportQR />} />
           <Route path="/support/print" element={<SupportPrint />} />
           <Route path="/fund" element={<Fund />} />
+          <Route path="/fund/ads" element={<AdFund />} />
           <Route path="/news" element={<News />} />
           <Route path="/spotlight" element={<Spotlight />} />
           <Route path="/how" element={<HowItWorks />} />

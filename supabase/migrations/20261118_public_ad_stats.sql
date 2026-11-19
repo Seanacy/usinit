@@ -1,0 +1,1 @@
+-- Applied via MCP as public_ad_stats (Nov 18): totals only - paid_to_holders_cents (holder_ledger scan_ad), ad_scans, ready_cents (approved advertiser balances), businesses (approved advertisers with a deposit).

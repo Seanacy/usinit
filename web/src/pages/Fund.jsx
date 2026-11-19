@@ -4,6 +4,7 @@ import { money, startCheckout, useStats, withCardFee } from '../lib/supabase'
 import { GoalTracker } from './Home'
 import { Notice } from '../components/Layout'
 import { getRef } from '../lib/ref'
+import FundTabs from '../components/FundTabs'
 
 export default function Fund() {
   const stats = useStats()
@@ -31,6 +32,7 @@ export default function Fund() {
 
   return (
     <div className="mx-auto max-w-xl px-4 py-8">
+      <FundTabs />
       <h1 className="h1">Community Fund</h1>
       <p className="muted mt-2">The Community Fund pays people on our streets for scans when no paid messages are running. It keeps holders earning while local businesses come on board.</p>
       <div className="mt-5 grid grid-cols-2 gap-3">
