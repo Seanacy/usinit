@@ -55,9 +55,18 @@ export default function HolderCashout() {
       {!open && d.cashouts_open === false ? (
         <div className="space-y-2 rounded-xl border-2 border-orange p-3">
           <p className="font-extrabold">Cash-outs are paused for now</p>
-          <p className="text-sm">Your money is safe and stays on your balance. You keep earning from every scan. Cash-outs open again when the Community Fund reaches {money(d.resume_cents)}.</p>
-          <div className="h-3 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-700"><div className="h-3 bg-orange" style={{ width: `${Math.min(100, Math.round((Math.max(0, d.fund_cents) / d.resume_cents) * 100))}%` }} /></div>
-          <p className="muted text-xs">Community Fund: {money(Math.max(0, d.fund_cents))} of {money(d.resume_cents)}</p>
+          {d.force_paused ? (
+            <>
+              <p className="text-sm">Your money is safe and stays on your balance. You keep earning from every scan. Cash-outs open on launch day.</p>
+              <p className="text-sm font-bold">Community Fund right now: {money(Math.max(0, d.fund_cents))}</p>
+            </>
+          ) : (
+            <>
+              <p className="text-sm">Your money is safe and stays on your balance. You keep earning from every scan. Cash-outs open again when the Community Fund reaches {money(d.resume_cents)}.</p>
+              <div className="h-3 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-700"><div className="h-3 bg-orange" style={{ width: `${Math.min(100, Math.round((Math.max(0, d.fund_cents) / d.resume_cents) * 100))}%` }} /></div>
+              <p className="muted text-xs">Community Fund: {money(Math.max(0, d.fund_cents))} of {money(d.resume_cents)}</p>
+            </>
+          )}
         </div>
       ) : open ? (
         <div className="space-y-2 rounded-xl bg-orange/15 p-3">

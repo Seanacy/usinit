@@ -1,0 +1,1 @@
+-- Applied via MCP: cashout_force_pause + cashout_info_force_flag (Nov 18). Setting cashout_force_pause=true keeps cash-outs closed until launch day; holder sees fund amount.
