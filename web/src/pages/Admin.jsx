@@ -27,26 +27,67 @@ function useTable(table, order = 'created_at', deps = []) {
   return [rows, load]
 }
 
-function Overview() {
+// Top of Overview: everything waiting on you to approve or pay. Tap a row to open that tab.
+function NeedsYou({ goTo }) {
+  const [t, setT] = useState(null)
+  useEffect(() => { supabase.rpc('admin_todo').then(({ data }) => setT(data)) }, [])
+  if (!t) return <Spinner />
+  const p = t.pay, a = t.approve
+  const pay = [
+    [p.holder_cashouts, `Holder cash-out${p.holder_cashouts === 1 ? '' : 's'} to pay · ${money(p.holder_cashouts_cents)}${p.holder_cashouts_review ? ` (${p.holder_cashouts_review} need a check)` : ''}`, 'Payouts'],
+    [p.creator_cashouts, `Creator cash-out${p.creator_cashouts === 1 ? '' : 's'} to pay · ${money(p.creator_cashouts_cents)}`, 'Creators'],
+    [p.plug_cashouts, `Plug cash-out${p.plug_cashouts === 1 ? '' : 's'} to pay · ${money(p.plug_cashouts_cents)}`, 'Nonprofits'],
+  ].filter((r) => r[0] > 0)
+  const approve = [
+    [a.ambassadors, 'Ambassadors', 'Ambassadors'],
+    [a.holders, 'Holders', 'Holders'],
+    [a.advertisers, 'Businesses (advertisers)', 'Ads'],
+    [a.ads, 'Ads', 'Ads'],
+    [a.spotlights, 'Spotlights', 'Spotlights'],
+    [a.creators, 'Creators', 'Creators'],
+    [a.nonprofits, 'Nonprofit discounts', 'Nonprofits'],
+    [a.workplace_notes, 'Workplace notes', 'Workplaces'],
+    [a.schools, 'School campaigns', 'Schools'],
+    [a.gift_requests, 'Gift Tree requests', 'Gift Tree'],
+    [a.fraud_flags, 'Fraud flags to check', 'Scans'],
+  ].filter((r) => r[0] > 0)
+  const Item = ({ n, label, tab, kind }) => (
+    <button onClick={() => goTo(tab)} className={`flex w-full items-center gap-3 rounded-xl p-4 text-left text-lg font-bold ${kind === 'pay' ? 'bg-orange text-black' : 'bg-neutral-900 text-white dark:bg-neutral-100 dark:text-black'}`}>
+      <span className="min-w-[2.5rem] rounded-lg bg-white/90 px-2 py-1 text-center text-black">{n}</span>
+      <span className="flex-1">{label}</span>
+      <span>›</span>
+    </button>
+  )
+  return (
+    <div className="card space-y-3 border-2 border-orange">
+      <p className="h2">Needs you</p>
+      {pay.length === 0 && approve.length === 0 && <p className="text-lg">✅ Nothing to approve or pay right now.</p>}
+      {pay.length > 0 && <p className="font-extrabold">💸 To pay</p>}
+      {pay.map(([n, l, tab]) => <Item key={l} n={n} label={l} tab={tab} kind="pay" />)}
+      {approve.length > 0 && <p className="font-extrabold">✋ To approve</p>}
+      {approve.map(([n, l, tab]) => <Item key={l} n={n} label={l} tab={tab} kind="approve" />)}
+    </div>
+  )
+}
+
+function Overview({ goTo }) {
   const [o, setO] = useState(null)
   useEffect(() => { supabase.rpc('admin_overview').then(({ data }) => setO(data)) }, [])
-  if (!o) return <Spinner />
   const box = (l, v) => <div className="card"><p className="muted text-sm">{l}</p><p className="text-2xl font-extrabold">{v}</p></div>
   return (
     <div className="space-y-4">
+      <NeedsYou goTo={goTo} />
+      {!o ? <Spinner /> : <>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {box('Community Fund', money(o.fund_balance_cents))}
         {box('Scans today', o.scans_today)}
         {box('Verified today', o.verified_today)}
         {box('Paid to holders today', money(o.paid_today_cents))}
         {box('Platform earned (all time)', money(o.platform_total_cents))}
-        {box('Holders waiting', o.pending_holders)}
-        {box('Ads waiting', o.pending_ads)}
-        {box('Advertisers waiting', o.pending_advertisers)}
       </div>
       <div className="card"><p className="font-bold">Scans today by status</p><pre className="mt-2 whitespace-pre-wrap text-sm">{JSON.stringify(o.status_today, null, 1)}</pre></div>
       <div className="card"><p className="font-bold">"What's next" taps (all time)</p><pre className="mt-2 text-sm">{JSON.stringify(o.taps, null, 1)}</pre></div>
-      {o.open_flags > 0 && <Notice kind="error">{o.open_flags} fraud flag(s) to review on the Scans tab.</Notice>}
+      </>}
     </div>
   )
 }
@@ -566,8 +607,8 @@ export default function Admin() {
       <div className="no-print mb-5 flex gap-2 overflow-x-auto pb-1">
         {TABS.map((t) => <button key={t} onClick={() => setTab(t)} className={`shrink-0 rounded-lg px-3 py-2 text-sm font-bold ${tab === t ? 'bg-orange text-ink' : 'bg-neutral-100 dark:bg-neutral-800'}`}>{t}{t === 'Payouts' && waitingCount > 0 ? ` (${waitingCount})` : ''}</button>)}
       </div>
-      {waitingCount > 0 && tab !== 'Payouts' && <button className="no-print mb-4 w-full rounded-xl bg-orange p-3 text-left font-bold text-black" onClick={() => setTab('Payouts')}>💸 {waitingCount} cash-out{waitingCount === 1 ? '' : 's'} waiting to be paid. Tap to open.</button>}
-      <C />
+      {waitingCount > 0 && tab !== 'Payouts' && tab !== 'Overview' && <button className="no-print mb-4 w-full rounded-xl bg-orange p-3 text-left font-bold text-black" onClick={() => setTab('Payouts')}>💸 {waitingCount} cash-out{waitingCount === 1 ? '' : 's'} waiting to be paid. Tap to open.</button>}
+      <C goTo={(t) => { setTab(t); window.scrollTo(0, 0) }} />
     </div>
   )
 }
