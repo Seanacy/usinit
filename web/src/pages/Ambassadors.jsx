@@ -398,6 +398,40 @@ function SocialPictures() {
   )
 }
 
+// Team Lead view: everyone on the Team Lead's team, side by side, this month. Only Team Leads see it.
+function MyTeam() {
+  const [t, setT] = useState(undefined)
+  const [prog, setProg] = useState(null)
+  useEffect(() => {
+    supabase.rpc('my_team').then(({ data }) => setT(data || null))
+    supabase.rpc('amb_progress_all').then(({ data }) => setProg(data))
+  }, [])
+  if (!t) return null
+  const total = t.members.reduce((s, m) => s + m.month_cents, 0)
+  const quietDays = (m) => Math.floor((Date.now() - new Date(m.last_active).getTime()) / 86400000)
+  return (
+    <div className="card space-y-3 border-2 border-orange">
+      <p className="h2">⭐ My team: {TEAMS[t.team] || t.team}</p>
+      <p className="text-sm">{t.members.length} Ambassador{t.members.length === 1 ? '' : 's'} · <b>{money(total)}</b> brought in this month together</p>
+      <p className="muted text-xs">Most brought in this month is first. Reach out to anyone who's been quiet for 2 weeks or more.</p>
+      {t.members.map((m, i) => { const st = boxStyle(i); const q = quietDays(m); return (
+        <div key={m.slug} className={`space-y-2 rounded-xl p-3 ${st.box}`}>
+          <div className="flex items-center gap-3">
+            <Avatar a={m} size="h-12 w-12" text="text-xl" />
+            <div className="min-w-0 flex-1">
+              <Link to={`/ambassadors/${m.slug}`} className="font-extrabold underline">{m.name}{m.me ? ' (you)' : ''}</Link>
+              <p className={`text-xs ${st.sub}`}>{m.weeks_active} weeks active · {q <= 0 ? 'active today' : `last active ${q} day${q === 1 ? '' : 's'} ago`}{q >= 14 ? ' · 👋 check in' : ''}</p>
+            </div>
+            <p className="text-right text-lg font-extrabold">{money(m.month_cents)}</p>
+          </div>
+          <p className={`text-xs ${st.sub}`}>💛 {money(m.month_fund_cents)} Community Fund · 🏪 {money(m.month_ad_cents)} Ad Fund · 🙋 {m.month_people} sign-ups and gifts</p>
+          {prog?.[m.slug] && <GoalBar p={prog[m.slug]} />}
+        </div>
+      ) })}
+    </div>
+  )
+}
+
 export function MyAmbassador() {
   const session = useSession()
   const [me, setMe] = useState(undefined)
@@ -428,7 +462,7 @@ export function MyAmbassador() {
         </div>
       )}
       {me.status === 'denied' && <Notice>Your Ambassador sign-up wasn't approved. Message Us In It if you have questions.</Notice>}
-      {(me.status === 'active' || me.status === 'hidden') && <><Meters /><MyLinks code={me.ref_code} /><ReadyMessages name={me.name} code={me.ref_code} /></>}
+      {(me.status === 'active' || me.status === 'hidden') && <><Meters />{me.status === 'active' && <MyTeam />}<MyLinks code={me.ref_code} /><ReadyMessages name={me.name} code={me.ref_code} /></>}
       {me.status !== 'denied' && <ProfileBody a={me} mine />}
       {(me.status === 'active' || me.status === 'hidden') && <SocialPictures />}
     </div>
