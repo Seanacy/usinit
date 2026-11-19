@@ -292,6 +292,80 @@ function Meters() {
   )
 }
 
+// Ready-to-send messages for Ambassadors, with their own links filled in.
+function readyMessages(name, code) {
+  const support = `${SITE_URL}/support?ref=${code}`
+  const drop = `${SITE_URL}/2?ref=${code}`
+  const biz = `${SITE_URL}/advertise?ref=${code}`
+  return [
+    { title: 'Social media post', where: 'Facebook, Instagram, Nextdoor', text:
+`I'm helping launch something in Minneapolis called Us In It.
+
+People going through hard times carry a QR code. When you scan it, a local business message shows up, and the person holding the code gets paid. Not a handout. A paycheck.
+
+Before businesses come on board, we need neighbors to fund the first scans. The launch goal is $5,000.
+
+You can help two ways:
+💛 Give once or weekly (as little as $5 a week)
+💸 Do a $2 Drop. That's 4 paid scans for someone on our streets: ${drop}
+
+Every dollar shows up on the public Fund page, so you can watch it grow.
+
+For-Profit, For People.
+👉 ${support}` },
+    { title: 'Text or DM to people you know', where: 'Texts, Messenger, Instagram DMs', text:
+`Hey [name], I'm helping launch something called Us In It.
+
+People going through hard times carry a QR code. Every time someone scans it, they get paid. Local businesses will pay for the scans, but to get started we're raising $5,000 so the first scans pay right away.
+
+Would you help? Even $2 pays for 4 scans. Weekly starts at $5.
+
+${support}
+
+And if you can't give, sharing it helps just as much. 🙏` },
+    { title: 'The $50 business ask', where: 'Email, DM, or read it in person', text:
+`Subject: 100 neighbors, $50, your business name in front of them
+
+Hi [owner name],
+
+I'm ${name}, an Ambassador for Us In It here in Minneapolis.
+
+People going through hard times carry a QR code. When someone scans it, your message shows up on their phone, and the person holding the code gets paid for that scan.
+
+$50 = 100 scans. That means 100 local people see your business, and $40 of it goes straight to people working our streets.
+
+You pick your area, so your message only shows near you. You can see your scans live on your own page.
+
+Would you be one of the first 100 businesses? It takes about 5 minutes to sign up:
+${biz}
+
+${name}
+Ambassador, Us In It · For-Profit, For People` },
+  ]
+}
+
+function ReadyMessages({ name, code }) {
+  const [copied, setCopied] = useState(null)
+  const [open, setOpen] = useState(null)
+  const msgs = readyMessages(name, code)
+  return (
+    <div className="card space-y-3">
+      <p className="font-bold">Ready-to-send messages</p>
+      <p className="muted text-sm">Your links are already in them. Copy, paste, and send. Change any words you want, and fill in anything in [brackets].</p>
+      {msgs.map((m, i) => { const st = boxStyle(i); return (
+        <div key={m.title} className={`space-y-2 rounded-xl p-3 ${st.box}`}>
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0"><p className="font-bold">{m.title}</p><p className={`text-xs ${st.sub}`}>{m.where}</p></div>
+            <button className={`shrink-0 rounded-xl px-4 py-2 text-sm font-bold ${st.btn}`} onClick={() => { navigator.clipboard?.writeText(m.text); setCopied(i); setTimeout(() => setCopied(null), 1500) }}>{copied === i ? 'Copied!' : 'Copy'}</button>
+          </div>
+          <button className="text-sm font-bold underline" onClick={() => setOpen(open === i ? null : i)}>{open === i ? 'Hide message' : 'Read message'}</button>
+          {open === i && <p className="whitespace-pre-wrap rounded-lg bg-white p-3 text-sm text-ink">{m.text}</p>}
+        </div>
+      ) })}
+    </div>
+  )
+}
+
 export function MyAmbassador() {
   const session = useSession()
   const [me, setMe] = useState(undefined)
@@ -322,7 +396,7 @@ export function MyAmbassador() {
         </div>
       )}
       {me.status === 'denied' && <Notice>Your Ambassador sign-up wasn't approved. Message Us In It if you have questions.</Notice>}
-      {(me.status === 'active' || me.status === 'hidden') && <><Meters /><MyLinks code={me.ref_code} /></>}
+      {(me.status === 'active' || me.status === 'hidden') && <><Meters /><MyLinks code={me.ref_code} /><ReadyMessages name={me.name} code={me.ref_code} /></>}
       {me.status !== 'denied' && <ProfileBody a={me} mine />}
     </div>
   )
