@@ -20,18 +20,19 @@ type Amb = { id: string; name: string; slug: string; ref: string; email: string;
 
 function layout(a: Amb, body: string, footerAddress: string) {
   const unsub = `${SITE}/unsubscribe?t=${a.token}`;
-  return `<!doctype html><html><body style="margin:0;background:#f4f4f4;font-family:Arial,Helvetica,sans-serif;color:#111">
-  <div style="max-width:560px;margin:0 auto;background:#fff">
-    <div style="background:#111;padding:18px 24px"><span style="color:#fff;font-weight:bold;font-size:22px;border:3px solid #FF6A00;padding:4px 10px">Us In It</span></div>
-    <div style="padding:24px;font-size:16px;line-height:1.5">${body}</div>
-    <div style="padding:16px 24px;font-size:12px;color:#666;border-top:1px solid #eee">
+  // Plain, personal-looking email (reads like a note, so Gmail is more likely to put it in Primary).
+  return `<!doctype html><html><body style="margin:0;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#111">
+  <div style="max-width:560px;margin:0 auto;padding:20px 16px;font-size:16px;line-height:1.55">
+    ${body}
+    <p style="margin-top:24px">— Jermaine, Us In It</p>
+    <p style="margin-top:28px;font-size:12px;color:#777;border-top:1px solid #eee;padding-top:12px">
       You're getting this because you're an Us In It Ambassador. Ambassadors are volunteers, not employees or owners.<br>
-      <a href="${unsub}" style="color:#666">Unsubscribe from Ambassador emails</a><br>
+      <a href="${unsub}" style="color:#777">Unsubscribe from Ambassador emails</a><br>
       Us In It · Many Ways Up LLC${footerAddress ? " · " + esc(footerAddress) : " · Minneapolis, MN"}
-    </div>
+    </p>
   </div></body></html>`;
 }
-const btn = (href: string, text: string) => `<p><a href="${href}" style="display:inline-block;background:#FF6A00;color:#111;font-weight:bold;padding:12px 20px;border-radius:10px;text-decoration:none">${esc(text)}</a></p>`;
+const btn = (href: string, text: string) => `<p><a href="${href}" style="color:#c2410c">${esc(text)}</a></p>`;
 const links = (a: Amb) => ({
   page: `${SITE}/ambassadors/${a.slug}`,
   support: `${SITE}/support?ref=${a.ref}`,
@@ -47,21 +48,25 @@ function build(kind: string, a: Amb, d: any, extra: Record<string, unknown> = {}
   switch (kind) {
     case "welcome":
       return { subject: `You're in, ${a.name} 🧡`, html:
-        `<h2>Welcome to the Us In It Ambassadors, ${name}!</h2>
+        `<p>Hi ${name},</p>
+        <p><b>Welcome to the Us In It Ambassadors!</b></p>
         <p>Your page: <a href="${L.page}">${L.page}</a></p>
         <p>Your links:<br>• <a href="${L.support}">Support link</a><br>• <a href="${L.business}">Business link</a><br>• <a href="${L.holder}">Holder sign-up link</a><br>• <a href="${L.friend}">Bring a friend</a></p>
         <p><b>This month's goal:</b> bring 1 new Ambassador, bring in 1 supporter or business, and share your link every week.</p>
-        <p><b>Not a handout. A paycheck.</b> Thanks for being in it.</p>${btn(L.page, "See my page")}` };
+        <p><b>Not a handout. A paycheck.</b> Thanks for being in it.</p>${btn(L.page, "See my page")}
+        <p style="font-size:14px;color:#555">To make sure our updates don't get lost, move this email to your Primary tab, or add team@usinit.com to your contacts.</p>` };
     case "milestone": {
       const what = String(extra.what ?? "a new milestone");
       return { subject: `You just hit ${what} 🎉`, html:
-        `<h2>${name}, you just hit ${esc(what)}!</h2>
+        `<p>Hi ${name},</p>
+        <p><b>You just hit ${esc(what)}!</b></p>
         <p>Your link is bringing in real money that pays real people on our streets.</p>${btn(L.page, "See my page")}` };
     }
     case "weekly": {
       const top = (d.top as string[]).length ? (d.top as string[]).map(esc).join(", ") : "Could be you next week!";
       return { subject: "This week on Us In It", html:
-        `<h2>This week on Us In It</h2>
+        `<p>Hi ${name},</p>
+        <p>Here's where things stand this week.</p>
         <p><b>Community Fund:</b> ${money(d.fund_cents)}<br><b>Ad Fund:</b> ${money(d.ad_ready_cents)}<br><b>Paid to holders this week:</b> ${money(d.paid_week_cents)}</p>
         <p><b>Your goal bar:</b> ${goalLine(a.progress)}</p>
         <p><b>Top Ambassadors this week:</b> ${top}</p>
@@ -69,18 +74,21 @@ function build(kind: string, a: Amb, d: any, extra: Record<string, unknown> = {}
     }
     case "nudge":
       return { subject: `Still in it, ${a.name}?`, html:
-        `<h2>Still in it, ${name}?</h2>
+        `<p>Hi ${name},</p>
+        <p><b>Still in it?</b></p>
         <p>It's been a couple of weeks. One share can pay someone today.</p>
         <p>Here's your link: <a href="${L.support}">${L.support}</a></p>
-        <p>Reply to this email if you need anything.</p>${btn(L.support, "Share my link")}` };
+        <p>Reply to this email if you need anything.</p>` };
     case "fund_low":
       return { subject: "Boost time ⚡ The Community Fund is low", html:
-        `<h2>Boost time ⚡</h2>
+        `<p>Hi ${name},</p>
+        <p><b>Boost time ⚡</b></p>
         <p>The Community Fund is at <b>${money(d.fund_cents)}</b>. When it's low, fewer scans get paid.</p>
-        <p>Share your link today: <a href="${L.support}">${L.support}</a></p>${btn(L.support, "Share my link")}` };
+        <p>Share your link today: <a href="${L.support}">${L.support}</a></p>` };
     case "fund_high":
       return { subject: `We did it 🙌 The Community Fund hit ${money(d.fund_cents)}`, html:
-        `<h2>We did it 🙌</h2>
+        `<p>Hi ${name},</p>
+        <p><b>We did it 🙌</b></p>
         <p>Thanks to you, the Community Fund is at <b>${money(d.fund_cents)}</b>. That's about <b>${Math.floor((d.fund_cents || 0) / 50).toLocaleString()}</b> paid scans waiting for holders.</p>${btn(L.page, "See my page")}` };
   }
   throw new Error("unknown kind " + kind);
@@ -96,6 +104,8 @@ async function send(to: { email: string; name: string }, subject: string, html: 
       sender: { name: "Us In It", email: "team@usinit.com" },
       replyTo: { email: "team@usinit.com", name: "Us In It" },
       to: [to], subject, htmlContent: html,
+      // Plain-text copy too: emails with both look more like a personal note to Gmail.
+      textContent: html.replace(/<br\s*\/?>/gi, "\n").replace(/<\/p>/gi, "\n\n").replace(/<a [^>]*href="([^"]+)"[^>]*>([^<]*)<\/a>/gi, "$2: $1").replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/\n{3,}/g, "\n\n").trim(),
       headers: { "List-Unsubscribe": `<${unsubUrl}>` },
     }),
   });
