@@ -7,7 +7,6 @@ import ShareQR from '../components/ShareQR'
 import { Notice, Spinner } from '../components/Layout'
 import { GoalTracker } from './Home'
 import { boxStyle } from '../lib/boxStyles'
-import QRCode from 'qrcode'
 
 export const TEAMS = { street: 'Street Team', business: 'Business Team', event: 'Event Team', social: 'Social Team', workplace: 'Workplace Team', skyway: 'Skyway & Downtown', shop: 'Shop Team', media: 'Media Team', community: 'Community Team' }
 const DISCLAIMER = "Ambassadors are volunteers who help spread the word about Us In It. They aren't owners, employees, or paid."
@@ -368,52 +367,33 @@ function ReadyMessages({ name, code }) {
   )
 }
 
-// Pictures for social media. Same three $2 pictures Jermaine uses, but the QR code is redrawn
-// with the Ambassador's own $2 Drop link so every scan is credited to them.
+// Pictures for social media: the Us In It square picture and banner (same ones on the Cash App / Venmo profiles).
 const PICS = [
-  { file: '/kit/2-paychecks-square.png', name: 'square-paychecks', label: 'Square post (Instagram, Facebook)', box: [352, 535, 377] },
-  { file: '/kit/2-scans-square.png', name: 'square-scans', label: 'Square post (Instagram, Facebook)', box: [358, 551, 364] },
-  { file: '/kit/2-scans-story.png', name: 'story', label: 'Story (Instagram, Facebook, TikTok)', box: [238, 897, 604] },
+  { file: '/kit/usinit-square.png', name: 'usinit-square.png', label: 'Square picture: posts, profile pictures' },
+  { file: '/kit/usinit-banner.png', name: 'usinit-banner.png', label: 'Banner: Facebook, X, or LinkedIn cover photo' },
 ]
-async function makePic(pic, url) {
-  const img = await new Promise((ok, bad) => { const i = new Image(); i.onload = () => ok(i); i.onerror = bad; i.src = pic.file })
-  const c = document.createElement('canvas'); c.width = img.width; c.height = img.height
-  const g = c.getContext('2d'); g.drawImage(img, 0, 0)
-  const [x, y, size] = pic.box, pad = Math.round(size * 0.09), inner = size - pad * 2
-  g.fillStyle = '#fff'; g.fillRect(x + 8, y + 8, size - 16, size - 16)
-  const q = document.createElement('canvas')
-  await QRCode.toCanvas(q, url, { margin: 0, width: inner, errorCorrectionLevel: 'M', color: { dark: '#111111', light: '#ffffff' } })
-  g.drawImage(q, x + pad, y + pad, inner, inner)
-  return c.toDataURL('image/png')
-}
-function SocialPictures({ code }) {
-  const [pics, setPics] = useState(null)
-  const url = `${SITE_URL}/2?ref=${code}`
-  useEffect(() => { Promise.all(PICS.map((p) => makePic(p, url))).then(setPics).catch(() => setPics([])) }, [url])
-  async function save(i) {
-    const data = pics[i], fname = `usinit-${PICS[i].name}.png`
+function SocialPictures() {
+  async function save(p) {
     try {
-      const blob = await (await fetch(data)).blob()
-      const file = new File([blob], fname, { type: 'image/png' })
+      const blob = await (await fetch(p.file)).blob()
+      const file = new File([blob], p.name, { type: 'image/png' })
       if (navigator.canShare?.({ files: [file] })) { await navigator.share({ files: [file] }); return }
     } catch { /* fall back to download */ }
-    const a = document.createElement('a'); a.href = data; a.download = fname; a.click()
+    const a = document.createElement('a'); a.href = p.file; a.download = p.name; a.click()
   }
   return (
     <div className="card space-y-3">
       <p className="font-bold">Pictures for social media</p>
-      <p className="muted text-sm">The QR code in each picture is your own $2 Drop link, so every $2 that comes from your post is credited to you. On a phone, tap Save picture, then tap Save Image.</p>
-      {!pics ? <Spinner /> : pics.length === 0 ? <p className="muted text-sm">Pictures didn't load. Refresh the page and try again.</p> : (
-        <div className="grid gap-4 sm:grid-cols-3">
-          {pics.map((src, i) => { const st = boxStyle(i); return (
-            <div key={i} className={`space-y-2 rounded-xl p-3 ${st.box}`}>
-              <img src={src} alt={`Us In It $2 picture ${i + 1}`} className="w-full rounded-lg" />
-              <p className={`text-xs ${st.sub}`}>{PICS[i].label}</p>
-              <button className={`w-full rounded-xl px-4 py-3 text-sm font-bold ${st.btn}`} onClick={() => save(i)}>Save picture</button>
-            </div>
-          ) })}
-        </div>
-      )}
+      <p className="muted text-sm">Use these with your posts. On a phone, tap Save picture, then tap Save Image.</p>
+      <div className="grid gap-4 sm:grid-cols-2">
+        {PICS.map((p, i) => { const st = boxStyle(i); return (
+          <div key={p.file} className={`flex flex-col gap-2 rounded-xl p-3 ${st.box}`}>
+            <img src={p.file} alt={p.label} className="w-full rounded-lg" />
+            <p className={`text-xs ${st.sub}`}>{p.label}</p>
+            <button className={`mt-auto w-full rounded-xl px-4 py-3 text-sm font-bold ${st.btn}`} onClick={() => save(p)}>Save picture</button>
+          </div>
+        ) })}
+      </div>
     </div>
   )
 }
@@ -450,7 +430,7 @@ export function MyAmbassador() {
       {me.status === 'denied' && <Notice>Your Ambassador sign-up wasn't approved. Message Us In It if you have questions.</Notice>}
       {(me.status === 'active' || me.status === 'hidden') && <><Meters /><MyLinks code={me.ref_code} /><ReadyMessages name={me.name} code={me.ref_code} /></>}
       {me.status !== 'denied' && <ProfileBody a={me} mine />}
-      {(me.status === 'active' || me.status === 'hidden') && <SocialPictures code={me.ref_code} />}
+      {(me.status === 'active' || me.status === 'hidden') && <SocialPictures />}
     </div>
   )
 }
