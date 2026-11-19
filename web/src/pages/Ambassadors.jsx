@@ -126,7 +126,7 @@ function ProfileBody({ a, mine }) {
           {a.shoutouts.map((s, i) => <p key={i} className="rounded-xl bg-orange/15 p-3">"{s.message}" <span className="muted text-xs">· {new Date(s.created_at).toLocaleDateString()}</span></p>)}
         </div>
       )}
-      {a.ref_code && <ShareQR inline url={link} heading={mine ? 'Your support link' : `Support Us In It with ${a.name}`} label="Full screen" />}
+      {a.ref_code && a.status !== 'pending' && <ShareQR inline url={link} heading={mine ? 'Your support link' : `Support Us In It with ${a.name}`} label="Full screen" />}
       <p className="muted text-xs">{DISCLAIMER}</p>
     </div>
   )
