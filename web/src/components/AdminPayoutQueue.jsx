@@ -58,7 +58,14 @@ function QueueCard({ r, reload }) {
       })
       const out = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(out.error || 'Something went wrong. Try again.')
-      if (out.result === 'no_ai') {
+      if (out.result === 'need_id') {
+        const raw = prompt(`Everything matches${out.read?.recipient_name ? ` (sent to ${out.read.recipient_name})` : ''}. Type the Transaction number from the receipt (example: D-71G365463):`)
+        const id = (raw || '').trim().replace(/^#\s*/, '')
+        if (id) {
+          const { error } = await supabase.rpc('admin_mark_cashout_paid', { p_req: r.id, p_payment_id: id, p_receipt_path: out.receipt_path, p_ai: out.read })
+          if (error) throw error
+        }
+      } else if (out.result === 'no_ai') {
         const id = prompt('Receipt saved. Type the payment ID from the receipt:')
         if (id) {
           const { error } = await supabase.rpc('admin_mark_cashout_paid', { p_req: r.id, p_payment_id: id, p_receipt_path: out.receipt_path })
@@ -73,8 +80,10 @@ function QueueCard({ r, reload }) {
     if (fileRef.current) fileRef.current.value = ''
   }
   async function markPaid() {
-    const id = prompt('Payment ID from the receipt:', r.ai_result?.payment_id || '')
-    if (id === null) return
+    const raw = prompt('Transaction number from the receipt (example: D-71G365463):', r.ai_result?.payment_id || '')
+    if (raw === null) return
+    const id = raw.trim().replace(/^#\s*/, '')
+    if (!id) return
     const { error } = await supabase.rpc('admin_mark_cashout_paid', { p_req: r.id, p_payment_id: id })
     setMsg(error?.message || null); reload()
   }

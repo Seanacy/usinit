@@ -10,10 +10,16 @@ const cors = {
 };
 const json = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { ...cors, "Content-Type": "application/json" } });
 const norm = (s: unknown) => String(s ?? "").trim().replace(/^[$@]/, "").toLowerCase();
+const cleanId = (s: unknown) => String(s ?? "").trim().replace(/^#\s*/, "");
 
-const PROMPT = `This is a screenshot of a Cash App or Venmo payment receipt. Read it and answer with ONLY this JSON, no other text:
-{"app":"cashapp"|"venmo"|"unknown","status":"completed"|"pending"|"failed"|"unknown","amount_cents":<integer or null>,"recipient_handle":"<$cashtag or @username exactly as shown, or null>","recipient_name":"<name shown or null>","payment_id":"<transaction ID / identifier shown, or null>","date":"<date shown or null>","readable":true|false}
-Rules: amount_cents is the amount sent in cents (e.g. $20.00 -> 2000). Only fill a field if you can clearly read it on the screenshot; otherwise use null. If the image is not a payment receipt, set readable to false.`;
+const PROMPT = `This is a screenshot of a Cash App or Venmo payment screen or receipt. Read it and answer with ONLY this JSON, no other text:
+{"app":"cashapp"|"venmo"|"unknown","status":"completed"|"pending"|"failed"|"unknown","amount_cents":<integer or null>,"recipient_handle":"<the receiver's $cashtag or @username exactly as shown, or null>","recipient_name":"<the receiver's display name or null>","payment_id":"<transaction number / identifier / transaction ID shown, or null>","date":"<date shown or null>","readable":true|false}
+Rules:
+- amount_cents is the amount sent in cents (e.g. $20.00 -> 2000).
+- payment_id: Cash App shows it as "Transaction number" or "Identifier" (looks like #D-71G365463); Venmo shows "Transaction ID" (a long number). Copy it exactly, without the # sign.
+- recipient_handle: the person the money went TO, not "From". A $cashtag starts with $; a Venmo username starts with @.
+- A detail screen that shows "Payment source" or "Fees" with no failure message counts as completed.
+- Only fill a field if you can clearly read it; otherwise use null. If the image is not a payment screen or receipt, set readable to false.`;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
@@ -33,7 +39,7 @@ Deno.serve(async (req) => {
     if (!["image/png", "image/jpeg", "image/webp"].includes(mediaType)) return json({ error: "Use a PNG or JPG screenshot." }, 400);
     if (b64.length > 11_000_000) return json({ error: "That picture is too big. Use a normal screenshot." }, 400);
 
-    const { data: r } = await db.from("cashout_requests").select("id,amount_cents,method,handle,status").eq("id", reqId).single();
+    const { data: r } = await db.from("cashout_requests").select("id,amount_cents,method,handle,status,ai_result").eq("id", reqId).single();
     if (!r) return json({ error: "Cash-out not found." }, 404);
     if (!["waiting", "review"].includes(r.status)) return json({ error: `This cash-out is already ${r.status}.` }, 400);
 
@@ -68,21 +74,33 @@ Deno.serve(async (req) => {
     let read: any = {};
     try { read = JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1)); } catch { read = { readable: false }; }
 
+    // Two screenshots can be added (for example the "Completed" screen and the detail screen with the transaction number).
+    // What one screenshot is missing, the other can fill in.
+    const prev = (r.ai_result && typeof r.ai_result === "object") ? r.ai_result as Record<string, unknown> : {};
+    const pick = (k: string) => (read[k] !== null && read[k] !== undefined && read[k] !== "" && read[k] !== "unknown") ? read[k] : prev[k] ?? read[k];
+    read = { ...read, app: pick("app"), status: pick("status"), amount_cents: pick("amount_cents"), recipient_handle: pick("recipient_handle"),
+      recipient_name: pick("recipient_name"), payment_id: read.payment_id ? cleanId(read.payment_id) : (prev.payment_id ?? null), readable: read.readable || prev.readable === true };
+
     const problems: string[] = [];
     if (!read.readable) problems.push("Couldn't read the picture");
     if (read.app && read.app !== "unknown" && read.app !== r.method) problems.push(`Receipt is from ${read.app === "cashapp" ? "Cash App" : "Venmo"}, but they asked for ${r.method === "cashapp" ? "Cash App" : "Venmo"}`);
     if (read.status !== "completed") problems.push(read.status === "pending" ? "Payment still shows as pending" : read.status === "failed" ? "Payment shows as failed" : "Couldn't tell if the payment went through");
     if (Number(read.amount_cents) !== r.amount_cents) problems.push(`Amount on receipt ${read.amount_cents ? "$" + (read.amount_cents / 100).toFixed(2) : "not found"}, cash-out is $${(r.amount_cents / 100).toFixed(2)}`);
-    if (!read.recipient_handle) problems.push("Couldn't find who it was sent to");
-    else if (norm(read.recipient_handle) !== norm(r.handle)) problems.push(`Sent to ${read.recipient_handle}, but they asked for ${r.handle}`);
-    if (!read.payment_id) problems.push("No payment ID found on the receipt");
+    if (read.recipient_handle && norm(read.recipient_handle) !== norm(r.handle)) problems.push(`Sent to ${read.recipient_handle}, but they asked for ${r.handle}`);
+    else if (!read.recipient_handle && !read.recipient_name) problems.push("Couldn't find who it was sent to");
+
+    // Everything checks out except the transaction number: ask the admin to type it in.
+    if (!problems.length && !read.payment_id) {
+      await db.rpc("admin_cashout_set_review", { p_req: reqId, p_reason: "Waiting for the transaction number", p_receipt_path: path, p_ai: read });
+      return json({ result: "need_id", read, receipt_path: path });
+    }
 
     if (problems.length) {
       const reason = problems.join(" · ");
       await db.rpc("admin_cashout_set_review", { p_req: reqId, p_reason: reason, p_receipt_path: path, p_ai: read });
       return json({ result: "review", reason, read, receipt_path: path });
     }
-    const { error } = await db.rpc("admin_mark_cashout_paid", { p_req: reqId, p_payment_id: String(read.payment_id), p_receipt_path: path, p_ai: read });
+    const { error } = await db.rpc("admin_mark_cashout_paid", { p_req: reqId, p_payment_id: cleanId(read.payment_id), p_receipt_path: path, p_ai: read });
     if (error) {
       await db.rpc("admin_cashout_set_review", { p_req: reqId, p_reason: error.message, p_receipt_path: path, p_ai: read });
       return json({ result: "review", reason: error.message, read, receipt_path: path });
