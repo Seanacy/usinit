@@ -133,6 +133,28 @@ Deno.serve(async (req) => {
     const { data: cfg } = await db.from("app_private_cfg").select("value").eq("key", "mailer_key").single();
     if (!cfg?.value || req.headers.get("x-mailer-key") !== cfg.value) return json({ error: "Not allowed." }, 403);
 
+    // Server-side test: send one of each email to every admin's own email address.
+    if (body.action === "test_admins") {
+      const { data: admins } = await db.from("admins").select("user_id");
+      const { data: d, error } = await db.rpc("amb_mail_data");
+      if (error) throw error;
+      const sent: string[] = [];
+      for (const ad of admins ?? []) {
+        const { data: u } = await db.auth.admin.getUserById(ad.user_id);
+        const email = u?.user?.email;
+        if (!email) continue;
+        const sample: Amb = { id: "test", name: "Frank", slug: "frank", ref: "FRNK42", email, updates: true,
+          token: "00000000-0000-0000-0000-000000000000", joined: new Date().toISOString(), badges: [],
+          progress: { pct: 42, new_amb: true, brought: false, weeks_hit: 1, weeks: 4 }, last_active: "", sent7: 0, keys: [], last_nudge: null };
+        for (const k of ["welcome", "milestone", "weekly", "nudge", "fund_low", "fund_high"]) {
+          const m = build(k, sample, d, { what: "your first supporter" });
+          await send({ email, name: "Test" }, "[TEST] " + m.subject, layout(sample, m.html, d.footer_address), `${SITE}/unsubscribe`);
+        }
+        sent.push(email.replace(/^(.).*(@.*)$/, "$1***$2"));
+      }
+      return json({ ok: true, sent_to: sent });
+    }
+
     const { data: d, error } = await db.rpc("amb_mail_data");
     if (error) throw error;
     const ambs: Amb[] = d.ambassadors || [];
