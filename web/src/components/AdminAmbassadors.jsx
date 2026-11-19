@@ -30,7 +30,7 @@ function Row({ a, reload, setMsg }) {
       <button className="flex w-full items-center gap-3 text-left" onClick={() => setOpen(!open)}>
         <Avatar a={a} size="h-12 w-12" text="text-xl" />
         <div className="min-w-0 flex-1">
-          <p className="font-extrabold">{a.name}{a.status === 'hidden' ? ' (hidden)' : ''}{a.is_team_lead ? ' ⭐' : ''}{a.nonprofit_org ? ' 💚' : ''}</p>
+          <p className="font-extrabold">{a.name}{a.status === 'hidden' ? ' (hidden)' : a.status === 'pending' ? ' (waiting for approval)' : a.status === 'denied' ? ' (denied)' : ''}{a.is_team_lead ? ' ⭐' : ''}{a.nonprofit_org ? ' 💚' : ''}</p>
           <p className="muted text-xs">{a.team ? TEAMS[a.team] : 'No team'} · {money(a.stats.raised_cents)} · {a.stats.supporters} supporters · {a.stats.weeks_active} wks · {quietDays(a)}d since last</p>
         </div>
         <span className="text-sm font-bold">{open ? '▲' : '▼'}</span>
@@ -50,13 +50,44 @@ function Row({ a, reload, setMsg }) {
             <button className="btn-outline px-3 py-1" onClick={() => { const o = prompt('Nonprofit name (leave empty to remove the Nonprofit Ambassador badge):', a.nonprofit_org || ''); if (o !== null) set('nonprofit_org', o) }}>{a.nonprofit_org ? 'Edit nonprofit' : 'Mark Nonprofit Ambassador'}</button>
             <button className="btn-outline px-3 py-1" onClick={shout}>Add shout-out</button>
             <button className="btn-outline px-3 py-1" onClick={() => { const n = prompt('New display name:', a.name); if (n) set('name', n) }}>Reset name</button>
-            <button className="btn-outline px-3 py-1" onClick={() => set('status', a.status === 'hidden' ? 'active' : 'hidden')}>{a.status === 'hidden' ? 'Show page' : 'Hide page'}</button>
+            {(a.status === 'active' || a.status === 'hidden') && <button className="btn-outline px-3 py-1" onClick={() => set('status', a.status === 'hidden' ? 'active' : 'hidden')}>{a.status === 'hidden' ? 'Show page' : 'Hide page'}</button>}
+            {a.status === 'denied' && <button className="btn-outline px-3 py-1" onClick={() => set('status', 'active')}>Approve after all</button>}
           </div>
           {a.names.length > 0 && (
             <div><b>Name history</b><ul className="muted mt-1">{a.names.map((n, i) => <li key={i}>{new Date(n.at).toLocaleDateString()}: {n.old} → {n.new}</li>)}</ul></div>
           )}
         </div>
       )}
+    </div>
+  )
+}
+
+// New Ambassadors wait here until you approve them.
+function Pending({ list, reload, setMsg }) {
+  async function decide(a, status) {
+    if (status === 'denied' && !confirm(`Deny ${a.name}? They won't get links or a public page.`)) return
+    const { error } = await supabase.rpc('admin_ambassador_set', { p_id: a.id, p_field: 'status', p_value: status })
+    setMsg(error?.message || (status === 'active' ? `${a.name} is approved. Their welcome email goes out within 15 minutes.` : `${a.name} was denied.`)); reload()
+  }
+  if (list.length === 0) return null
+  return (
+    <div className="card space-y-3 border-2 border-orange">
+      <p className="h2">⏳ Waiting for approval ({list.length})</p>
+      {list.map((a) => (
+        <div key={a.id} className="space-y-2 rounded-xl border border-neutral-300 p-3 dark:border-neutral-700">
+          <div className="flex items-center gap-3">
+            <Avatar a={a} size="h-12 w-12" text="text-xl" />
+            <div className="min-w-0">
+              <p className="font-extrabold">{a.name}</p>
+              <p className="muted break-all text-xs">{a.email}</p>
+              <p className="muted text-xs">Signed up {new Date(a.joined).toLocaleString()}{a.recruited_by ? ` · brought in by ${a.recruiter_name || 'an Ambassador'}` : ''}</p>
+            </div>
+          </div>
+          {a.bio && <p className="text-sm">"{a.bio}"</p>}
+          <button className="btn-orange w-full py-4 text-lg" onClick={() => decide(a, 'active')}>Approve</button>
+          <button className="w-full rounded-xl bg-red-600 py-4 text-lg font-bold text-white" onClick={() => decide(a, 'denied')}>Deny</button>
+        </div>
+      ))}
     </div>
   )
 }
@@ -110,6 +141,8 @@ export default function AdminAmbassadors() {
   if (!d) return msg ? <Notice kind="error">{msg}</Notice> : <Spinner />
 
   const list = d.list
+  const byId = Object.fromEntries(list.map((a) => [a.id, a]))
+  const pending = list.filter((a) => a.status === 'pending').map((a) => ({ ...a, recruiter_name: byId[a.recruited_by]?.name }))
   const active = list.filter((a) => a.status === 'active')
   const quiet = active.filter((a) => quietDays(a) >= 14).sort((x, y) => quietDays(y) - quietDays(x))
   const standouts = [...active].sort((x, y) => (y.stats.weeks_active - x.stats.weeks_active) || (y.stats.raised_cents - x.stats.raised_cents)).slice(0, 10)
@@ -124,6 +157,7 @@ export default function AdminAmbassadors() {
   return (
     <div className="space-y-4">
       {msg && <Notice>{msg}</Notice>}
+      <Pending list={pending} reload={load} setMsg={setMsg} />
       <EmailBox />
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <div className="card"><p className="muted text-sm">Ambassadors</p><p className="text-3xl font-extrabold">{active.length}</p><p className="muted text-xs">goal 200+</p></div>
@@ -168,7 +202,7 @@ export default function AdminAmbassadors() {
           )}
         </div>
       )}
-      {view === 'tree' && <div className="card">{list.length === 0 ? <p className="muted">Nobody yet.</p> : <Tree list={list} />}</div>}
+      {view === 'tree' && <div className="card">{list.length === 0 ? <p className="muted">Nobody yet.</p> : <Tree list={list.filter((a) => a.status === 'active' || a.status === 'hidden')} />}</div>}
     </div>
   )
 }

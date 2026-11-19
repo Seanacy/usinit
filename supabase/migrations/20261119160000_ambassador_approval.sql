@@ -1,0 +1,3 @@
+-- Applied via MCP: ambassador_approval
+-- New Ambassadors start as 'pending'; admin approves (status active) or denies.
+-- Recruiter credit is given on first approval. Admin sign-ups are auto-approved.

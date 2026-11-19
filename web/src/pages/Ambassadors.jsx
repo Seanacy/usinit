@@ -246,12 +246,20 @@ export function MyAmbassador() {
   return (
     <div className="mx-auto max-w-xl space-y-4 px-4 py-8">
       <div className="flex items-center justify-between gap-2">
-        <p className="muted text-sm">Your public page: <Link className="font-bold underline" to={`/ambassadors/${me.slug}`}>usinit.com/ambassadors/{me.slug}</Link></p>
+        <p className="muted text-sm">{me.status === 'pending' ? 'Your page goes live after approval:' : 'Your public page:'} <Link className="font-bold underline" to={`/ambassadors/${me.slug}`}>usinit.com/ambassadors/{me.slug}</Link></p>
         <button className="btn-outline px-3 py-1 text-sm" onClick={() => setEditing(true)}>Edit</button>
       </div>
       {me.status === 'hidden' && <Notice>Your page is hidden right now. Message Us In It if you have questions.</Notice>}
-      <MyLinks code={me.ref_code} />
-      <ProfileBody a={me} mine />
+      {me.status === 'pending' && (
+        <div className="card space-y-2 border-orange">
+          <p className="h2">⏳ Waiting for approval</p>
+          <p>Thanks for signing up, {me.name}! Us In It checks every new Ambassador first.</p>
+          <p>We'll email you when you're approved. Then your links and your public page turn on.</p>
+        </div>
+      )}
+      {me.status === 'denied' && <Notice>Your Ambassador sign-up wasn't approved. Message Us In It if you have questions.</Notice>}
+      {(me.status === 'active' || me.status === 'hidden') && <MyLinks code={me.ref_code} />}
+      {me.status !== 'denied' && <ProfileBody a={me} mine />}
     </div>
   )
 }
