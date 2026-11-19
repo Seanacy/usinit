@@ -1,0 +1,1 @@
+-- Applied via MCP: drop schema test_backup_20261118 cascade (user approved)
