@@ -351,7 +351,8 @@ function ReadyMessages({ name, code }) {
   return (
     <div className="card space-y-3">
       <p className="font-bold">Ready-to-send messages</p>
-      <p className="muted text-sm">Your links are already in them. Copy, paste, and send. Change any words you want, and fill in anything in [brackets].</p>
+      <p className="rounded-lg bg-orange/15 p-3 text-sm"><b>From Jermaine:</b> I wrote these for you to send out on my behalf. When you send one, you're speaking for Us In It, so please keep it kind and honest and don't promise anything that isn't in the message.</p>
+      <p className="muted text-sm">Your links are already in them. Copy, paste, and send. Fill in anything in [brackets].</p>
       {msgs.map((m, i) => { const st = boxStyle(i); return (
         <div key={m.title} className={`space-y-2 rounded-xl p-3 ${st.box}`}>
           <div className="flex items-center justify-between gap-2">
