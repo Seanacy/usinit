@@ -13,6 +13,8 @@ const ROLES = [
     box: { title: 'Champion sign up', intro: 'Make a free account. Then pick a holder and print your Champion code.' } },
   { key: 'creator', title: "I'm a content creator", text: 'I want a code on my videos or livestreams so viewers can support me, and I can share holders\' codes too.', path: '/creator',
     box: { title: 'Creator sign up', intro: 'Make a free account, then send your creator profile for approval.' } },
+  { key: 'ambassador', title: "I'm an Ambassador", text: 'I want to help Us In It grow by bringing in supporters, businesses, and holders. Free and unpaid, and I get credit for everything I bring in.', path: '/ambassador',
+    box: { title: 'Ambassador sign up', intro: "Make a free account. Next you'll pick your Ambassador name and get your links." } },
   { key: 'supporter', title: "I'm a supporter", text: "I want to star holders whose stories I like. (You don't need an account to scan or give.)", path: '/me',
     box: { title: 'Supporter sign up', intro: 'A free account lets you star holders and keep a list of the people you\'re rooting for.' } },
 ]
