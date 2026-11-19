@@ -6,6 +6,7 @@ import AuthBox from '../components/AuthBox'
 import ShareQR from '../components/ShareQR'
 import { Notice, Spinner } from '../components/Layout'
 import { GoalTracker } from './Home'
+import { boxStyle } from '../lib/boxStyles'
 
 export const TEAMS = { street: 'Street Team', business: 'Business Team', event: 'Event Team', social: 'Social Team', workplace: 'Workplace Team', skyway: 'Skyway & Downtown', shop: 'Shop Team', media: 'Media Team', community: 'Community Team' }
 const DISCLAIMER = "Ambassadors are volunteers who help spread the word about Us In It. They aren't owners, employees, or paid."
@@ -218,12 +219,12 @@ function MyLinks({ code }) {
     <div className="card space-y-3">
       <p className="font-bold">Your links</p>
       <p className="muted text-sm">Everything that comes in through these links is credited to you.</p>
-      {links.map(([label, url]) => (
-        <div key={url} className="flex items-center justify-between gap-2 rounded-xl border border-neutral-300 p-2 dark:border-neutral-700">
-          <div className="min-w-0"><p className="text-sm font-bold">{label}</p><p className="muted truncate text-xs">{url.replace(/^https?:\/\//, '')}</p></div>
-          <button className="btn-outline shrink-0 px-3 py-1 text-sm" onClick={() => { navigator.clipboard?.writeText(url); setCopied(url); setTimeout(() => setCopied(null), 1500) }}>{copied === url ? 'Copied!' : 'Copy'}</button>
+      {links.map(([label, url], i) => { const st = boxStyle(i); return (
+        <div key={url} className={`flex items-center justify-between gap-2 rounded-xl p-3 ${st.box}`}>
+          <div className="min-w-0"><p className="text-sm font-bold">{label}</p><p className={`truncate text-xs ${st.sub}`}>{url.replace(/^https?:\/\//, '')}</p></div>
+          <button className={`shrink-0 rounded-xl px-4 py-2 text-sm font-bold ${st.btn}`} onClick={() => { navigator.clipboard?.writeText(url); setCopied(url); setTimeout(() => setCopied(null), 1500) }}>{copied === url ? 'Copied!' : 'Copy'}</button>
         </div>
-      ))}
+      ) })}
     </div>
   )
 }

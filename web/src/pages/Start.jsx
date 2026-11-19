@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import AuthBox from '../components/AuthBox'
 import { Spinner } from '../components/Layout'
 import { homeFor, useSession } from '../lib/supabase'
+import { boxStyle } from '../lib/boxStyles'
 
 const ROLES = [
   { key: 'holder', title: "I'm a holder", text: 'I carry an Us In It QR code and get paid when people scan it.', path: '/holder',
@@ -41,12 +42,12 @@ export function Signup() {
       <h1 className="h2 mb-1">Who are you?</h1>
       <p className="muted mb-5">Pick one so we can set up the right account for you.</p>
       <div className="grid gap-3">
-        {ROLES.map((r) => (
-          <button key={r.key} onClick={() => (r.box ? setRole(r) : nav(r.path))} className="card text-left transition hover:border-orange">
+        {ROLES.map((r, i) => { const st = boxStyle(i); return (
+          <button key={r.key} onClick={() => (r.box ? setRole(r) : nav(r.path))} className={`rounded-2xl p-5 text-left shadow-sm transition hover:scale-[1.01] ${st.box}`}>
             <div className="text-lg font-black">{r.title}</div>
-            <div className="muted mt-1 text-sm">{r.text}</div>
+            <div className={`mt-1 text-sm ${st.sub}`}>{r.text}</div>
           </button>
-        ))}
+        ) })}
       </div>
       <p className="muted mt-6 text-center text-sm">Already have an account? <Link to="/login" className="font-bold underline">Log in</Link></p>
     </div>
