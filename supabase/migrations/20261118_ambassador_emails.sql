@@ -1,0 +1,6 @@
+-- Applied via MCP as ambassador_emails + ambassador_mailer_cron (Nov 18, 2026).
+-- pg_cron job 'ambassador-mailer' every 15 min -> edge function ambassador-mailer (x-mailer-key from app_private_cfg).
+-- Tables: amb_email_log (dedupe_key unique; failed rows retry), app_private_cfg (RLS, no policies).
+-- ambassadors.email_token for one-click unsubscribe (RPC amb_unsubscribe, page /unsubscribe).
+-- Settings: amb_fund_low_cents 50000, amb_fund_high_cents 300000, amb_fund_alert_state, amb_weekly_hour 9, amb_email_week_cap 2, amb_email_footer_address.
+-- RPCs (service_role only): amb_mail_data, amb_mail_claim, amb_mail_done, amb_set_alert_state, amb_progress_for.

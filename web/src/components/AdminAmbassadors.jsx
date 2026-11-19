@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { money, supabase } from '../lib/supabase'
+import { KEY, SUPABASE_URL, money, supabase } from '../lib/supabase'
 import { Notice, Spinner } from './Layout'
 import { Avatar, TEAMS } from '../pages/Ambassadors'
 
@@ -73,6 +73,34 @@ function Tree({ list }) {
   return <ul>{(kids.root || []).map((a) => <Node key={a.id} a={a} depth={0} />)}</ul>
 }
 
+// Automatic Ambassador emails: send yourself a test copy of each one.
+function EmailBox() {
+  const [busy, setBusy] = useState(false)
+  const [out, setOut] = useState(null)
+  async function test() {
+    setBusy(true); setOut(null)
+    try {
+      const { data: s } = await supabase.auth.getSession()
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/ambassador-mailer`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', apikey: KEY, Authorization: `Bearer ${s?.session?.access_token}` },
+        body: JSON.stringify({ action: 'test' }),
+      })
+      const j = await res.json().catch(() => ({}))
+      setOut(res.ok ? `Sent ${j.sent} test emails to ${j.to}. Check your inbox (and spam).` : (j.error || 'Something went wrong.'))
+    } catch (e) { setOut(e.message) }
+    setBusy(false)
+  }
+  return (
+    <div className="card space-y-2">
+      <p className="font-extrabold">📧 Automatic emails are on</p>
+      <p className="muted text-sm">Welcome, milestones, Monday 9 AM update, 2-week nudge, and Community Fund alerts (low under $500, high at $3,000). At most 2 a week per Ambassador. Change the numbers in Settings: amb_fund_low_cents, amb_fund_high_cents, amb_weekly_hour, amb_email_week_cap.</p>
+      <button className="btn-black w-full py-4 text-lg" onClick={test} disabled={busy}>{busy ? 'Sending…' : 'Send me a test of every email'}</button>
+      {out && <p className="text-sm font-bold">{out}</p>}
+    </div>
+  )
+}
+
 export default function AdminAmbassadors() {
   const [d, setD] = useState(null)
   const [msg, setMsg] = useState(null)
@@ -96,6 +124,7 @@ export default function AdminAmbassadors() {
   return (
     <div className="space-y-4">
       {msg && <Notice>{msg}</Notice>}
+      <EmailBox />
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <div className="card"><p className="muted text-sm">Ambassadors</p><p className="text-3xl font-extrabold">{active.length}</p><p className="muted text-xs">goal 200+</p></div>
         <div className="card"><p className="muted text-sm">New this month</p><p className="text-3xl font-extrabold">{d.new_month}</p><p className="muted text-xs">{up(d.new_month, d.new_last_month).trim() || 'first month'}</p></div>
