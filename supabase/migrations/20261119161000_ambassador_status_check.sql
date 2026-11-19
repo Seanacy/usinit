@@ -1,0 +1,1 @@
+-- Applied via MCP: ambassador_status_check_pending (allow pending, denied)
