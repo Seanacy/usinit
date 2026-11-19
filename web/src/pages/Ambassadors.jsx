@@ -228,6 +228,69 @@ function MyLinks({ code }) {
   )
 }
 
+// Two meters at the top of an Ambassador's own page:
+// 1) shared: the $5,000 launch goal before launch (setting `launched` false), the Community Fund after.
+// 2) personal: what came in through their links this month, plus a list of recent sign-ups/gifts (no names).
+const RECENT = {
+  supporter: (c) => `Someone gave ${money(c)} through your link`,
+  gift: (c) => `Someone dropped ${money(c)} through your link`,
+  business: (c) => (c > 0 ? `A business added ${money(c)} for ads through your link` : 'A business signed up through your link'),
+  holder: () => 'A new holder signed up through your link',
+  ambassador: () => 'A new Ambassador joined through your link',
+}
+const ago = (t) => {
+  const d = Math.floor((Date.now() - new Date(t).getTime()) / 86400000)
+  return d <= 0 ? 'Today' : d === 1 ? 'Yesterday' : `${d} days ago`
+}
+function Meters() {
+  const [m, setM] = useState(null)
+  useEffect(() => { supabase.rpc('my_amb_meters').then(({ data }) => setM(data)) }, [])
+  if (!m) return null
+  const bar = (pct, color = 'bg-orange') => (
+    <div className="mt-2 h-4 w-full overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-700"><div className={`h-4 rounded-full ${color}`} style={{ width: `${Math.max(2, Math.min(100, pct))}%` }} /></div>
+  )
+  const zone = m.fund_cents < m.low_cents ? ['Low', 'bg-red-500', 'Holders need a boost. Now is the best time to share your support link.']
+    : m.fund_cents >= m.high_cents ? ['Strong', 'bg-green-500', 'The fund is strong. Great time to bring in businesses and holders.']
+    : ['OK', 'bg-orange', 'Holders are getting paid. Keep sharing.']
+  const mine = m.my_fund_cents + m.my_ad_cents
+  const share = m.all_fund_month_cents > 0 ? Math.round((m.my_fund_cents / m.all_fund_month_cents) * 100) : 0
+  return (
+    <div className="space-y-4">
+      {m.launched ? (
+        <div className="card">
+          <p className="font-bold">Community Fund right now</p>
+          <p className="text-3xl font-extrabold">{money(m.fund_cents)} <span className="text-base">· {zone[0]}</span></p>
+          {bar((m.fund_cents / m.high_cents) * 100, zone[1])}
+          <div className="muted mt-1 flex justify-between text-xs"><span>Low under {money(m.low_cents)}</span><span>Strong at {money(m.high_cents)}</span></div>
+          <p className="mt-2 text-sm">{zone[2]}</p>
+        </div>
+      ) : (
+        <div className="card">
+          <p className="font-bold">Launch goal</p>
+          <p className="text-3xl font-extrabold">{money(m.launch_raised_cents)} <span className="text-base font-bold">of {money(m.launch_goal_cents)}</span></p>
+          {bar((m.launch_raised_cents / Math.max(m.launch_goal_cents, 1)) * 100)}
+          <p className="mt-2 text-sm">When we hit the goal, holders start getting paid. Every share gets us closer.</p>
+        </div>
+      )}
+      <div className="card">
+        <p className="font-bold">You this month</p>
+        <p className="text-3xl font-extrabold">{money(mine)} <span className="text-base font-bold">brought in</span></p>
+        <ul className="mt-2 space-y-1 text-sm">
+          <li>💛 {money(m.my_fund_cents)} from supporters → <b>Community Fund</b></li>
+          <li>🏪 {money(m.my_ad_cents)} from businesses → <b>Ad Fund</b></li>
+        </ul>
+        {m.my_fund_cents > 0 && <p className="muted mt-2 text-sm">That's {share}% of all the money given to the Community Fund this month.</p>}
+        <p className="mt-4 font-bold">What came in through your links</p>
+        {m.recent.length === 0 ? <p className="muted mt-1 text-sm">Nothing yet. Share one of your links below to get your first one.</p> : (
+          <ul className="mt-1 divide-y divide-neutral-200 text-sm dark:divide-neutral-700">
+            {m.recent.map((r, i) => <li key={i} className="flex justify-between gap-2 py-2"><span>{(RECENT[r.kind] || (() => 'Something came in through your link'))(r.cents)}</span><span className="muted shrink-0">{ago(r.at)}</span></li>)}
+          </ul>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export function MyAmbassador() {
   const session = useSession()
   const [me, setMe] = useState(undefined)
@@ -258,7 +321,7 @@ export function MyAmbassador() {
         </div>
       )}
       {me.status === 'denied' && <Notice>Your Ambassador sign-up wasn't approved. Message Us In It if you have questions.</Notice>}
-      {(me.status === 'active' || me.status === 'hidden') && <MyLinks code={me.ref_code} />}
+      {(me.status === 'active' || me.status === 'hidden') && <><Meters /><MyLinks code={me.ref_code} /></>}
       {me.status !== 'denied' && <ProfileBody a={me} mine />}
     </div>
   )
