@@ -25,6 +25,7 @@ function AdForm({ advertiser, existing, prefill, onDone }) {
   const [f, setF] = useState({
     ad_type: e0.ad_type || 'standard', headline: e0.headline || '', body: e0.body || '', image_url: e0.image_url || '',
     button_text: e0.button_text ?? 'Learn more', button_url: e0.button_url || '',
+    coupon_on: !!e0.coupon_text, coupon_text: e0.coupon_text || '', coupon_terms: e0.coupon_terms || '', coupon_days: e0.coupon_days || 7,
     champion_scans: e0.champion_scans || false, crowd_types: e0.crowd_types || [],
     gift_tree: e0.gift_tree || false, digital_on: e0.digital_on || false, digital_kinds: e0.digital_kinds || ['holder'], digital_cap: existing ? (e0.digital_daily_cap_cents / 100) : 10, digital_mn_only: e0.digital_mn_only || false,
     days: e0.days || [0, 1, 2, 3, 4, 5, 6], start_hour: e0.start_hour ?? 7, end_hour: e0.end_hour ?? 21,
@@ -51,12 +52,14 @@ function AdForm({ advertiser, existing, prefill, onDone }) {
     if (f.ad_type === 'event' && (!f.event_name || !f.event_start || !f.event_end)) return setErr('Add the event name, start, and end time.')
     if (f.ad_type === 'political' && (!f.political_committee || !f.political_address)) return setErr('Political ads need the committee name and address for the Minnesota disclaimer.')
     if (!f.days.length) return setErr('Pick at least one day.')
+    if (f.coupon_on && !f.coupon_text.trim()) return setErr('Write your deal, like "$2 off entry", or turn the coupon off.')
     if (f.digital_on && !f.digital_kinds.length) return setErr('Pick who your online scans help: holders, creators, or both.')
     if (f.champion_scans && !f.crowd_types.length) return setErr('Pick at least one Champion crowd type, or turn Champion scans off.')
     setBusy(true)
     const row = {
       advertiser_id: advertiser.id, ad_type: f.ad_type, headline: f.headline.trim(), body: f.body.trim() || null, image_url: f.image_url.trim() || null,
       button_text: f.button_text.trim() || null, button_url: f.button_url.trim() || null, zone_ids: zoneIds, gift_tree: f.gift_tree,
+      coupon_text: f.coupon_on ? f.coupon_text.trim() : null, coupon_terms: f.coupon_on ? (f.coupon_terms.trim() || null) : null, coupon_days: Math.min(90, Math.max(1, Number(f.coupon_days) || 7)),
       champion_scans: f.champion_scans, crowd_types: f.champion_scans ? f.crowd_types : [],
       digital_on: f.digital_on, digital_kinds: f.digital_kinds, digital_daily_cap_cents: Math.round(Number(f.digital_cap || 0) * 100), digital_mn_only: f.digital_on && f.digital_mn_only,
       days: f.days, start_hour: Number(f.start_hour), end_hour: Number(f.end_hour), daily_budget_cents: Math.round(Number(f.daily_budget) * 100),
@@ -88,6 +91,18 @@ function AdForm({ advertiser, existing, prefill, onDone }) {
       <div className="grid grid-cols-2 gap-2">
         <div><label className="label">Button text</label><input className="input" maxLength={24} value={f.button_text} onChange={set('button_text')} /></div>
         <div><label className="label">Button link</label><input className="input" value={f.button_url} onChange={set('button_url')} placeholder="https://yourshop.com" /></div>
+      </div>
+      <div className="space-y-3 rounded-xl border-2 border-dashed border-orange p-3">
+        <label className="flex items-center gap-2 font-bold"><input type="checkbox" checked={f.coupon_on} onChange={(e) => setF({ ...f, coupon_on: e.target.checked })} /> 🎟️ Add a coupon to this ad (recommended)</label>
+        <p className="muted text-sm">People who scan can save your deal and show it at your counter. Your staff types your store PIN to use it, so you see exactly how many customers we sent you.</p>
+        {f.coupon_on && (
+          <div className="space-y-3">
+            <div><label className="label">Your deal (60 max)</label><input className="input" maxLength={60} value={f.coupon_text} onChange={set('coupon_text')} placeholder="$2 off entry tonight" /></div>
+            <div><label className="label">Fine print (optional)</label><input className="input" maxLength={200} value={f.coupon_terms} onChange={set('coupon_terms')} placeholder="One per person. 21+ with ID." /></div>
+            <div><label className="label">Good for how many days after it's saved?</label><input className="input w-32" type="number" min={1} max={90} value={f.coupon_days} onChange={set('coupon_days')} /></div>
+            <p className="muted text-xs">No alcohol deals. Food, entry, events, and services are fine.</p>
+          </div>
+        )}
       </div>
       {f.ad_type === 'event' && (
         <div className="space-y-2 rounded-xl bg-neutral-100 p-3 dark:bg-neutral-800">
@@ -285,6 +300,50 @@ function AddFunds({ stats, adv }) {
   )
 }
 
+// Coupons: store PIN + how many customers came in with a coupon.
+function CouponPanel({ adv }) {
+  const [st, setSt] = useState(null)
+  const [pin, setPin] = useState('')
+  const [msg, setMsg] = useState(null)
+  const [editing, setEditing] = useState(false)
+  const load = () => supabase.rpc('my_coupon_stats').then(({ data }) => setSt(data))
+  useEffect(() => { load() }, [adv?.id]) // eslint-disable-line
+  async function savePin() {
+    setMsg(null)
+    const { error } = await supabase.rpc('set_redeem_pin', { p_pin: pin })
+    if (error) return setMsg({ kind: 'error', text: error.message })
+    setPin(''); setEditing(false); setMsg({ text: 'Store PIN saved. Share it with your staff.' }); load()
+  }
+  if (!st) return null
+  return (
+    <div className="card space-y-3 border-2 border-orange">
+      <p className="h2">🎟️ Coupons</p>
+      <div className="grid grid-cols-3 gap-2 text-center">
+        <div><p className="text-3xl font-extrabold">{st.redeemed_week}</p><p className="muted text-xs">customers this week</p></div>
+        <div><p className="text-3xl font-extrabold">{st.redeemed}</p><p className="muted text-xs">customers all time</p></div>
+        <div><p className="text-3xl font-extrabold">{st.saved}</p><p className="muted text-xs">coupons saved</p></div>
+      </div>
+      <div className="rounded-xl bg-neutral-100 p-3 dark:bg-neutral-800">
+        <p className="font-bold">Store PIN {st.has_pin ? '✅ set' : '⚠️ not set yet'}</p>
+        <p className="muted text-sm">Your staff types this 4-digit PIN on the customer's phone to use a coupon. Change it anytime, like when someone leaves.</p>
+        {(!st.has_pin || editing) ? (
+          <div className="mt-2 flex gap-2">
+            <input className="input w-32 text-center text-2xl tracking-[0.4em]" inputMode="numeric" maxLength={4} value={pin} onChange={(e) => setPin(e.target.value.replace(/[^0-9]/g, ''))} aria-label="New store PIN" />
+            <button className="btn-orange" disabled={pin.length !== 4} onClick={savePin}>Save PIN</button>
+          </div>
+        ) : <button className="btn-outline mt-2 py-2" onClick={() => setEditing(true)}>Change PIN</button>}
+      </div>
+      {msg && <Notice kind={msg.kind}>{msg.text}</Notice>}
+      {st.recent.length > 0 && (
+        <div><p className="font-bold">Recent customers</p>
+          <ul className="muted text-sm">{st.recent.map((r, i) => <li key={i}>{r.text} · {new Date(r.at).toLocaleString()}</li>)}</ul>
+        </div>
+      )}
+      <p className="muted text-xs">Add a deal to any ad: tap Edit on the ad, then turn on "Add a coupon."</p>
+    </div>
+  )
+}
+
 export default function Advertise() {
   const session = useSession()
   const stats = useStats()
@@ -392,6 +451,7 @@ export default function Advertise() {
               <BookingManager adv={adv} />
               <BusinessShares />
               <PlugPanel adv={adv} ads={ads} reloadAds={load} />
+              <CouponPanel adv={adv} />
               <h2 className="h2 pt-2">Ads and zones</h2>
               <div className="card flex flex-wrap items-center justify-between gap-2">
                 <span><b>Your zones:</b> {zoneCount}<span className="muted block text-sm">The areas where your ads show, with live scan counts.</span></span>
@@ -405,6 +465,7 @@ export default function Advertise() {
                     <div>
                       <p className="text-lg font-extrabold">{a.headline}</p>
                       <p className="muted text-sm">{a.ad_type} · {(a.zone_ids || []).length} zone{(a.zone_ids || []).length === 1 ? '' : 's'} · {a.views} scans · {a.clicks} taps · cost {money(a.views * price)}</p>
+                      {a.coupon_text && <p className="text-sm font-bold">🎟️ {a.coupon_text}</p>}
                     </div>
                     <span className={`pill ${a.status === 'active' ? 'bg-green-100 text-green-800' : a.status === 'pending' ? 'bg-orange/20 text-ink dark:text-white' : 'bg-neutral-200 text-neutral-700'}`}>{a.status === 'pending' ? 'waiting for approval' : a.status}</span>
                   </div>

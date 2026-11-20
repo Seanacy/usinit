@@ -1,0 +1,4 @@
+-- Applied via MCP: ad_coupons, ad_coupons_pin_fail_fix, guard_ad_coupon_review
+-- ads.coupon_text/coupon_terms/coupon_days; advertisers.redeem_pin_hash (bcrypt); coupons table (RLS on, no direct access).
+-- RPCs: ad_coupon, claim_coupon, get_coupon, redeem_coupon (anon); set_redeem_pin, my_coupon_stats (owner).
+-- guard_ad: coupon edits send the ad back for approval.

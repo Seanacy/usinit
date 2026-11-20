@@ -1,4 +1,5 @@
 import { LaunchGiveBox } from '../components/LaunchGive'
+import { CouponOffer } from './Coupon'
 import { useEffect, useRef, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { deviceId, money, startCheckout, supabase, useStats, withCardFee } from '../lib/supabase'
@@ -76,6 +77,7 @@ export function ContentCard({ content, scanId }) {
           <p className="muted mt-4 text-xs">Prepared and paid for by the {content.political_committee}{content.political_address ? `, ${content.political_address}` : ''}.</p>
         )}
       </div>
+    {content.type === 'ad' && content.id && <CouponOffer adId={content.id} scanId={scanId} />}
     </div>
   )
 }

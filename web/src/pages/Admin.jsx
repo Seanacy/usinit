@@ -280,6 +280,7 @@ function Ads() {
           <div key={a.id} className="card">
             <p className="font-extrabold">{a.headline} <span className="pill bg-neutral-200 text-neutral-800">{a.ad_type}</span> <span className="pill bg-orange/20">{a.status}</span></p>
             <p className="text-sm">{a.body}</p>
+            {a.coupon_text && <p className="text-sm font-bold">🎟️ Coupon: {a.coupon_text}{a.coupon_terms ? ` · ${a.coupon_terms}` : ''} · good {a.coupon_days} days</p>}
             <p className="muted text-sm">{advName(a.advertiser_id)} · {(a.zone_ids || []).length} zone{(a.zone_ids || []).length === 1 ? '' : 's'} · {a.views} scans · {a.clicks} taps · {a.button_url}</p>
             {a.ad_type === 'political' && <p className="text-sm font-bold">Disclaimer: Prepared and paid for by the {a.political_committee}, {a.political_address}. Reg: {a.political_registration || 'none'}</p>}
             <div className="mt-2 flex gap-2">
