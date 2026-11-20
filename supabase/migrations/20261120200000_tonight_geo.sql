@@ -1,0 +1,4 @@
+-- Applied via MCP: tonight_geo
+-- Adds lat/lng/geo_req/geo_status to tonight_places, address-change trigger,
+-- tonight_geo_send()/tonight_geo_collect() using pg_net + US Census geocoder,
+-- and pg_cron job 'tonight-geo' every 10 minutes.

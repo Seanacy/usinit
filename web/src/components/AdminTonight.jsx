@@ -55,6 +55,7 @@ function PlaceBox({ p, reload, setMsg }) {
         <div>
           <p className="text-lg font-extrabold">{p.name}</p>
           <p className="text-sm text-neutral-500">{p.area} · {p.zone} · {p.address || 'no address'}{p.instagram ? ` · @${p.instagram}` : ''}</p>
+          {p.lat == null && <p className="text-sm font-bold text-orange-dark">{p.geo_status === 'nomatch' ? '📍 Address not found on the map. Add the full street address so it shows in “Near me.”' : '📍 Map point coming (up to 10 min).'}</p>}
         </div>
         <button type="button" className="text-sm font-bold underline" onClick={() => setEdit(!edit)}>{edit ? 'Close' : 'Edit place'}</button>
       </div>
@@ -116,7 +117,7 @@ function PlaceForm({ p, onDone }) {
       <label className="block text-sm font-bold">Filter group
         <select className="input mt-1" value={f.zone} onChange={set('zone')}>{ZONES.map((z) => <option key={z}>{z}</option>)}</select>
       </label>
-      <input className="input" placeholder="Address" value={f.address} onChange={set('address')} />
+      <input className="input" placeholder="Full street address (e.g. 123 Main St)" value={f.address} onChange={set('address')} />
       <input className="input" placeholder="Instagram name (no @)" value={f.instagram} onChange={set('instagram')} />
       <input className="input" placeholder="Website (optional)" value={f.website} onChange={set('website')} />
       {p && <label className="flex items-center gap-2 font-bold"><input type="checkbox" checked={f.active} onChange={set('active')} /> Show this place</label>}
