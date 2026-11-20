@@ -9,6 +9,7 @@ import StripePayouts from '../components/StripePayouts'
 import { BookingManager, BusinessShares } from './Booking'
 import { describeRadius } from '../components/MapPicker'
 import { Notice, Spinner } from '../components/Layout'
+import TonightBiz from '../components/TonightBiz'
 import SpotlightPanel from '../components/SpotlightPanel'
 import { getRef } from '../lib/ref'
 
@@ -452,6 +453,7 @@ export default function Advertise() {
               <BusinessShares />
               <PlugPanel adv={adv} ads={ads} reloadAds={load} />
               <CouponPanel adv={adv} />
+              <TonightBiz adv={adv} />
               <h2 className="h2 pt-2">Ads and zones</h2>
               <div className="card flex flex-wrap items-center justify-between gap-2">
                 <span><b>Your zones:</b> {zoneCount}<span className="muted block text-sm">The areas where your ads show, with live scan counts.</span></span>

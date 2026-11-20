@@ -1,0 +1,5 @@
+-- Applied via MCP: tonight_business_tools + tonight_guard_internal
+-- tonight_places: advertiser_id, perk, owner_edited_at; owner RLS + guard trigger.
+-- New tables: tonight_stats (+ tonight_track rpc), tonight_claims (+ approve trigger),
+-- tonight_reports (+ tonight_report rpc), tonight_boosts (no-alcohol check), tonight_photos (admin approves, max 3).
+-- tonight_refresh_perks() via pg_cron 'tonight-perks' every 10 min.

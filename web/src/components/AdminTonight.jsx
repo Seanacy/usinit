@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { Notice } from './Layout'
+import { REPORT_REASONS } from '../lib/tonight'
 
 // Admin: manage the Tonight page. Hidden rows ("Check first") never show on the public page.
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -15,7 +16,7 @@ export default function AdminTonight() {
   const [newPlace, setNewPlace] = useState(false)
 
   async function load() {
-    const { data, error } = await supabase.from('tonight_places').select('*, events:tonight_events(*)').order('name')
+    const { data, error } = await supabase.from('tonight_places').select('*, events:tonight_events(*), owner:advertisers(business_name)').order('name')
     if (error) setMsg(error.message)
     setPlaces(data || [])
   }
@@ -33,6 +34,7 @@ export default function AdminTonight() {
         <p className="text-sm">Public page: <a className="font-bold underline" href="/tonight" target="_blank" rel="noreferrer">usinit.com/tonight</a>. Drink specials are OK here. Ads still can't be for alcohol.</p>
       </div>
       {msg && <Notice kind="error">{msg}</Notice>}
+      <Inbox reload={load} setMsg={setMsg} />
       <div className="grid grid-cols-3 gap-2">
         {[['check', `Check first (${waiting})`], ['live', `Live (${all.length - waiting})`], ['all', 'All']].map(([id, label]) => (
           <button key={id} type="button" onClick={() => setShow(id)} className={id === show ? 'btn-black' : 'btn-outline'}>{label}</button>
@@ -55,6 +57,8 @@ function PlaceBox({ p, reload, setMsg }) {
         <div>
           <p className="text-lg font-extrabold">{p.name}</p>
           <p className="text-sm text-neutral-500">{p.area} · {p.zone} · {p.address || 'no address'}{p.instagram ? ` · @${p.instagram}` : ''}</p>
+          {p.owner && <p className="text-sm font-bold">🏪 Claimed by {p.owner.business_name}{p.perk ? ' · 💛 Good Neighbor (running an ad)' : ' · no running ad'}</p>}
+          <p className="text-sm"><a className="font-bold underline" href={`/tonight/print/${p.id}?kind=report`} target="_blank" rel="noreferrer">📊 Report</a> · <a className="font-bold underline" href={`/tonight/print/${p.id}?kind=sticker`} target="_blank" rel="noreferrer">🪧 Window sticker</a></p>
           {p.lat == null && <p className="text-sm font-bold text-orange-dark">{p.geo_status === 'nomatch' ? '📍 Address not found on the map. Add the full street address so it shows in “Near me.”' : '📍 Map point coming (up to 10 min).'}</p>}
         </div>
         <button type="button" className="text-sm font-bold underline" onClick={() => setEdit(!edit)}>{edit ? 'Close' : 'Edit place'}</button>
@@ -126,7 +130,7 @@ function PlaceForm({ p, onDone }) {
   )
 }
 
-function EventForm({ e, placeId, onDone }) {
+export function EventForm({ e, placeId, onDone, owner }) {
   const [f, setF] = useState({
     title: e?.title || '', details: e?.details || '', kind: e?.kind || 'food', days: e?.days || [], weeks: e?.weeks || [],
     time_text: e?.time_text || '', starts_at: e?.starts_at?.slice(0, 5) || '', deal_text: e?.deal_text || '', source_url: e?.source_url || '',
@@ -137,7 +141,7 @@ function EventForm({ e, placeId, onDone }) {
   async function save() {
     if (!f.title.trim()) return setErr('Name of the night or deal is needed.')
     if (!f.days.length) return setErr('Pick at least one day.')
-    const row = { ...f, weeks: f.weeks.length ? f.weeks : null, starts_at: f.starts_at || null, details: f.details || null, deal_text: f.deal_text || null, source_url: f.source_url || null, last_checked: today() }
+    const row = { ...f, weeks: f.weeks.length ? f.weeks : null, starts_at: f.starts_at || null, details: f.details || null, deal_text: f.deal_text || null, source_url: owner ? 'owner' : (f.source_url || null), last_checked: today() }
     const { error } = e ? await supabase.from('tonight_events').update(row).eq('id', e.id) : await supabase.from('tonight_events').insert({ ...row, place_id: placeId, needs_confirm: false })
     if (error) return setErr(error.message)
     onDone()
@@ -159,8 +163,75 @@ function EventForm({ e, placeId, onDone }) {
       ))}</div>
       <input className="input" placeholder="Time shown (e.g. 9 PM–2 AM)" value={f.time_text} onChange={set('time_text')} />
       <label className="block text-sm font-bold">Start time (for sorting)<input className="input mt-1" type="time" value={f.starts_at} onChange={set('starts_at')} /></label>
-      <input className="input" placeholder="Where you found it (link, optional)" value={f.source_url} onChange={set('source_url')} />
+      {!owner && <input className="input" placeholder="Where you found it (link, optional)" value={f.source_url} onChange={set('source_url')} />}
       <button type="button" className="btn-black w-full" onClick={save}>Save</button>
+    </div>
+  )
+}
+
+// Things waiting on you: business claims, customer "something's wrong" notes, photos, tonight-only posts.
+function Inbox({ reload, setMsg }) {
+  const [d, setD] = useState(null)
+  async function load() {
+    const [c, r, ph, b] = await Promise.all([
+      supabase.from('tonight_claims').select('*, place:tonight_places(name,address), adv:advertisers(business_name,contact_name,phone,status)').eq('status', 'pending').order('created_at'),
+      supabase.from('tonight_reports').select('*, place:tonight_places(name), event:tonight_events(title)').eq('status', 'open').order('created_at', { ascending: false }),
+      supabase.from('tonight_photos').select('*, place:tonight_places(name)').eq('status', 'pending').order('created_at'),
+      supabase.from('tonight_boosts').select('*, place:tonight_places(name)').eq('day', today()).order('created_at'),
+    ])
+    setD({ claims: c.data || [], reports: r.data || [], photos: ph.data || [], boosts: b.data || [] })
+  }
+  useEffect(() => { load() }, [])
+  async function act(table, id, patch) {
+    const { error } = await supabase.from(table).update(patch).eq('id', id)
+    if (error) setMsg(error.message)
+    load(); reload()
+  }
+  if (!d) return null
+  const reason = Object.fromEntries(REPORT_REASONS)
+  const none = !d.claims.length && !d.reports.length && !d.photos.length && !d.boosts.length
+  return (
+    <div className="card space-y-3 border-2 border-orange">
+      <p className="text-lg font-extrabold">📥 Waiting on you</p>
+      {none && <p className="text-sm">Nothing right now.</p>}
+      {d.claims.map((c) => (
+        <div key={c.id} className="rounded-xl bg-neutral-100 p-3 dark:bg-neutral-800">
+          <p className="font-bold">🏪 {c.adv?.business_name} says they own <b>{c.place?.name}</b></p>
+          <p className="text-sm">{c.adv?.contact_name}{c.adv?.phone ? ` · ${c.adv.phone}` : ''} · business account {c.adv?.status}</p>
+          {c.note && <p className="text-sm">“{c.note}”</p>}
+          <p className="text-xs text-neutral-500">Call the place to make sure before you say yes.</p>
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            <button type="button" className="btn-orange py-2" onClick={() => act('tonight_claims', c.id, { status: 'approved' })}>Yes, it’s theirs</button>
+            <button type="button" className="btn-outline py-2" onClick={() => act('tonight_claims', c.id, { status: 'denied' })}>No</button>
+          </div>
+        </div>
+      ))}
+      {d.reports.map((r) => (
+        <div key={r.id} className="rounded-xl bg-neutral-100 p-3 dark:bg-neutral-800">
+          <p className="font-bold">⚠️ {r.place?.name}{r.event ? ` · ${r.event.title}` : ''}</p>
+          <p className="text-sm">{reason[r.reason]}{r.note ? ` · “${r.note}”` : ''}</p>
+          <p className="text-xs text-neutral-500">{new Date(r.created_at).toLocaleString('en-US', { timeZone: 'America/Chicago', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</p>
+          <button type="button" className="btn-outline mt-2 w-full py-2" onClick={() => act('tonight_reports', r.id, { status: 'fixed' })}>✅ Checked / fixed</button>
+        </div>
+      ))}
+      {d.photos.map((ph) => (
+        <div key={ph.id} className="rounded-xl bg-neutral-100 p-3 dark:bg-neutral-800">
+          <p className="font-bold">📷 New photo · {ph.place?.name}</p>
+          <img src={ph.url} alt="" className="mt-2 max-h-56 rounded-xl" />
+          <p className="text-xs text-neutral-500">Say no if it shows alcohol, people who didn’t agree, or anything not okay.</p>
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            <button type="button" className="btn-orange py-2" onClick={() => act('tonight_photos', ph.id, { status: 'approved' })}>Show it</button>
+            <button type="button" className="btn-outline py-2" onClick={() => act('tonight_photos', ph.id, { status: 'rejected' })}>No</button>
+          </div>
+        </div>
+      ))}
+      {d.boosts.map((b) => (
+        <div key={b.id} className="rounded-xl bg-neutral-100 p-3 dark:bg-neutral-800">
+          <p className="font-bold">🔥 Tonight only · {b.place?.name}{b.hidden ? ' (hidden)' : ''}</p>
+          <p className="text-sm">{b.body}</p>
+          <button type="button" className="btn-outline mt-2 w-full py-2" onClick={() => act('tonight_boosts', b.id, { hidden: !b.hidden })}>{b.hidden ? 'Show it again' : 'Hide it'}</button>
+        </div>
+      ))}
     </div>
   )
 }
