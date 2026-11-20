@@ -4,8 +4,8 @@ import { Notice } from './Layout'
 
 // Admin: manage the Tonight page. Hidden rows ("Check first") never show on the public page.
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-const KINDS = ['food', 'drink', 'music', 'dance', 'karaoke', 'games', 'drag', 'other']
-const ZONES = ['Uptown', 'Lake St', 'Downtown', 'Northeast', 'North Loop', 'St. Paul', 'Other']
+const KINDS = ['food', 'drink', 'music', 'dance', 'karaoke', 'games', 'comedy', 'drag', 'other']
+const ZONES = ['Downtown', 'North Loop', 'Northeast', 'Uptown', 'Lake St', 'South Mpls', 'SE / Campus', 'North Mpls', 'Other']
 const today = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Chicago' })
 
 export default function AdminTonight() {

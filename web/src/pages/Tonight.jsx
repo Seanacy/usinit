@@ -14,11 +14,12 @@ const KIND = {
   karaoke: { tag: '🎤 Karaoke', label: 'Karaoke' },
   games: { tag: '🎲 Games', label: 'Games' },
   drag: { tag: '👑 Drag', label: 'Drag' },
+  comedy: { tag: '😂 Comedy', label: 'Comedy' },
   other: { tag: '⭐ Special', label: 'Other' },
 }
 const CHIPS = [
-  ...['food', 'drink', 'music', 'dance', 'karaoke', 'games', 'drag'].map((k) => ({ id: 'k:' + k, label: KIND[k].label, test: (e) => e.kind === k })),
-  ...['Uptown', 'Lake St', 'Downtown', 'Northeast', 'North Loop', 'St. Paul'].map((z) => ({ id: 'z:' + z, label: z, test: (e) => e.place?.zone === z })),
+  ...['food', 'drink', 'music', 'dance', 'karaoke', 'games', 'comedy', 'drag'].map((k) => ({ id: 'k:' + k, label: KIND[k].label, test: (e) => e.kind === k })),
+  ...['Downtown', 'North Loop', 'Northeast', 'Uptown', 'Lake St', 'South Mpls', 'SE / Campus', 'North Mpls'].map((z) => ({ id: 'z:' + z, label: z, test: (e) => e.place?.zone === z })),
 ]
 
 // Minneapolis time, no matter where the phone is.
@@ -75,7 +76,7 @@ export default function Tonight() {
       <div className="sticky top-0 z-20 space-y-3 bg-white px-4 pb-3 pt-4 dark:bg-ink">
         <div className="flex items-baseline justify-between gap-2">
           <h1 className="text-3xl font-extrabold tracking-tight">Tonight</h1>
-          <span className="text-sm font-bold text-neutral-500">{now.label}</span>
+          <span className="text-right text-sm font-bold text-neutral-500">Minneapolis<br />{now.label}</span>
         </div>
         <input className="input text-lg" type="search" inputMode="search" placeholder="Search: tacos, karaoke, Uptown…" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search places and specials" />
         {!searching && (

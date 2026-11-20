@@ -1,0 +1,1 @@
+-- Applied via MCP: comedy kind; non-Minneapolis places hidden; ~150 Minneapolis places / ~213 nights & deals loaded (karaokeandtrivia, TriviaNearMe, City Cast, Meet Minneapolis, mplsdowntown, Minnesota Monthly, Racket, jaminthestream).
