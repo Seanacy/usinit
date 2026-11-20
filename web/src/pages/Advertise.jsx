@@ -94,7 +94,7 @@ function AdForm({ advertiser, existing, prefill, onDone }) {
       </div>
       <div className="space-y-3 rounded-xl border-2 border-dashed border-orange p-3">
         <label className="flex items-center gap-2 font-bold"><input type="checkbox" checked={f.coupon_on} onChange={(e) => setF({ ...f, coupon_on: e.target.checked })} /> 🎟️ Add a coupon to this ad (recommended)</label>
-        <p className="muted text-sm">People who scan can save your deal and show it at your counter. Your staff types your store PIN to use it, so you see exactly how many customers we sent you.</p>
+        <p className="muted text-sm">People who scan can save your deal and show it at your counter. Your staff types your store PIN to use it, so you see exactly how many customers we sent you. <b>Ads with a coupon get shown more often.</b></p>
         {f.coupon_on && (
           <div className="space-y-3">
             <div><label className="label">Your deal (60 max)</label><input className="input" maxLength={60} value={f.coupon_text} onChange={set('coupon_text')} placeholder="$2 off entry tonight" /></div>

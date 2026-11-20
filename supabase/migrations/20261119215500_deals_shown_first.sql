@@ -1,0 +1,1 @@
+-- Applied via MCP: deals_shown_first (process_scan + process_digital_scan pick ads by random()*(2 if coupon else 1): deal ads win ~3 of 4 head-to-head)
