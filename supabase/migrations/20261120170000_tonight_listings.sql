@@ -1,0 +1,1 @@
+-- Applied via MCP: tonight_places + tonight_events tables, RLS (public sees active & confirmed only; admins all), seeded 34 places / 51 nights.

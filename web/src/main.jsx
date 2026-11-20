@@ -7,6 +7,7 @@ import Home from './pages/Home'
 import Scan from './pages/Scan'
 import Profile, { MyStars } from './pages/Profile'
 import Give from './pages/Give'
+import Tonight from './pages/Tonight'
 import CouponPage, { MyCoupons } from './pages/Coupon'
 import { PlugScan } from './pages/Plug'
 import BookingPage from './pages/Booking'
@@ -96,6 +97,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/how" element={<HowItWorks />} />
           <Route path="/2" element={<TwoDollars />} />
           <Route path="/give" element={<Give />} />
+          <Route path="/tonight" element={<Tonight />} />
           <Route path="/c/:code" element={<CouponPage />} />
           <Route path="/coupons" element={<MyCoupons />} />
           <Route path="/contact" element={<Contact />} />

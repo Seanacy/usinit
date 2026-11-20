@@ -1,0 +1,1 @@
+-- Applied via MCP: Tonight policies scoped to roles (anon read-only; admin via is_admin for authenticated).

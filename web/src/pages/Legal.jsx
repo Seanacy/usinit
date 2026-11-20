@@ -45,7 +45,7 @@ export function Terms() {
       <h2>Advertisers</h2>
       <p>Advertisers accept the <a className="underline" href="/advertiser-agreement">Advertiser Agreement</a>. Every ad is reviewed before it runs.</p>
       <h2>Content rules</h2>
-      <p>No hateful, harassing, sexual, or illegal content, and nothing from these categories: payday loans, gambling, alcohol, cannabis, vape, adult content. We may remove any content or account that breaks these rules.</p>
+      <p>No hateful, harassing, sexual, or illegal content. Ads, spotlights, coupons, and user posts can't promote these categories: payday loans, gambling, alcohol, cannabis, vape, adult content. Our Tonight listings may show a place's food and drink specials (for adults 21+ where alcohol is involved). We may remove any content or account that breaks these rules.</p>
       <h2>Limits</h2>
       <p>The site is provided as is. To the extent the law allows, Us In It is not liable for indirect damages, and our total liability is limited to the amount you paid us in the last 3 months. Minnesota law governs these terms.</p>
     </Page>
