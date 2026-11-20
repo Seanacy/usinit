@@ -100,7 +100,7 @@ function AdForm({ advertiser, existing, prefill, onDone }) {
             <div><label className="label">Your deal (60 max)</label><input className="input" maxLength={60} value={f.coupon_text} onChange={set('coupon_text')} placeholder="$2 off entry tonight" /></div>
             <div><label className="label">Fine print (optional)</label><input className="input" maxLength={200} value={f.coupon_terms} onChange={set('coupon_terms')} placeholder="One per person. 21+ with ID." /></div>
             <div><label className="label">Good for how many days after it's saved?</label><input className="input w-32" type="number" min={1} max={90} value={f.coupon_days} onChange={set('coupon_days')} /></div>
-            <p className="muted text-xs">Alcohol deals must say 21+ in the fine print.</p>
+            <p className="muted text-xs">No alcohol deals. Food, entry, events, and services are fine.</p>
           </div>
         )}
       </div>
@@ -405,7 +405,7 @@ export default function Advertise() {
               <input className="input" placeholder="Business or nonprofit name" value={biz.business_name} onChange={(e) => setBiz({ ...biz, business_name: e.target.value })} />
               <input className="input" placeholder="Your name" value={biz.contact_name} onChange={(e) => setBiz({ ...biz, contact_name: e.target.value })} />
               <input className="input" placeholder="Phone (optional)" value={biz.phone} onChange={(e) => setBiz({ ...biz, phone: e.target.value })} />
-              {!adv && <p className="muted text-sm">By continuing you agree to the Advertiser Agreement. Not allowed: payday loans, gambling, cannabis, vape, adult content. Alcohol ads must say 21+ and follow Minnesota law.</p>}
+              {!adv && <p className="muted text-sm">By continuing you agree to the Advertiser Agreement. Not allowed: payday loans, gambling, alcohol, cannabis, vape, adult content. Bars and breweries can promote food and events, with no alcohol in the ad.</p>}
               {err && <Notice kind="error">{err}</Notice>}
               <div className="flex gap-2">
                 {adv && <button type="button" className="btn-outline flex-1" onClick={() => setEditingBiz(false)}>Cancel</button>}

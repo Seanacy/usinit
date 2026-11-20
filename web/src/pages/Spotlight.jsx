@@ -29,7 +29,7 @@ export default function Spotlight() {
         {session ? 'Go to my business account' : 'Make my free spotlight'}
       </Link>
       {!session && <p className="muted mt-3 text-center text-sm">Already have a business account? Tap the button and log in.</p>}
-      <p className="muted mt-6 text-xs">Not allowed: payday loans, gambling, cannabis, vape, adult content, or anything illegal, hateful, or misleading. Alcohol ads must say 21+.</p>
+      <p className="muted mt-6 text-xs">Not allowed: payday loans, gambling, alcohol, cannabis, vape, adult content, or anything illegal, hateful, or misleading. Bars and breweries can promote food and events, with no alcohol in the ad.</p>
     </div>
   )
 }
