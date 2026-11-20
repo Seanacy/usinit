@@ -16,6 +16,7 @@ import AdminMessages from '../components/AdminMessages'
 import AdminPayoutQueue from '../components/AdminPayoutQueue'
 import AdminAmbassadors from '../components/AdminAmbassadors'
 import AdminTonight from '../components/AdminTonight'
+import TrialReport from '../components/TrialReport'
 import { Notice, Spinner } from '../components/Layout'
 
 const TABS = ['Overview', 'Messages', 'Ambassadors', 'Holders', 'Champions', 'Creators', 'Posts', 'Updates', 'Zones', 'Ads', 'Spotlights', 'Tonight', 'Gift Tree', 'Nonprofits', 'Workplaces', 'Schools', 'Fund', 'House messages', 'Openers', 'Payouts', 'Scans', 'Location data', 'Supporters', 'Settings']
@@ -284,6 +285,7 @@ function Ads() {
             {a.coupon_text && <p className="text-sm font-bold">🎟️ Coupon: {a.coupon_text}{a.coupon_terms ? ` · ${a.coupon_terms}` : ''} · good {a.coupon_days} days</p>}
             <p className="muted text-sm">{advName(a.advertiser_id)} · {(a.zone_ids || []).length} zone{(a.zone_ids || []).length === 1 ? '' : 's'} · {a.views} scans · {a.clicks} taps · {a.button_url}</p>
             {a.ad_type === 'political' && <p className="text-sm font-bold">Disclaimer: Prepared and paid for by the {a.political_committee}, {a.political_address}. Reg: {a.political_registration || 'none'}</p>}
+            <TrialControls a={a} reload={loadAds} />
             <div className="mt-2 flex gap-2">
               {a.status !== 'active' && <button className="btn-orange py-2" onClick={() => adStatus(a, 'active')}>Approve and run</button>}
               {a.status === 'active' && <button className="btn-outline py-2" onClick={() => adStatus(a, 'paused')}>Pause</button>}
@@ -292,6 +294,35 @@ function Ads() {
           </div>
         ))}
       </div>
+    </div>
+  )
+}
+
+// Free trial: the business's ad shows on Community Fund scans in its zones. The fund pays holders, the business pays nothing.
+function TrialControls({ a, reload }) {
+  const [err, setErr] = useState(null)
+  const on = a.trial_until && new Date(a.trial_until) > new Date()
+  async function set(days) {
+    if (days === 0 && !confirm('End this free trial now?')) return
+    setErr(null)
+    const { error } = await supabase.rpc('admin_set_trial', { p_ad: a.id, p_days: days })
+    if (error) setErr(error.message); reload()
+  }
+  return (
+    <div className="mt-2">
+      {!on && (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm font-bold">🎁 Free trial:</span>
+          <button className="btn-outline py-1 text-sm" onClick={() => set(7)}>1 week</button>
+          <button className="btn-outline py-1 text-sm" onClick={() => set(14)}>2 weeks</button>
+        </div>
+      )}
+      {on && <button className="btn-outline py-1 text-sm" onClick={() => set(0)}>End free trial now</button>}
+      {(on || a.trial_started_at) && (a.status !== 'active' || !(a.zone_ids || []).length) && on && (
+        <p className="mt-1 text-sm font-bold text-red-600">Not showing yet: {a.status !== 'active' ? 'approve the ad' : 'the business needs at least one zone'}.</p>
+      )}
+      {err && <p className="text-sm text-red-600">{err}</p>}
+      {a.trial_started_at && <TrialReport adId={a.id} admin />}
     </div>
   )
 }

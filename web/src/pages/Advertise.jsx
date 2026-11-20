@@ -10,6 +10,7 @@ import { BookingManager, BusinessShares } from './Booking'
 import { describeRadius } from '../components/MapPicker'
 import { Notice, Spinner } from '../components/Layout'
 import TonightBiz from '../components/TonightBiz'
+import TrialReport from '../components/TrialReport'
 import SpotlightPanel from '../components/SpotlightPanel'
 import { getRef } from '../lib/ref'
 
@@ -466,11 +467,12 @@ export default function Advertise() {
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <p className="text-lg font-extrabold">{a.headline}</p>
-                      <p className="muted text-sm">{a.ad_type} · {(a.zone_ids || []).length} zone{(a.zone_ids || []).length === 1 ? '' : 's'} · {a.views} scans · {a.clicks} taps · cost {money(a.views * price)}</p>
+                      <p className="muted text-sm">{a.ad_type} · {(a.zone_ids || []).length} zone{(a.zone_ids || []).length === 1 ? '' : 's'} · {a.views} paid scans · {a.clicks} taps · cost {money(a.views * price)}</p>
                       {a.coupon_text && <p className="text-sm font-bold">🎟️ {a.coupon_text}</p>}
                     </div>
                     <span className={`pill ${a.status === 'active' ? 'bg-green-100 text-green-800' : a.status === 'pending' ? 'bg-orange/20 text-ink dark:text-white' : 'bg-neutral-200 text-neutral-700'}`}>{a.status === 'pending' ? 'waiting for approval' : a.status}</span>
                   </div>
+                  {a.trial_started_at && <TrialReport adId={a.id} />}
                   <div className="mt-3 flex flex-wrap gap-2">
                     <button className="btn-black py-2" onClick={() => setEditingAd(a)}>Edit</button>
                     {a.status === 'active' && <button className="btn-outline py-2" onClick={() => setStatus(a, 'paused')}>Pause</button>}

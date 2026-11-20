@@ -1,0 +1,5 @@
+-- Applied via MCP: ad_free_trials
+-- ads: trial_started_at, trial_until, trial_last_shown, trial_views (guard_ad keeps them admin-only).
+-- process_scan: trial ads never billed; on Community Fund scans inside the ad's zone (and its days/hours),
+--   show a trial ad (coupon works), taking turns by trial_last_shown. Holder paid by fund as before.
+-- admin_set_trial(ad, days) (0 = end now), trial_report(ad) for admin or the ad's business.
