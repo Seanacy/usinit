@@ -1,3 +1,4 @@
+import { LaunchGiveBox } from '../components/LaunchGive'
 import { useEffect, useRef, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { deviceId, money, startCheckout, supabase, useStats, withCardFee } from '../lib/supabase'
@@ -239,6 +240,8 @@ export default function Scan() {
               <div className="mt-4 space-y-3">
                 <button className="btn-orange w-full py-4 text-lg" onClick={() => { tap('tip'); setPanel(panel === 'tip' ? null : 'tip') }}>Tip {name}</button>
                 {panel === 'tip' && <TipPanel code={code} firstName={name} scanId={res?.scan_id} stats={stats} />}
+                <button className="btn-outline w-full border-orange py-4 text-lg" onClick={() => { tap('give3'); setPanel(panel === 'give3' ? null : 'give3') }}>Give $3 · $2 to {name}</button>
+                {panel === 'give3' && <LaunchGiveBox code={code} firstName={name} scanId={res?.scan_id} settings={stats?.settings} />}
                 <button className="btn-black w-full py-4 text-lg" onClick={() => { tap('meet'); setPanel('meet') }}>Meet {name}</button>
                 <button className="btn-outline w-full py-4 text-lg" onClick={() => { tap('support'); setPanel('support') }}>Support Us In It</button>
                 <a href="/fund" className="block text-center text-sm font-bold underline">Or give once to the Community Fund</a>

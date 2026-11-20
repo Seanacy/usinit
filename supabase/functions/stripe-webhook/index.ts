@@ -55,6 +55,15 @@ Deno.serve(async (req) => {
           await db.from("holder_ledger").insert({ holder_id: m.holder_id, amount_cents: holder, kind: "tip", ref_id: tip.id });
           await db.from("platform_ledger").insert({ amount_cents: platform, source: "tip", ref_id: tip.id });
         }
+      } else if (m.kind === "launch_give") {
+        // "Give $3": payer covered the card fee. Holder gets their set share; the rest goes to the Community Fund.
+        const base = Number(m.base_cents), toHolder = Math.min(base, Number(m.holder_cents)), toFund = base - toHolder;
+        const { data: tip, error } = await db.from("tips").insert({ holder_id: m.holder_id, scan_id: m.scan_id || null, amount_cents: gross, fee_cents: gross - base, platform_cents: 0, holder_cents: toHolder, stripe_session_id: obj.id, status: "paid", launch_give: true }).select("id").single();
+        if (!dup(error) && tip) {
+          await db.from("holder_ledger").insert({ holder_id: m.holder_id, amount_cents: toHolder, kind: "tip", ref_id: tip.id });
+          if (toFund > 0) await db.from("community_fund_transactions").insert({ amount_cents: toFund, source: "public_gift", gross_cents: toFund, fee_cents: 0, platform_cents: 0, donor_name: name, stripe_ref: obj.id });
+          if (m.ref) await db.rpc("amb_credit_gift", { p_ref: m.ref, p_cents: base, p_source: obj.id });
+        }
       } else if (m.kind === "gift") {
         const onTop = m.fee_on_top === "1";
         const net = onTop ? Number(m.base_cents) : gross - stripeFee(gross);

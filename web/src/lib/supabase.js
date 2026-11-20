@@ -66,11 +66,11 @@ export async function callConnect(action, kind) {
   return out
 }
 
-export async function startCheckout(payload) {
+export async function startCheckout(payload, fn = 'create-checkout') {
   const { data: s } = await supabase.auth.getSession()
   const headers = { 'Content-Type': 'application/json', apikey: KEY }
   if (s?.session?.access_token) headers.Authorization = `Bearer ${s.session.access_token}`
-  const res = await fetch(`${SUPABASE_URL}/functions/v1/create-checkout`, {
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/${fn}`, {
     method: 'POST',
     headers,
     body: JSON.stringify(payload),

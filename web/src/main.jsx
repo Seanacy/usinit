@@ -6,6 +6,7 @@ import Layout, { Notice, Spinner } from './components/Layout'
 import Home from './pages/Home'
 import Scan from './pages/Scan'
 import Profile, { MyStars } from './pages/Profile'
+import Give from './pages/Give'
 import { PlugScan } from './pages/Plug'
 import BookingPage from './pages/Booking'
 import WorkplacePage from './pages/Workplace'
@@ -93,6 +94,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/spotlight" element={<Spotlight />} />
           <Route path="/how" element={<HowItWorks />} />
           <Route path="/2" element={<TwoDollars />} />
+          <Route path="/give" element={<Give />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/about" element={<About />} />
           <Route path="/gifttree" element={<GiftTree />} />

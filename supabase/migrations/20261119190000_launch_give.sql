@@ -1,0 +1,3 @@
+-- Applied via MCP: launch_give_and_open_cashouts, record_tap_give3
+-- Settings launch_give_on/launch_give_cents(300)/launch_give_holder_cents(200); tips.launch_give; launch_give_stats() public.
+-- Cash-outs opened: cashout_force_pause=false, min_payout_cents=1000, fund-based pause thresholds set to 0.
