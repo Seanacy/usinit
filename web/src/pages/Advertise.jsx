@@ -6,7 +6,7 @@ import ZoneManager from '../components/ZoneManager'
 import { CROWDS } from './Champion'
 import PlugPanel from './Plug'
 import StripePayouts from '../components/StripePayouts'
-import { BookingManager, BusinessShares } from './Booking'
+import { BookingManager } from './Booking'
 import { describeRadius } from '../components/MapPicker'
 import { Notice, Spinner } from '../components/Layout'
 import TonightBiz from '../components/TonightBiz'
@@ -453,11 +453,11 @@ export default function Advertise() {
                     <Tile icon="📢" title="My ads" sub="Make ads. Draw zones." onClick={() => openSec('ads')} />
                     <Tile icon="💵" title="My money" sub="Add money. Cash out." onClick={() => openSec('money')} />
                     <Tile icon="🎟️" title="Coupons" sub="Deals + store PIN" onClick={() => openSec('coupons')} />
-                    <Tile icon="🤝" title="Referral Partners" sub="Send customers. Get paid." to="/partners" />
+                    <Tile icon="🔌" title="The Plug" sub="Carry other shops' codes. Get paid." to="/partners" />
                     <Tile icon="🌙" title="Tonight listing" sub="Your specials page" onClick={() => openSec('tonight')} />
                     <Tile icon="⭐" title="Free Spotlight" sub="Show off for free" onClick={() => openSec('spotlight')} />
                     <Tile icon="📅" title="Bookings" sub="Let people book you" onClick={() => openSec('bookings')} />
-                    <Tile icon="🔌" title="The Plug" sub="Carry other shops' codes" onClick={() => openSec('plug')} />
+                    <Tile icon="🤲" title="Nonprofit Plug" sub="For nonprofits only" onClick={() => openSec('plug')} />
                   </div>
                 </>
               ) : (
@@ -470,7 +470,7 @@ export default function Advertise() {
                       <div className="card"><p className="muted text-sm">Ad money</p><p className="text-3xl font-extrabold">{money(adv.balance_cents)}</p><p className="muted text-xs">About {Math.floor(adv.balance_cents / price)} scans · {ads.reduce((x, y) => x + y.views, 0)} scans so far · {ads.reduce((x, y) => x + y.clicks, 0)} button taps</p></div>
                       <AddFunds stats={stats} adv={adv} />
                       {adv.status === 'approved'
-                        ? <StripePayouts kind="business" title="Earnings (bookings, The Plug, Referral Partners)" handNote="Money you earn lands here. Card fees for your deposits come out of your share." />
+                        ? <StripePayouts kind="business" title="Earnings (bookings and The Plug)" handNote="Money you earn lands here. Card fees for your deposits come out of your share." />
                         : <div className="card"><p className="muted text-sm">Earnings</p><p className="text-3xl font-extrabold">$0.00</p><p className="muted text-xs">Cash-outs open once Us In It approves your business.</p></div>}
                     </>
                   )}
@@ -478,7 +478,7 @@ export default function Advertise() {
                   {sec === 'tonight' && <TonightBiz adv={adv} />}
                   {sec === 'spotlight' && <><h2 className="h2">⭐ Free Spotlight</h2><SpotlightPanel adv={adv} onBoost={(x) => { setBoosting(x); window.scrollTo({ top: 0, behavior: 'smooth' }) }} /></>}
                   {sec === 'bookings' && <><h2 className="h2">📅 Bookings</h2><BookingManager adv={adv} /></>}
-                  {sec === 'plug' && <><h2 className="h2">🔌 The Plug</h2><p className="muted">Carry another business's QR code at your place. Get paid when it brings them a customer.</p><BusinessShares /><PlugPanel adv={adv} ads={ads} reloadAds={load} /></>}
+                  {sec === 'plug' && <><h2 className="h2">🤲 The Plug for Nonprofits</h2><p className="muted">Business? Use <a href="/partners" className="underline font-bold">The Plug</a> instead.</p><PlugPanel adv={adv} ads={ads} reloadAds={load} /></>}
                   {sec === 'ads' && (
                     <>
                       <h2 className="h2">📢 My ads</h2>

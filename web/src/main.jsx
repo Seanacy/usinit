@@ -105,6 +105,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/r/:code/print" element={<ReferralPrint />} />
           <Route path="/rc/:code" element={<ReferralClaim />} />
           <Route path="/partners" element={<PartnersPage />} />
+          <Route path="/plug" element={<PartnersPage />} />
           <Route path="/c/:code" element={<CouponPage />} />
           <Route path="/coupons" element={<MyCoupons />} />
           <Route path="/contact" element={<Contact />} />

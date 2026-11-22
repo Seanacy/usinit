@@ -2,10 +2,13 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { deviceId, money, supabase, useSession, IS_FINAL_DOMAIN, SITE_URL } from '../lib/supabase'
 import { Notice, Spinner } from './Layout'
-import { useQR, Verified } from './Printables'
+import { useQR, Verified, BookingSign } from './Printables'
+import { bookingUrl } from '../pages/Booking'
 import { hasAlcohol } from '../lib/tonight'
 
-// Referral Partners: businesses send each other customers. The business that gets the customer
+// The Plug (was Referral Partners): businesses send each other customers. Two kinds of codes:
+// 🎟️ walk-in deals (below) and 📅 booking codes (booking pages, paid from the deposit).
+// Walk-in deals: The business that gets the customer
 // pays the sender a set reward, plus Us In It's 20% fee on top (at least 50¢), from its prepaid balance.
 export const fee = (cents) => Math.max(50, Math.round(cents * 0.2))
 export const refUrl = (code) => `${SITE_URL}/r/${code}`
@@ -28,8 +31,8 @@ const PAYS = [200, 500, 1000]
 export function ReferralPanel() {
   return (
     <Link to="/partners" className="card block border-2 border-orange">
-      <p className="text-xl font-extrabold">🤝 Referral Partners →</p>
-      <p className="mt-1">Send customers to shops near you. Get paid when they buy.</p>
+      <p className="text-xl font-extrabold">🔌 The Plug →</p>
+      <p className="mt-1">Carry other shops' QR codes. Get paid when they bring them customers.</p>
     </Link>
   )
 }
@@ -39,16 +42,17 @@ export function PartnersPage() {
   const session = useSession()
   const [d, setD] = useState(undefined)
   const [sugs, setSugs] = useState([])
+  const [book, setBook] = useState({ code: null, pages: [] })
   const [tab, setTab] = useState('find')
   const [msg, setMsg] = useState(null)
   const [setup, setSetup] = useState(false)
   async function load() {
-    const [{ data }, { data: s }] = await Promise.all([supabase.rpc('my_referrals'), supabase.rpc('referral_suggestions')])
-    setD(data || null); setSugs(s || [])
+    const [{ data }, { data: s }, { data: b }] = await Promise.all([supabase.rpc('my_referrals'), supabase.rpc('referral_suggestions'), supabase.rpc('business_booking_shares')])
+    setD(data || null); setSugs(s || []); setBook({ code: b?.code || null, pages: b?.pages || [] })
   }
   useEffect(() => { if (session) load(); else if (session === null) setD(null) }, [session]) // eslint-disable-line react-hooks/exhaustive-deps
   if (session === undefined || d === undefined) return <Spinner />
-  if (!session) return <Gate text="Log in with your business account to use Referral Partners." />
+  if (!session) return <Gate text="Log in with your business account to use The Plug." />
   if (!d) return <Gate text="Make a business account first. It's free." />
   async function act(fn, args, ok) {
     setMsg(null)
@@ -63,8 +67,8 @@ export function PartnersPage() {
     <div className="mx-auto max-w-xl space-y-4 px-4 py-6">
       <Link to="/advertise" className="btn-black block w-full py-4 text-center text-lg">← Back</Link>
       <div>
-        <h1 className="h1">🤝 Referral Partners</h1>
-        <p className="text-lg">Send customers to shops near you. <b>Get paid when they buy.</b></p>
+        <h1 className="h1">🔌 The Plug</h1>
+        <p className="text-lg">Carry other shops' QR codes. <b>Get paid when they bring them customers.</b></p>
       </div>
       {!d.me.approved && <Notice>We’re still checking your business. You can set up now. It turns on when we approve you.</Notice>}
       {(needSpot || setup) ? <SpotStep me={d.me} onDone={() => { setSetup(false); load() }} /> : (
@@ -79,12 +83,13 @@ export function PartnersPage() {
               </button>
             ))}
           </div>
-          {tab === 'find' && <FindTab me={d.me} offer={d.offer} sugs={sugs} act={act} goDeal={() => setTab('deal')} />}
+          {tab === 'find' && <FindTab me={d.me} offer={d.offer} sugs={sugs} book={book} act={act} goDeal={() => setTab('deal')} />}
           {tab === 'mine' && <MineTab waiting={waiting} partners={partners} act={act} goFind={() => setTab('find')} />}
           {tab === 'deal' && <DealTab me={d.me} offer={d.offer} onDone={load} />}
           <p className="text-center text-sm">📍 {d.me.address} · {d.me.category} · <button className="underline" onClick={() => setSetup(true)}>Change</button></p>
         </>
       )}
+      <Link to="/advertise?tab=plug" className="block text-center text-sm underline">Are you a nonprofit? The Plug for Nonprofits →</Link>
       <Link to="/advertise" className="btn-outline block w-full text-center">← Back</Link>
     </div>
   )
@@ -93,7 +98,7 @@ export function PartnersPage() {
 function Gate({ text }) {
   return (
     <div className="mx-auto max-w-md space-y-4 px-4 py-16 text-center">
-      <p className="h2">🤝 Referral Partners</p>
+      <p className="h2">🔌 The Plug</p>
       <p className="text-lg">{text}</p>
       <Link to="/advertise" className="btn-orange block w-full py-4 text-lg">Go to my business page</Link>
     </div>
@@ -140,56 +145,92 @@ function SpotStep({ me, onDone }) {
   )
 }
 
-function FindTab({ me, offer, sugs, act, goDeal }) {
+function FindTab({ me, offer, sugs, book, act, goDeal }) {
   const [all, setAll] = useState(false)
+  const [printing, setPrinting] = useState(null)
   const mine = groupOf(me.category)
   const goes = (x) => groupOf(x.category) === mine && x.category !== me.category
-  const list = useMemo(() => [...sugs].filter((x) => all || goes(x) || (x.dist_m != null && x.dist_m <= 402))
-    .sort((a, b) => (goes(a) ? 0 : 1) - (goes(b) ? 0 : 1) || (a.dist_m ?? 1e9) - (b.dist_m ?? 1e9)), [sugs, all]) // eslint-disable-line react-hooks/exhaustive-deps
+  // One card per shop: its walk-in deal and/or its booking code.
+  const shops = useMemo(() => {
+    const m = new Map()
+    for (const x of sugs) m.set(x.id, { ...x, pages: [] })
+    for (const p of book.pages) {
+      const id = p.advertiser_id || p.slug
+      if (!m.has(id)) m.set(id, { id, business_name: p.business, category: p.category, dist_m: p.dist_m, offer: null, links: null, pages: [] })
+      m.get(id).pages.push(p)
+    }
+    return [...m.values()]
+  }, [sugs, book])
+  const list = useMemo(() => shops.filter((x) => all || goes(x) || (x.dist_m != null && x.dist_m <= 402) || (x.pages.length && x.dist_m != null && x.dist_m <= 8047))
+    .sort((a, b) => (goes(a) ? 0 : 1) - (goes(b) ? 0 : 1) || (a.dist_m ?? 1e9) - (b.dist_m ?? 1e9)), [shops, all]) // eslint-disable-line react-hooks/exhaustive-deps
   if (!me.approved) return <Notice>You’ll see shops here once we approve your business.</Notice>
+  if (printing) return (
+    <div>
+      <button type="button" className="no-print btn-black mb-4 w-full py-3" onClick={() => setPrinting(null)}>← Back</button>
+      <BookingSign url={bookingUrl(printing.slug, book.code)} title={printing.title} />
+    </div>
+  )
   return (
     <div className="space-y-3">
-      <p className="text-lg"><b>Pick a shop. Put their QR code by your register.</b> When your customer buys there, you get paid.</p>
+      <p className="text-lg"><b>Pick a shop. Put their QR code at your place.</b> When it brings them a customer, you get paid.</p>
+      <div className="rounded-xl bg-neutral-100 p-3 text-sm dark:bg-neutral-800">
+        <p><b>🎟️ Walk-in deal:</b> you get paid when your customer buys there.</p>
+        <p><b>📅 Book:</b> you get paid when your customer books and pays a deposit.</p>
+      </div>
       <div className="flex gap-2">
-        <button type="button" onClick={() => setAll(false)} className={`rounded-full border-2 px-4 py-2 font-bold ${!all ? 'border-orange bg-orange text-ink' : 'border-neutral-300'}`}>Best for me</button>
+        <button type="button" onClick={() => setAll(false)} className={`rounded-full border-2 px-4 py-2 font-bold ${!all ? 'border-orange bg-orange text-ink' : 'border-neutral-300'}`}>📍 Best for me</button>
         <button type="button" onClick={() => setAll(true)} className={`rounded-full border-2 px-4 py-2 font-bold ${all ? 'border-orange bg-orange text-ink' : 'border-neutral-300'}`}>All shops</button>
       </div>
       {list.length > 0 && <p className="text-sm font-bold">{list.length} {list.length === 1 ? 'shop' : 'shops'}</p>}
       {!list.length && (
         <div className="card text-center">
-          {sugs.length === 0 ? (
-            <><p className="text-lg font-bold">You’re one of the first shops here! 🎉</p><p className="muted">No other shops have joined Referral Partners yet. When they do, they show up here.</p></>
+          {shops.length === 0 ? (
+            <><p className="text-lg font-bold">You’re one of the first shops here! 🎉</p><p className="muted">No other shops have joined The Plug yet. When they do, they show up here.</p></>
           ) : (
-            <><p className="text-lg font-bold">No good matches close by.</p><button type="button" className="btn-orange mt-3 w-full py-3" onClick={() => setAll(true)}>Show all shops ({sugs.length})</button></>
+            <><p className="text-lg font-bold">No good matches close by.</p><button type="button" className="btn-orange mt-3 w-full py-3" onClick={() => setAll(true)}>Show all shops ({shops.length})</button></>
           )}
         </div>
       )}
       {list.slice(0, 20).map((x) => {
         const link = (x.links || [])[0]
         return (
-          <div key={x.id} className="card space-y-2">
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <p className="text-xl font-extrabold">{x.business_name}</p>
-                <p className="text-sm">{x.category || 'Shop'} {x.dist_m != null && `· ${walk(x.dist_m)}`}{goes(x) ? ' · ✨ Good match' : ''}</p>
-              </div>
+          <div key={x.id} className="card space-y-3">
+            <div>
+              <p className="text-xl font-extrabold">{x.business_name}</p>
+              <p className="text-sm">{x.category || 'Shop'}{x.dist_m != null ? ` · ${walk(x.dist_m)}` : ''}{goes(x) ? ' · ✨ Good match' : ''}</p>
             </div>
-            {x.offer ? (
-              <div className="grid grid-cols-2 gap-2 text-center">
-                <div className="rounded-xl bg-neutral-100 p-2 dark:bg-neutral-800"><p className="text-xs font-bold">YOUR CUSTOMER GETS</p><p className="font-extrabold">{x.offer.discount}</p></div>
-                <div className="rounded-xl bg-green-50 p-2 text-green-900"><p className="text-xs font-bold">YOU GET</p><p className="text-2xl font-extrabold">{money(x.offer.payout_cents)}</p><p className="text-xs">each time</p></div>
+            {x.offer && (
+              <div className="space-y-2 rounded-xl border border-neutral-200 p-3 dark:border-neutral-700">
+                <p className="font-extrabold">🎟️ Walk-in deal</p>
+                <div className="grid grid-cols-2 gap-2 text-center">
+                  <div className="rounded-xl bg-neutral-100 p-2 dark:bg-neutral-800"><p className="text-xs font-bold">YOUR CUSTOMER GETS</p><p className="font-extrabold">{x.offer.discount}</p></div>
+                  <div className="rounded-xl bg-green-50 p-2 text-green-900"><p className="text-xs font-bold">YOU GET</p><p className="text-2xl font-extrabold">{money(x.offer.payout_cents)}</p><p className="text-xs">each time</p></div>
+                </div>
+                {link ? <p className="rounded-xl bg-neutral-100 p-3 text-center font-bold dark:bg-neutral-800">{link.status === 'active' ? '🤝 You’re partners. See “My partners.”' : '⏳ Asked. Waiting for them to say yes.'}</p>
+                  : x.offer.accepting && <button type="button" className="btn-orange w-full py-4 text-lg" onClick={() => act('request_referral_partner', { p_other: x.id, p_i_send: true }, `Asked ${x.business_name}! We’ll show their answer in “My partners.”`)}>Host their QR</button>}
               </div>
-            ) : <p className="muted text-sm">They don’t have a deal yet.</p>}
-            {link ? <p className="rounded-xl bg-neutral-100 p-3 text-center font-bold dark:bg-neutral-800">{link.status === 'active' ? '🤝 You’re partners. See “My partners.”' : '⏳ Asked. Waiting for them to say yes.'}</p> : (
-              <>
-                {x.offer?.accepting && <button type="button" className="btn-orange w-full py-4 text-lg" onClick={() => act('request_referral_partner', { p_other: x.id, p_i_send: true }, `Asked ${x.business_name}! We’ll show their answer in “My partners.”`)}>Host their QR</button>}
-                {offer?.active && <button type="button" className="btn-outline w-full py-3" onClick={() => act('request_referral_partner', { p_other: x.id, p_i_send: false }, `Asked ${x.business_name} to host your QR.`)}>Ask them to host my QR</button>}
-              </>
             )}
+            {x.pages.map((p) => {
+              const url = bookingUrl(p.slug, book.code)
+              return (
+                <div key={p.slug} className="space-y-2 rounded-xl border border-neutral-200 p-3 dark:border-neutral-700">
+                  <p className="font-extrabold">📅 Book: {p.title}</p>
+                  <div className="rounded-xl bg-green-50 p-2 text-center text-green-900"><p className="text-xs font-bold">YOU GET</p><p className="text-2xl font-extrabold">{money(p.cut_cents)}</p><p className="text-xs">per booking</p></div>
+                  <p className="text-sm">{p.referred} {p.referred === 1 ? 'booking' : 'bookings'} sent · {money(p.earned_cents)} earned</p>
+                  <p className="text-xs">No need to ask. You can start right away.</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button type="button" className="btn-orange py-3" onClick={() => setPrinting(p)}>🖨️ Print their code</button>
+                    <button type="button" className="btn-outline py-3" onClick={() => { navigator.clipboard?.writeText(url); alert('Link copied. You can text it or post it.') }}>📋 Copy link</button>
+                  </div>
+                </div>
+              )
+            })}
+            {!x.offer && !x.pages.length && <p className="muted text-sm">They don’t have a deal yet.</p>}
+            {!link && offer?.active && <button type="button" className="btn-outline w-full py-3" onClick={() => act('request_referral_partner', { p_other: x.id, p_i_send: false }, `Asked ${x.business_name} to host your QR.`)}>Ask them to host my QR</button>}
           </div>
         )
       })}
-      {!offer && <button type="button" className="card block w-full text-left" onClick={goDeal}><p className="font-extrabold">Want shops to send customers to you too? →</p><p className="text-sm">Make your deal in “My deal.”</p></button>}
+      {!offer && <button type="button" className="card block w-full text-left" onClick={goDeal}><p className="font-extrabold">Want shops to send customers to you too? →</p><p className="text-sm">Make a walk-in deal in “My deal.” Or make a booking page from the Bookings button on your business page.</p></button>}
     </div>
   )
 }

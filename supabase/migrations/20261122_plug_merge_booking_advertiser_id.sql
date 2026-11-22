@@ -1,0 +1,1 @@
+-- applied via MCP: plug_merge_booking_advertiser_id (business_booking_shares pages add advertiser_id)

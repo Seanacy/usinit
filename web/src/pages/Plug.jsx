@@ -131,8 +131,6 @@ export default function PlugPanel({ adv, ads, reloadAds }) {
 
   return (
     <div className="card space-y-4">
-      <h2 className="h2">For nonprofits</h2>
-
       {plug.nonprofit_status === 'none' && <Apply plug={plug} onDone={load} />}
       {plug.nonprofit_status === 'pending' && <Notice>Thanks! Us In It is checking your nonprofit proof. You'll be able to use The Plug once you're verified.</Notice>}
       {plug.nonprofit_status === 'rejected' && <><Notice kind="error">We couldn't verify your nonprofit status. Check your EIN or proof link and send it again.</Notice><Apply plug={plug} onDone={load} /></>}
