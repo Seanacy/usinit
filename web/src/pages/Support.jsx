@@ -96,6 +96,18 @@ export default function Support({ embedded = false, onBack }) {
         <p className="muted mt-1 text-center text-sm">Show it so people can scan it, or share it with anyone.</p>
       </div>
 
+      <div className="card mt-6 space-y-3">
+        <h2 className="h2">How a holder earns money</h2>
+        <ol className="list-decimal space-y-2 pl-5">
+          <li><b>A holder stands in a busy spot</b> with their own QR code, like on a sidewalk, in a park, or at an event.</li>
+          <li><b>You scan it with your phone camera.</b> Scanning is free for you.</li>
+          <li><b>Each scan pays the holder {money(share)}.</b> Local businesses pay for the scans by showing a short ad. When there’s no ad, our Community Fund pays.</li>
+          <li><b>Want to do more?</b> You can give the holder money directly. $2 to $5 helps a lot, and more goes even further.</li>
+          <li><b>The holder cashes out</b> to Cash App, Venmo, or their bank once they reach $10.</li>
+        </ol>
+        <p className="muted text-sm">One scan per phone per day counts for each holder, so please scan once and share the code with a friend.</p>
+      </div>
+
       <div className="muted mt-6 space-y-2 text-sm">
         <p>Every scan costs {money(price)}: {money(share)} goes to the holder, {money(price - share)} keeps Us In It running and growing. <Link to="/about" className="font-bold underline">See where it goes</Link></p>
         <p>Your support goes into the Us In It Community Fund, which pays holders for scans when no paid messages are running. Us In It is a business, not a charity. Support is not tax-deductible. Card processing fees come out first. You can cancel anytime from your email receipt.</p>
