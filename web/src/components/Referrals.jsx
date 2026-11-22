@@ -154,7 +154,16 @@ function FindTab({ me, offer, sugs, act, goDeal }) {
         <button type="button" onClick={() => setAll(false)} className={`rounded-full border-2 px-4 py-2 font-bold ${!all ? 'border-orange bg-orange text-ink' : 'border-neutral-300'}`}>Best for me</button>
         <button type="button" onClick={() => setAll(true)} className={`rounded-full border-2 px-4 py-2 font-bold ${all ? 'border-orange bg-orange text-ink' : 'border-neutral-300'}`}>All shops</button>
       </div>
-      {!list.length && <div className="card text-center"><p className="text-lg font-bold">No shops near you yet.</p><p className="muted">Tap “All shops,” or check back. New shops join all the time.</p></div>}
+      {list.length > 0 && <p className="text-sm font-bold">{list.length} {list.length === 1 ? 'shop' : 'shops'}</p>}
+      {!list.length && (
+        <div className="card text-center">
+          {sugs.length === 0 ? (
+            <><p className="text-lg font-bold">You’re one of the first shops here! 🎉</p><p className="muted">No other shops have joined Referral Partners yet. When they do, they show up here.</p></>
+          ) : (
+            <><p className="text-lg font-bold">No good matches close by.</p><button type="button" className="btn-orange mt-3 w-full py-3" onClick={() => setAll(true)}>Show all shops ({sugs.length})</button></>
+          )}
+        </div>
+      )}
       {list.slice(0, 20).map((x) => {
         const link = (x.links || [])[0]
         return (
