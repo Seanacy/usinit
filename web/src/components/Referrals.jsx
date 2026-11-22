@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { deviceId, money, supabase, IS_FINAL_DOMAIN, SITE_URL } from '../lib/supabase'
+import { deviceId, money, supabase, useSession, IS_FINAL_DOMAIN, SITE_URL } from '../lib/supabase'
 import { Notice, Spinner } from './Layout'
 import { useQR, Verified } from './Printables'
 import { hasAlcohol } from '../lib/tonight'
@@ -20,220 +20,265 @@ const GROUPS = {
   Other: ['Other'],
 }
 const groupOf = (cat) => Object.keys(GROUPS).find((g) => GROUPS[g].includes(cat)) || 'Other'
-const feetOrMiles = (m) => (m == null ? 'distance unknown' : m < 300 ? `${Math.round(m * 3.281)} ft away` : `${(m / 1609).toFixed(1)} mi away`)
 
-export function ReferralPanel({ adv }) {
-  const [d, setD] = useState(null)
+const walk = (m) => (m == null ? '' : m < 120 ? '🚶 Next door' : `🚶 ${Math.max(1, Math.round(m / 80))} min walk`)
+const PAYS = [200, 500, 1000]
+
+// Small card on the Advertise page that opens the Partners page.
+export function ReferralPanel() {
+  return (
+    <Link to="/partners" className="card block border-2 border-orange">
+      <p className="text-xl font-extrabold">🤝 Referral Partners →</p>
+      <p className="mt-1">Send customers to shops near you. Get paid when they buy.</p>
+    </Link>
+  )
+}
+
+// usinit.com/partners — made simple: 3 big tabs, plain words, big buttons.
+export function PartnersPage() {
+  const session = useSession()
+  const [d, setD] = useState(undefined)
   const [sugs, setSugs] = useState([])
+  const [tab, setTab] = useState('find')
   const [msg, setMsg] = useState(null)
+  const [setup, setSetup] = useState(false)
   async function load() {
     const [{ data }, { data: s }] = await Promise.all([supabase.rpc('my_referrals'), supabase.rpc('referral_suggestions')])
-    setD(data); setSugs(s || [])
+    setD(data || null); setSugs(s || [])
   }
-  useEffect(() => { load() }, [adv.id]) // eslint-disable-line react-hooks/exhaustive-deps
-  if (!d) return null
-  const waiting = d.links.filter((l) => l.status === 'requested' && ((l.requested_by === 'owner') === l.i_send))
-  const sent = d.links.filter((l) => l.status === 'requested' && !waiting.includes(l))
-  const active = d.links.filter((l) => l.status === 'active')
+  useEffect(() => { if (session) load(); else if (session === null) setD(null) }, [session]) // eslint-disable-line react-hooks/exhaustive-deps
+  if (session === undefined || d === undefined) return <Spinner />
+  if (!session) return <Gate text="Log in with your business account to use Referral Partners." />
+  if (!d) return <Gate text="Make a business account first. It's free." />
   async function act(fn, args, ok) {
     setMsg(null)
     const { error } = await supabase.rpc(fn, args)
     if (error) setMsg({ kind: 'error', text: error.message }); else if (ok) setMsg({ kind: 'ok', text: ok })
     load()
   }
+  const needSpot = !d.me.address || !d.me.category
+  const waiting = d.links.filter((l) => l.status === 'requested' && ((l.requested_by === 'owner') === l.i_send))
+  const partners = d.links.filter((l) => l.status === 'active')
   return (
-    <div className="space-y-3">
-      <h2 className="h2 pt-2">Referral Partners</h2>
-      <p className="muted -mt-2 text-sm">Team up with businesses near you. They send you customers with a discount, and you pay them a reward when the customer buys. Send them customers and you earn their reward.</p>
-      {!d.me.approved && <Notice>Referral Partners opens once Us In It approves your business.</Notice>}
-      {msg && <Notice kind={msg.kind}>{msg.text}</Notice>}
-      <SpotForm me={d.me} onDone={load} />
-      {d.me.approved && <OfferForm me={d.me} offer={d.offer} onDone={load} />}
-      {waiting.length > 0 && (
-        <div className="card space-y-2 border-2 border-orange">
-          <p className="font-extrabold">📥 Waiting on you ({waiting.length})</p>
-          {waiting.map((l) => (
-            <div key={l.id} className="rounded-xl bg-neutral-100 p-3 dark:bg-neutral-800">
-              <p>{l.i_send ? <><b>{l.other}</b> invited you to send them customers. You earn <b>{money(l.payout_cents)}</b> each time.</> : <><b>{l.other}</b> wants to send you customers. You pay <b>{money(l.payout_cents + l.fee_cents)}</b> per customer who buys.</>}</p>
-              <p className="text-sm">Their deal: {l.discount}</p>
-              <div className="mt-2 grid grid-cols-2 gap-2">
-                <button className="btn-orange py-2" onClick={() => act('respond_referral_partner', { p_id: l.id, p_action: 'yes' }, `You and ${l.other} are partners now.`)}>Yes, team up</button>
-                <button className="btn-outline py-2" onClick={() => act('respond_referral_partner', { p_id: l.id, p_action: 'no' })}>No thanks</button>
-              </div>
-            </div>
+    <div className="mx-auto max-w-xl space-y-4 px-4 py-6">
+      <div>
+        <h1 className="h1">🤝 Referral Partners</h1>
+        <p className="text-lg">Send customers to shops near you. <b>Get paid when they buy.</b></p>
+      </div>
+      {!d.me.approved && <Notice>We’re still checking your business. You can set up now. It turns on when we approve you.</Notice>}
+      {(needSpot || setup) ? <SpotStep me={d.me} onDone={() => { setSetup(false); load() }} /> : (
+        <>
+          {msg && <Notice kind={msg.kind}>{msg.text}</Notice>}
+          <div className="grid grid-cols-3 gap-2">
+            {[['find', '🔎', 'Find shops'], ['mine', '🤝', `My partners${partners.length ? ` (${partners.length})` : ''}`], ['deal', '🎟️', 'My deal']].map(([id, icon, label]) => (
+              <button key={id} type="button" onClick={() => setTab(id)}
+                className={`relative rounded-2xl border-2 px-2 py-3 text-center font-extrabold ${tab === id ? 'border-orange bg-orange text-ink' : 'border-neutral-300 dark:border-neutral-600'}`}>
+                <span className="block text-2xl">{icon}</span>{label}
+                {id === 'mine' && waiting.length > 0 && <span className="absolute -right-1 -top-1 rounded-full bg-red-600 px-2 text-sm text-white">{waiting.length}</span>}
+              </button>
+            ))}
+          </div>
+          {tab === 'find' && <FindTab me={d.me} offer={d.offer} sugs={sugs} act={act} goDeal={() => setTab('deal')} />}
+          {tab === 'mine' && <MineTab waiting={waiting} partners={partners} act={act} goFind={() => setTab('find')} />}
+          {tab === 'deal' && <DealTab me={d.me} offer={d.offer} onDone={load} />}
+          <p className="text-center text-sm">📍 {d.me.address} · {d.me.category} · <button className="underline" onClick={() => setSetup(true)}>Change</button></p>
+        </>
+      )}
+      <p className="text-center text-sm"><Link to="/advertise" className="underline">← Back to my business page</Link></p>
+    </div>
+  )
+}
+
+function Gate({ text }) {
+  return (
+    <div className="mx-auto max-w-md space-y-4 px-4 py-16 text-center">
+      <p className="h2">🤝 Referral Partners</p>
+      <p className="text-lg">{text}</p>
+      <Link to="/advertise" className="btn-orange block w-full py-4 text-lg">Go to my business page</Link>
+    </div>
+  )
+}
+
+// Step: where is your shop + what kind of shop (big tap tiles)
+function SpotStep({ me, onDone }) {
+  const [address, setAddress] = useState(me.address || '')
+  const [group, setGroup] = useState(me.category ? groupOf(me.category) : '')
+  const [category, setCategory] = useState(me.category || '')
+  const [err, setErr] = useState(null)
+  async function save() {
+    setErr(null)
+    if (address.trim().length < 6) return setErr('Type your shop’s street address.')
+    if (!category) return setErr('Tap what kind of shop you are.')
+    const { error } = await supabase.rpc('set_business_location', { p_address: address, p_category: category, p_on: true })
+    if (error) return setErr(error.message)
+    onDone()
+  }
+  return (
+    <div className="card space-y-4">
+      <p className="text-xl font-extrabold">1. Where is your shop?</p>
+      <input className="input text-lg" placeholder="123 Main St, Minneapolis" value={address} onChange={(e) => setAddress(e.target.value)} />
+      <p className="text-xl font-extrabold">2. What kind of shop?</p>
+      <div className="grid grid-cols-2 gap-2">
+        {Object.keys(GROUPS).map((g) => (
+          <button key={g} type="button" onClick={() => { setGroup(g); if (GROUPS[g].length === 1) setCategory(GROUPS[g][0]); else setCategory('') }}
+            className={`rounded-xl border-2 py-3 font-bold ${group === g ? 'border-orange bg-orange/15' : 'border-neutral-300 dark:border-neutral-600'}`}>{g}</button>
+        ))}
+      </div>
+      {group && GROUPS[group].length > 1 && (
+        <div className="flex flex-wrap gap-2">
+          {GROUPS[group].map((c) => (
+            <button key={c} type="button" onClick={() => setCategory(c)}
+              className={`rounded-full border-2 px-4 py-2 font-bold ${category === c ? 'border-orange bg-orange text-ink' : 'border-neutral-300 dark:border-neutral-600'}`}>{c}</button>
           ))}
         </div>
       )}
-      {active.length > 0 && (
-        <div className="card space-y-3">
-          <p className="font-extrabold">🤝 Your partners ({active.length})</p>
-          {active.map((l) => <PartnerRow key={l.id} l={l} onEnd={() => window.confirm(`Stop partnering with ${l.other}?`) && act('respond_referral_partner', { p_id: l.id, p_action: 'end' })} />)}
-        </div>
-      )}
-      {sent.length > 0 && <p className="muted text-sm">Waiting for an answer from: {sent.map((l) => l.other).join(', ')}</p>}
-      {d.me.approved && d.me.on && <FindPartners me={d.me} offer={d.offer} sugs={sugs} act={act} />}
-    </div>
-  )
-}
-
-function SpotForm({ me, onDone }) {
-  const [open, setOpen] = useState(!me.address || !me.category)
-  const [f, setF] = useState({ address: me.address || '', category: me.category || '', on: me.on || !me.address })
-  const [err, setErr] = useState(null)
-  async function save() {
-    setErr(null)
-    if (!f.address.trim()) return setErr('Add your full street address.')
-    if (!f.category) return setErr('Pick what kind of business you are.')
-    const { error } = await supabase.rpc('set_business_location', { p_address: f.address, p_category: f.category, p_on: f.on })
-    if (error) return setErr(error.message)
-    setOpen(false); onDone()
-  }
-  if (!open) {
-    return (
-      <div className="card flex items-start justify-between gap-2">
-        <div>
-          <p className="font-bold">📍 {me.address} · {me.category}</p>
-          <p className="muted text-sm">{me.on ? 'Other businesses can find you.' : 'Hidden from other businesses.'} {!me.mapped && (me.geo_status === 'nomatch' ? 'We couldn’t find that address on the map. Fix it so nearby businesses show up.' : 'Finding you on the map (up to 10 minutes).')}</p>
-        </div>
-        <button className="btn-outline shrink-0 py-2" onClick={() => setOpen(true)}>Edit</button>
-      </div>
-    )
-  }
-  return (
-    <div className="card space-y-3">
-      <p className="font-extrabold">Step 1: Where you are and what you do</p>
       {err && <Notice kind="error">{err}</Notice>}
-      <input className="input" placeholder="Full street address, like 123 Main St, Minneapolis" value={f.address} onChange={(e) => setF({ ...f, address: e.target.value })} />
-      <select className="input" value={f.category} onChange={(e) => setF({ ...f, category: e.target.value })} aria-label="Kind of business">
-        <option value="">What kind of business are you?</option>
-        {Object.entries(GROUPS).map(([g, list]) => <optgroup key={g} label={g}>{list.map((c) => <option key={c}>{c}</option>)}</optgroup>)}
-      </select>
-      <label className="flex items-center gap-2"><input type="checkbox" className="h-5 w-5" checked={f.on} onChange={(e) => setF({ ...f, on: e.target.checked })} /> Let other businesses find me</label>
-      <button className="btn-black w-full" onClick={save}>Save</button>
+      <button type="button" className="btn-orange w-full py-4 text-lg" onClick={save}>Save</button>
+      <p className="muted text-sm">Other shops near you will see your shop’s name, what kind of shop it is, and how far away you are. Not your exact address.</p>
     </div>
   )
 }
 
-function OfferForm({ me, offer, onDone }) {
-  const [open, setOpen] = useState(!offer)
-  const [f, setF] = useState({ discount: offer?.discount || '', terms: offer?.terms || '', payout: offer ? (offer.payout_cents / 100).toFixed(2) : '5.00', days: offer?.claim_days || 30, accepting: offer?.accepting ?? true, active: offer?.active ?? true })
-  const [err, setErr] = useState(null)
-  const cents = Math.round(Number(f.payout) * 100) || 0
-  async function save() {
-    setErr(null)
-    if (f.discount.trim().length < 3) return setErr('Write the deal customers get, like "$10 off any set of tires."')
-    if (cents < 100) return setErr('The reward has to be at least $1.')
-    if (hasAlcohol(f.discount) || hasAlcohol(f.terms)) return setErr('Referral offers can’t mention alcohol.')
-    const { error } = await supabase.rpc('save_referral_offer', { p_discount: f.discount, p_terms: f.terms, p_payout_cents: cents, p_claim_days: Number(f.days), p_accepting: f.accepting, p_active: f.active })
-    if (error) return setErr(error.message)
-    setOpen(false); onDone()
-  }
-  const low = offer && me.balance_cents < offer.payout_cents + offer.fee_cents
-  if (!open && offer) {
-    return (
-      <div className="card space-y-1">
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <p className="font-extrabold">🎟️ Your offer: {offer.discount}</p>
-            <p className="text-sm">You pay <b>{money(offer.payout_cents)}</b> to the business that sent them + <b>{money(offer.fee_cents)}</b> Us In It fee = <b>{money(offer.payout_cents + offer.fee_cents)}</b> per customer who buys.</p>
-            <p className="muted text-sm">{offer.active ? (offer.accepting ? 'On · taking new partners' : 'On · not taking new partners') : 'Off'}</p>
-          </div>
-          <button className="btn-outline shrink-0 py-2" onClick={() => setOpen(true)}>Edit</button>
-        </div>
-        {low && <Notice kind="error">Your ad balance is too low, so your offer is paused for customers. Add funds above to turn it back on.</Notice>}
-        {!me.has_pin && <Notice kind="error">Set your 4-digit store PIN in the Coupons box. Staff need it to accept referral codes.</Notice>}
-      </div>
-    )
-  }
-  return (
-    <div className="card space-y-3">
-      <p className="font-extrabold">Step 2: Your referral offer</p>
-      {err && <Notice kind="error">{err}</Notice>}
-      <label className="block text-sm font-bold">What the customer gets
-        <input className="input mt-1" maxLength={80} placeholder="$10 off any set of tires" value={f.discount} onChange={(e) => setF({ ...f, discount: e.target.value })} />
-      </label>
-      <label className="block text-sm font-bold">Rules (optional)
-        <input className="input mt-1" maxLength={200} placeholder="Purchase of $50 or more. One per customer." value={f.terms} onChange={(e) => setF({ ...f, terms: e.target.value })} />
-      </label>
-      <label className="block text-sm font-bold">Reward to the business that sends them ($)
-        <input className="input mt-1" inputMode="decimal" value={f.payout} onChange={(e) => setF({ ...f, payout: e.target.value.replace(/[^0-9.]/g, '') })} />
-      </label>
-      {cents >= 100 && <p className="rounded-xl bg-neutral-100 p-3 text-sm dark:bg-neutral-800">Per customer who buys: <b>{money(cents)}</b> reward + <b>{money(fee(cents))}</b> Us In It fee (20%, at least 50¢) = <b>{money(cents + fee(cents))}</b>, taken from your ad balance. If your balance runs low, the offer pauses by itself.</p>}
-      <label className="block text-sm font-bold">Customer has this many days to use it
-        <input className="input mt-1" type="number" min={1} max={90} value={f.days} onChange={(e) => setF({ ...f, days: e.target.value })} />
-      </label>
-      <label className="flex items-center gap-2"><input type="checkbox" className="h-5 w-5" checked={f.accepting} onChange={(e) => setF({ ...f, accepting: e.target.checked })} /> Take new partners</label>
-      <label className="flex items-center gap-2"><input type="checkbox" className="h-5 w-5" checked={f.active} onChange={(e) => setF({ ...f, active: e.target.checked })} /> Offer is on</label>
-      <div className="flex gap-2">
-        {offer && <button className="btn-outline flex-1" onClick={() => setOpen(false)}>Cancel</button>}
-        <button className="btn-orange flex-1" onClick={save}>Save offer</button>
-      </div>
-    </div>
-  )
-}
-
-function PartnerRow({ l, onEnd }) {
-  return (
-    <div className="rounded-xl bg-neutral-100 p-3 dark:bg-neutral-800">
-      {l.i_send ? (
-        <>
-          <p>You send customers to <b>{l.other}</b> · you earn <b>{money(l.payout_cents)}</b> each</p>
-          <p className="text-sm">Their deal: {l.discount}</p>
-          <p className="text-sm">{l.claims} saved · {l.walk_ins} bought · you earned {money(l.paid_cents)}</p>
-          <div className="mt-2 grid grid-cols-2 gap-2">
-            <a className="btn-black py-2" href={`/r/${l.code}/print`} target="_blank" rel="noreferrer">🖨️ Counter sign</a>
-            <button className="btn-outline py-2" onClick={() => { navigator.clipboard?.writeText(refUrl(l.code)); alert('Link copied. Text it or post it.') }}>Copy link</button>
-          </div>
-        </>
-      ) : (
-        <>
-          <p><b>{l.other}</b> sends you customers · you pay {money(l.payout_cents + l.fee_cents)} each</p>
-          <p className="text-sm">{l.claims} saved · {l.walk_ins} bought · paid them {money(l.paid_cents)}</p>
-        </>
-      )}
-      <button className="mt-2 text-sm underline" onClick={onEnd}>Stop partnering</button>
-    </div>
-  )
-}
-
-function FindPartners({ me, offer, sugs, act }) {
+function FindTab({ me, offer, sugs, act, goDeal }) {
+  const [all, setAll] = useState(false)
   const mine = groupOf(me.category)
-  const list = useMemo(() => [...sugs].sort((a, b) => {
-    const ca = groupOf(a.category) === mine && a.category !== me.category ? 0 : 1
-    const cb = groupOf(b.category) === mine && b.category !== me.category ? 0 : 1
-    return ca - cb || (a.dist_m ?? 1e9) - (b.dist_m ?? 1e9)
-  }), [sugs, mine, me.category])
-  const bands = [
-    ['Next door (500 ft)', list.filter((x) => x.dist_m != null && x.dist_m <= 152)],
-    ['Nearby (¼ mile)', list.filter((x) => x.dist_m != null && x.dist_m > 152 && x.dist_m <= 402)],
-    ['In your area', list.filter((x) => x.dist_m == null || x.dist_m > 402)],
-  ].filter(([, l]) => l.length)
+  const goes = (x) => groupOf(x.category) === mine && x.category !== me.category
+  const list = useMemo(() => [...sugs].filter((x) => all || goes(x) || (x.dist_m != null && x.dist_m <= 402))
+    .sort((a, b) => (goes(a) ? 0 : 1) - (goes(b) ? 0 : 1) || (a.dist_m ?? 1e9) - (b.dist_m ?? 1e9)), [sugs, all]) // eslint-disable-line react-hooks/exhaustive-deps
+  if (!me.approved) return <Notice>You’ll see shops here once we approve your business.</Notice>
   return (
-    <div className="card space-y-3">
-      <p className="font-extrabold">🔎 Find Referral Partners</p>
-      <p className="muted text-sm">Businesses near you that take referrals. Ones that go well with yours are first.</p>
-      {!list.length && <p className="text-sm">No other businesses nearby yet. As more join, they show up here.</p>}
-      {bands.map(([label, l]) => (
-        <div key={label} className="space-y-2">
-          <p className="text-sm font-bold uppercase tracking-wide text-neutral-500">{label}</p>
-          {l.slice(0, 10).map((x) => {
-            const link = (x.links || [])[0]
-            const goes = groupOf(x.category) === mine && x.category !== me.category
-            return (
-              <div key={x.id} className="rounded-xl border-2 border-neutral-200 p-3 dark:border-neutral-700">
-                <p><b>{x.business_name}</b> · {x.category || 'Business'} · {feetOrMiles(x.dist_m)}{goes ? ' · ✨ goes well with you' : ''}</p>
-                {x.offer ? <p className="text-sm">Their deal: {x.offer.discount} · they pay <b>{money(x.offer.payout_cents)}</b> per customer you send</p> : <p className="muted text-sm">No offer yet.</p>}
-                {link ? <p className="mt-1 text-sm font-bold">{link.status === 'active' ? '🤝 Partners' : 'Asked · waiting'}</p> : (
-                  <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                    {x.offer?.accepting && <button className="btn-orange py-2" onClick={() => act('request_referral_partner', { p_other: x.id, p_i_send: true }, `Asked ${x.business_name}. You’ll see their answer here.`)}>Send them customers</button>}
-                    {offer?.active && <button className="btn-outline py-2" onClick={() => act('request_referral_partner', { p_other: x.id, p_i_send: false }, `Invited ${x.business_name}.`)}>Invite them to send me customers</button>}
-                  </div>
-                )}
+    <div className="space-y-3">
+      <p className="text-lg"><b>Pick a shop. Put their QR code by your register.</b> When your customer buys there, you get paid.</p>
+      <div className="flex gap-2">
+        <button type="button" onClick={() => setAll(false)} className={`rounded-full border-2 px-4 py-2 font-bold ${!all ? 'border-orange bg-orange text-ink' : 'border-neutral-300'}`}>Best for me</button>
+        <button type="button" onClick={() => setAll(true)} className={`rounded-full border-2 px-4 py-2 font-bold ${all ? 'border-orange bg-orange text-ink' : 'border-neutral-300'}`}>All shops</button>
+      </div>
+      {!list.length && <div className="card text-center"><p className="text-lg font-bold">No shops near you yet.</p><p className="muted">Tap “All shops,” or check back. New shops join all the time.</p></div>}
+      {list.slice(0, 20).map((x) => {
+        const link = (x.links || [])[0]
+        return (
+          <div key={x.id} className="card space-y-2">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <p className="text-xl font-extrabold">{x.business_name}</p>
+                <p className="text-sm">{x.category || 'Shop'} {x.dist_m != null && `· ${walk(x.dist_m)}`}{goes(x) ? ' · ✨ Good match' : ''}</p>
               </div>
-            )
-          })}
+            </div>
+            {x.offer ? (
+              <div className="grid grid-cols-2 gap-2 text-center">
+                <div className="rounded-xl bg-neutral-100 p-2 dark:bg-neutral-800"><p className="text-xs font-bold">YOUR CUSTOMER GETS</p><p className="font-extrabold">{x.offer.discount}</p></div>
+                <div className="rounded-xl bg-green-50 p-2 text-green-900"><p className="text-xs font-bold">YOU GET</p><p className="text-2xl font-extrabold">{money(x.offer.payout_cents)}</p><p className="text-xs">each time</p></div>
+              </div>
+            ) : <p className="muted text-sm">They don’t have a deal yet.</p>}
+            {link ? <p className="rounded-xl bg-neutral-100 p-3 text-center font-bold dark:bg-neutral-800">{link.status === 'active' ? '🤝 You’re partners. See “My partners.”' : '⏳ Asked. Waiting for them to say yes.'}</p> : (
+              <>
+                {x.offer?.accepting && <button type="button" className="btn-orange w-full py-4 text-lg" onClick={() => act('request_referral_partner', { p_other: x.id, p_i_send: true }, `Asked ${x.business_name}! We’ll show their answer in “My partners.”`)}>Host their QR</button>}
+                {offer?.active && <button type="button" className="btn-outline w-full py-3" onClick={() => act('request_referral_partner', { p_other: x.id, p_i_send: false }, `Asked ${x.business_name} to host your QR.`)}>Ask them to host my QR</button>}
+              </>
+            )}
+          </div>
+        )
+      })}
+      {!offer && <button type="button" className="card block w-full text-left" onClick={goDeal}><p className="font-extrabold">Want shops to send customers to you too? →</p><p className="text-sm">Make your deal in “My deal.”</p></button>}
+    </div>
+  )
+}
+
+function MineTab({ waiting, partners, act, goFind }) {
+  return (
+    <div className="space-y-3">
+      {waiting.map((l) => (
+        <div key={l.id} className="card space-y-2 border-2 border-orange">
+          <p className="text-sm font-bold text-orange">📥 NEEDS YOUR ANSWER</p>
+          {l.i_send
+            ? <p className="text-lg"><b>{l.other}</b> wants you to host their QR. You get <b>{money(l.payout_cents)}</b> each time your customer buys there.</p>
+            : <p className="text-lg"><b>{l.other}</b> wants to host your QR. You pay <b>{money(l.payout_cents + l.fee_cents)}</b> each time they send you a customer who buys.</p>}
+          <div className="grid grid-cols-2 gap-2">
+            <button type="button" className="btn-orange py-4 text-lg" onClick={() => act('respond_referral_partner', { p_id: l.id, p_action: 'yes' }, `You and ${l.other} are partners! 🤝`)}>Yes</button>
+            <button type="button" className="btn-outline py-4 text-lg" onClick={() => act('respond_referral_partner', { p_id: l.id, p_action: 'no' })}>No</button>
+          </div>
         </div>
       ))}
+      {!partners.length && !waiting.length && (
+        <div className="card space-y-3 text-center"><p className="text-lg font-bold">No partners yet.</p><button type="button" className="btn-orange w-full py-4 text-lg" onClick={goFind}>🔎 Find shops</button></div>
+      )}
+      {partners.map((l) => (
+        <div key={l.id} className="card space-y-2">
+          {l.i_send ? (
+            <>
+              <p className="text-sm font-bold text-green-700">YOU HOST THEIR QR</p>
+              <p className="text-xl font-extrabold">{l.other}</p>
+              <p>{l.walk_ins} {l.walk_ins === 1 ? 'person' : 'people'} bought. <b>You earned {money(l.paid_cents)}.</b></p>
+              <a className="btn-orange block w-full py-4 text-center text-lg" href={`/r/${l.code}/print`} target="_blank" rel="noreferrer">🖨️ Print the QR sign</a>
+              <button type="button" className="btn-outline w-full py-3" onClick={() => { navigator.clipboard?.writeText(refUrl(l.code)); alert('Link copied. You can text it or post it.') }}>📋 Copy the link</button>
+            </>
+          ) : (
+            <>
+              <p className="text-sm font-bold text-orange">THEY HOST YOUR QR</p>
+              <p className="text-xl font-extrabold">{l.other}</p>
+              <p>{l.walk_ins} {l.walk_ins === 1 ? 'person' : 'people'} came in and bought. You paid {money(l.paid_cents + l.walk_ins * l.fee_cents)}.</p>
+            </>
+          )}
+          <button type="button" className="w-full text-sm underline" onClick={() => window.confirm(`Stop partnering with ${l.other}?`) && act('respond_referral_partner', { p_id: l.id, p_action: 'end' })}>Stop partnering</button>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function DealTab({ me, offer, onDone }) {
+  const [edit, setEdit] = useState(!offer)
+  const [f, setF] = useState({ discount: offer?.discount || '', terms: offer?.terms || '', pay: offer?.payout_cents || 500, other: '', days: offer?.claim_days || 30, active: offer?.active ?? true })
+  const [err, setErr] = useState(null)
+  const cents = f.pay === 'other' ? Math.round(Number(f.other) * 100) || 0 : f.pay
+  async function save() {
+    setErr(null)
+    if (f.discount.trim().length < 3) return setErr('Write what the customer gets.')
+    if (cents < 100) return setErr('Pay at least $1.')
+    if (hasAlcohol(f.discount) || hasAlcohol(f.terms)) return setErr('Deals can’t mention alcohol.')
+    const { error } = await supabase.rpc('save_referral_offer', { p_discount: f.discount, p_terms: f.terms, p_payout_cents: cents, p_claim_days: Number(f.days), p_accepting: true, p_active: f.active })
+    if (error) return setErr(error.message)
+    setEdit(false); onDone()
+  }
+  if (!me.approved) return <Notice>You can make your deal once we approve your business.</Notice>
+  const low = offer && me.balance_cents < offer.payout_cents + offer.fee_cents
+  if (!edit && offer) {
+    return (
+      <div className="card space-y-3">
+        <p className="text-sm font-bold">YOUR DEAL</p>
+        <p className="text-3xl font-black">{offer.discount}</p>
+        {offer.terms && <p className="muted">{offer.terms}</p>}
+        <p className="text-lg">Each time a shop sends you a customer who buys, you pay <b>{money(offer.payout_cents + offer.fee_cents)}</b>.</p>
+        <p className="muted text-sm">That’s {money(offer.payout_cents)} to the shop + {money(offer.fee_cents)} to Us In It. It comes out of your ad balance.</p>
+        <p className="font-bold">{offer.active ? '✅ Deal is on' : '⏸️ Deal is off'}</p>
+        {low && <Notice kind="error">Your balance is too low, so your deal is paused. Add money on your business page.</Notice>}
+        {!me.has_pin && <Notice kind="error">Set your 4-digit store PIN on your business page (Coupons box). Your staff need it.</Notice>}
+        <button type="button" className="btn-black w-full py-4 text-lg" onClick={() => setEdit(true)}>Change my deal</button>
+      </div>
+    )
+  }
+  return (
+    <div className="card space-y-4">
+      <p className="text-sm">Make a deal so other shops can send you customers. Skip this if you only want to host other shops’ QR codes.</p>
+      <label className="block"><span className="text-xl font-extrabold">1. What does the customer get?</span>
+        <input className="input mt-2 text-lg" maxLength={80} placeholder="$10 off any set of tires" value={f.discount} onChange={(e) => setF({ ...f, discount: e.target.value })} />
+      </label>
+      <div>
+        <p className="text-xl font-extrabold">2. What do you pay the shop that sent them?</p>
+        <div className="mt-2 grid grid-cols-4 gap-2">
+          {PAYS.map((c) => <button key={c} type="button" onClick={() => setF({ ...f, pay: c })} className={`rounded-xl border-2 py-3 text-lg font-extrabold ${f.pay === c ? 'border-orange bg-orange text-ink' : 'border-neutral-300'}`}>{money(c).replace('.00', '')}</button>)}
+          <button type="button" onClick={() => setF({ ...f, pay: 'other' })} className={`rounded-xl border-2 py-3 font-bold ${f.pay === 'other' ? 'border-orange bg-orange text-ink' : 'border-neutral-300'}`}>Other</button>
+        </div>
+        {f.pay === 'other' && <input className="input mt-2 text-lg" inputMode="decimal" placeholder="Amount in dollars, like 7.50" value={f.other} onChange={(e) => setF({ ...f, other: e.target.value.replace(/[^0-9.]/g, '') })} />}
+        {cents >= 100 && <p className="mt-2 rounded-xl bg-neutral-100 p-3 dark:bg-neutral-800">You pay <b>{money(cents + fee(cents))}</b> per customer who buys: {money(cents)} to the shop + {money(fee(cents))} to Us In It.</p>}
+      </div>
+      <label className="block"><span className="font-bold">Any rules? (you can skip this)</span>
+        <input className="input mt-1" maxLength={200} placeholder="Spend $50 or more. One per customer." value={f.terms} onChange={(e) => setF({ ...f, terms: e.target.value })} />
+      </label>
+      {offer && <label className="flex items-center gap-2 text-lg"><input type="checkbox" className="h-6 w-6" checked={f.active} onChange={(e) => setF({ ...f, active: e.target.checked })} /> Deal is on</label>}
+      {err && <Notice kind="error">{err}</Notice>}
+      <button type="button" className="btn-orange w-full py-4 text-lg" onClick={save}>Save my deal</button>
+      {offer && <button type="button" className="w-full underline" onClick={() => setEdit(false)}>Cancel</button>}
     </div>
   )
 }

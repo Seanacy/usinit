@@ -9,7 +9,7 @@ import Profile, { MyStars } from './pages/Profile'
 import Give from './pages/Give'
 import Tonight from './pages/Tonight'
 import TonightPrint from './pages/TonightPrint'
-import { ReferralOffer, ReferralClaim, ReferralPrint } from './components/Referrals'
+import { ReferralOffer, ReferralClaim, ReferralPrint, PartnersPage } from './components/Referrals'
 import CouponPage, { MyCoupons } from './pages/Coupon'
 import { PlugScan } from './pages/Plug'
 import BookingPage from './pages/Booking'
@@ -104,6 +104,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/r/:code" element={<ReferralOffer />} />
           <Route path="/r/:code/print" element={<ReferralPrint />} />
           <Route path="/rc/:code" element={<ReferralClaim />} />
+          <Route path="/partners" element={<PartnersPage />} />
           <Route path="/c/:code" element={<CouponPage />} />
           <Route path="/coupons" element={<MyCoupons />} />
           <Route path="/contact" element={<Contact />} />

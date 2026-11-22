@@ -351,6 +351,8 @@ export default function Advertise() {
   const session = useSession()
   const stats = useStats()
   const [params] = useSearchParams()
+  const [sec, setSec] = useState(params.get('tab'))
+  const openSec = (x) => { setSec(x); window.scrollTo({ top: 0 }) }
   const [adv, setAdv] = useState(undefined)
   const [ads, setAds] = useState([])
   const [creating, setCreating] = useState(false)
@@ -387,8 +389,8 @@ export default function Advertise() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
-      <h1 className="h1">Advertise with Us In It</h1>
-      <p className="muted mt-2">Draw the zone around your business. Pay {money(price)} only for real scans by real people standing in your zone. No bidding, same price for everyone.</p>
+      <h1 className="h1">{adv ? 'My business' : 'Advertise with Us In It'}</h1>
+      {!adv && <p className="muted mt-2">Draw the zone around your business. Pay {money(price)} only for real scans by real people standing in your zone. No bidding, same price for everyone.</p>}
       {(session === null || adv === null) && (
         <Link to="/spotlight" className="group mt-5 flex flex-col gap-3 rounded-2xl border-2 border-orange bg-orange/10 p-4 shadow-sm transition hover:-translate-y-0.5 hover:bg-orange/20 hover:shadow-md sm:flex-row sm:items-center">
           <div className="flex-1">
@@ -431,33 +433,55 @@ export default function Advertise() {
           ) : (
             <div className="space-y-4">
               {params.get('paid') && <Notice kind="ok">Payment received. Your balance updates in a few seconds. Refresh if you don't see it.</Notice>}
-              {adv.status === 'pending' && <Notice>Your business account is waiting for approval. You can add funds and create ads now. They start running once approved.</Notice>}
-              <SpotlightPanel adv={adv} onBoost={(s) => { setBoosting(s); window.scrollTo({ top: 0, behavior: 'smooth' }) }} />
-              <div className="card flex items-center justify-between gap-2">
-                <span><b>{adv.business_name}</b>{adv.contact_name ? ` · ${adv.contact_name}` : ''}{adv.phone ? ` · ${adv.phone}` : ''}</span>
-                <button className="btn-black py-2" onClick={startBizEdit}>Edit</button>
-              </div>
-              <h2 className="h2 pt-2">Your money</h2>
-              <p className="muted -mt-2 text-sm"><b>Ad balance</b> is money you put in to pay for scans. <b>Earnings</b> is money you made from bookings, The Plug and Referral Partners, and you can cash it out.</p>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="space-y-3">
-                  <div className="card"><p className="muted text-sm">Ad balance (pays for scans)</p><p className="text-3xl font-extrabold">{money(adv.balance_cents)}</p><p className="muted text-xs">≈ {Math.floor(adv.balance_cents / price)} scans · {ads.reduce((a, x) => a + x.views, 0)} scans so far · {ads.reduce((a, x) => a + x.clicks, 0)} button taps</p></div>
-                  <AddFunds stats={stats} adv={adv} />
-                </div>
-                <div>
-                  {adv.status === 'approved'
-                    ? <StripePayouts kind="business" title="Earnings (bookings and The Plug)" handNote="Booking deposits and Plug hosting earnings land here. Card fees for your deposits come out of your share." />
-                    : <div className="card"><p className="muted text-sm">Earnings (bookings and The Plug)</p><p className="text-3xl font-extrabold">$0.00</p><p className="muted text-xs">Cash-outs open once Us In It approves your business.</p></div>}
-                </div>
-              </div>
-              <h2 className="h2 pt-2">Bookings and The Plug</h2>
-              <BookingManager adv={adv} />
-              <BusinessShares />
-              <PlugPanel adv={adv} ads={ads} reloadAds={load} />
-              <CouponPanel adv={adv} />
-              <TonightBiz adv={adv} />
-              <ReferralPanel adv={adv} />
-              <h2 className="h2 pt-2">Ads and zones</h2>
+              {adv.status === 'pending' && <Notice>We're checking your business. You can set everything up now. Your ads start once we approve you.</Notice>}
+              {!sec ? (
+                <>
+                  <div className="card flex items-center justify-between gap-2">
+                    <div>
+                      <p className="text-2xl font-extrabold">{adv.business_name}</p>
+                      <p className="text-lg">Ad money: <b>{money(adv.balance_cents)}</b> <span className="muted text-sm">(about {Math.floor(adv.balance_cents / price)} scans)</span></p>
+                    </div>
+                    <button className="btn-outline shrink-0 py-2" onClick={startBizEdit}>Edit</button>
+                  </div>
+                  <StartHere steps={[
+                    ['Draw your zone', zoneCount > 0, () => setManagingZones(true)],
+                    ['Add ad money', adv.balance_cents > 0, () => openSec('money')],
+                    ['Make your first ad', ads.some((x) => x.ad_type !== 'outreach'), () => openSec('ads')],
+                    ...('redeem_pin_hash' in adv ? [['Set your store PIN', !!adv.redeem_pin_hash, () => openSec('coupons')]] : []),
+                  ]} />
+                  <div className="grid grid-cols-2 gap-3">
+                    <Tile icon="📢" title="My ads" sub="Make ads. Draw zones." onClick={() => openSec('ads')} />
+                    <Tile icon="💵" title="My money" sub="Add money. Cash out." onClick={() => openSec('money')} />
+                    <Tile icon="🎟️" title="Coupons" sub="Deals + store PIN" onClick={() => openSec('coupons')} />
+                    <Tile icon="🤝" title="Referral Partners" sub="Send customers. Get paid." to="/partners" />
+                    <Tile icon="🌙" title="Tonight listing" sub="Your specials page" onClick={() => openSec('tonight')} />
+                    <Tile icon="⭐" title="Free Spotlight" sub="Show off for free" onClick={() => openSec('spotlight')} />
+                    <Tile icon="📅" title="Bookings" sub="Let people book you" onClick={() => openSec('bookings')} />
+                    <Tile icon="🔌" title="The Plug" sub="Carry other QR codes" onClick={() => openSec('plug')} />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <button className="btn-black w-full py-4 text-lg" onClick={() => openSec(null)}>← Back</button>
+                  {sec === 'money' && (
+                    <>
+                      <h2 className="h2">💵 My money</h2>
+                      <p className="muted -mt-2"><b>Ad money</b> pays for scans and deals. <b>Earnings</b> is money you made, and you can cash it out.</p>
+                      <div className="card"><p className="muted text-sm">Ad money</p><p className="text-3xl font-extrabold">{money(adv.balance_cents)}</p><p className="muted text-xs">About {Math.floor(adv.balance_cents / price)} scans · {ads.reduce((x, y) => x + y.views, 0)} scans so far · {ads.reduce((x, y) => x + y.clicks, 0)} button taps</p></div>
+                      <AddFunds stats={stats} adv={adv} />
+                      {adv.status === 'approved'
+                        ? <StripePayouts kind="business" title="Earnings (bookings, The Plug, Referral Partners)" handNote="Money you earn lands here. Card fees for your deposits come out of your share." />
+                        : <div className="card"><p className="muted text-sm">Earnings</p><p className="text-3xl font-extrabold">$0.00</p><p className="muted text-xs">Cash-outs open once Us In It approves your business.</p></div>}
+                    </>
+                  )}
+                  {sec === 'coupons' && <><h2 className="h2">🎟️ Coupons</h2><CouponPanel adv={adv} /></>}
+                  {sec === 'tonight' && <TonightBiz adv={adv} />}
+                  {sec === 'spotlight' && <><h2 className="h2">⭐ Free Spotlight</h2><SpotlightPanel adv={adv} onBoost={(x) => { setBoosting(x); window.scrollTo({ top: 0, behavior: 'smooth' }) }} /></>}
+                  {sec === 'bookings' && <><h2 className="h2">📅 Bookings</h2><BookingManager adv={adv} /><BusinessShares /></>}
+                  {sec === 'plug' && <><h2 className="h2">🔌 The Plug</h2><PlugPanel adv={adv} ads={ads} reloadAds={load} /></>}
+                  {sec === 'ads' && (
+                    <>
+                      <h2 className="h2">📢 My ads</h2>
               <div className="card flex flex-wrap items-center justify-between gap-2">
                 <span><b>Your zones:</b> {zoneCount}<span className="muted block text-sm">The areas where your ads show, with live scan counts.</span></span>
                 <button className="btn-black py-2" onClick={() => setManagingZones(true)}>{zoneCount ? 'Add or edit zones' : 'Draw your first zone'}</button>
@@ -482,9 +506,36 @@ export default function Advertise() {
                   </div>
                 </div>
               ))}
+                    </>
+                  )}
+                  <button className="btn-outline w-full" onClick={() => openSec(null)}>← Back</button>
+                </>
+              )}
             </div>
           )}
       </div>
+    </div>
+  )
+}
+
+function Tile({ icon, title, sub, onClick, to }) {
+  const cls = 'card block w-full p-4 text-left active:scale-[0.98]'
+  const inner = <><span className="block text-3xl">{icon}</span><span className="mt-1 block text-lg font-extrabold leading-tight">{title}</span><span className="muted block text-sm">{sub}</span></>
+  return to ? <Link to={to} className={cls}>{inner}</Link> : <button type="button" onClick={onClick} className={cls}>{inner}</button>
+}
+
+function StartHere({ steps }) {
+  const left = steps.filter(([, done]) => !done)
+  if (!left.length) return null
+  return (
+    <div className="card space-y-2 border-2 border-orange">
+      <p className="text-lg font-extrabold">Start here ({steps.length - left.length} of {steps.length} done)</p>
+      {steps.map(([label, done, go]) => (
+        <button key={label} type="button" disabled={done} onClick={go}
+          className={`flex w-full items-center justify-between rounded-xl border-2 px-4 py-3 text-left text-lg font-bold ${done ? 'border-green-300 bg-green-50 text-green-900' : 'border-neutral-300 dark:border-neutral-600'}`}>
+          <span>{done ? '✅' : '⬜'} {label}</span>{!done && <span>→</span>}
+        </button>
+      ))}
     </div>
   )
 }
