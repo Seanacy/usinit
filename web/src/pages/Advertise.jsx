@@ -457,7 +457,7 @@ export default function Advertise() {
                     <Tile icon="🌙" title="Tonight listing" sub="Your specials page" onClick={() => openSec('tonight')} />
                     <Tile icon="⭐" title="Free Spotlight" sub="Show off for free" onClick={() => openSec('spotlight')} />
                     <Tile icon="📅" title="Bookings" sub="Let people book you" onClick={() => openSec('bookings')} />
-                    <Tile icon="🔌" title="The Plug" sub="Nonprofits only" onClick={() => openSec('plug')} />
+                    <Tile icon="🔌" title="The Plug" sub="Carry other shops' codes" onClick={() => openSec('plug')} />
                   </div>
                 </>
               ) : (
@@ -477,8 +477,8 @@ export default function Advertise() {
                   {sec === 'coupons' && <><h2 className="h2">🎟️ Coupons</h2><CouponPanel adv={adv} /></>}
                   {sec === 'tonight' && <TonightBiz adv={adv} />}
                   {sec === 'spotlight' && <><h2 className="h2">⭐ Free Spotlight</h2><SpotlightPanel adv={adv} onBoost={(x) => { setBoosting(x); window.scrollTo({ top: 0, behavior: 'smooth' }) }} /></>}
-                  {sec === 'bookings' && <><h2 className="h2">📅 Bookings</h2><BookingManager adv={adv} /><BusinessShares /></>}
-                  {sec === 'plug' && <><h2 className="h2">🔌 The Plug for Nonprofits</h2><PlugPanel adv={adv} ads={ads} reloadAds={load} /></>}
+                  {sec === 'bookings' && <><h2 className="h2">📅 Bookings</h2><BookingManager adv={adv} /></>}
+                  {sec === 'plug' && <><h2 className="h2">🔌 The Plug</h2><p className="muted">Carry another business's QR code at your place. Get paid when it brings them a customer.</p><BusinessShares /><PlugPanel adv={adv} ads={ads} reloadAds={load} /></>}
                   {sec === 'ads' && (
                     <>
                       <h2 className="h2">📢 My ads</h2>
