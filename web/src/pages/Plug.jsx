@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { deviceId, money, supabase } from '../lib/supabase'
 import { Notice, Spinner } from '../components/Layout'
 import { HostSign } from '../components/Printables'
@@ -131,7 +131,13 @@ export default function PlugPanel({ adv, ads, reloadAds }) {
 
   return (
     <div className="card space-y-4">
-      <h2 className="h2">The Plug for Nonprofits</h2>
+      {plug.nonprofit_status !== 'approved' && (
+        <div className="rounded-xl border-2 border-orange-500 bg-orange-50 p-4">
+          <p className="text-lg font-bold">Are you a business (not a nonprofit)?</p>
+          <p>The Plug is only for nonprofits. Businesses use <b>Referral Partners</b> instead. You carry another shop's QR code and get paid when their customers walk in.</p>
+          <Link to="/partners" className="btn-orange mt-3 block w-full py-3 text-center">Go to Referral Partners</Link>
+        </div>
+      )}
 
       {plug.nonprofit_status === 'none' && <Apply plug={plug} onDone={load} />}
       {plug.nonprofit_status === 'pending' && <Notice>Thanks! Us In It is checking your nonprofit proof. You'll be able to use The Plug once you're verified.</Notice>}
