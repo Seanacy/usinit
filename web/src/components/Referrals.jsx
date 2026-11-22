@@ -61,6 +61,7 @@ export function PartnersPage() {
   const partners = d.links.filter((l) => l.status === 'active')
   return (
     <div className="mx-auto max-w-xl space-y-4 px-4 py-6">
+      <Link to="/advertise" className="btn-black block w-full py-4 text-center text-lg">← Back</Link>
       <div>
         <h1 className="h1">🤝 Referral Partners</h1>
         <p className="text-lg">Send customers to shops near you. <b>Get paid when they buy.</b></p>
@@ -84,7 +85,7 @@ export function PartnersPage() {
           <p className="text-center text-sm">📍 {d.me.address} · {d.me.category} · <button className="underline" onClick={() => setSetup(true)}>Change</button></p>
         </>
       )}
-      <p className="text-center text-sm"><Link to="/advertise" className="underline">← Back to my business page</Link></p>
+      <Link to="/advertise" className="btn-outline block w-full text-center">← Back</Link>
     </div>
   )
 }

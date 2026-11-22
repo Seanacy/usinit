@@ -350,9 +350,9 @@ function CouponPanel({ adv }) {
 export default function Advertise() {
   const session = useSession()
   const stats = useStats()
-  const [params] = useSearchParams()
-  const [sec, setSec] = useState(params.get('tab'))
-  const openSec = (x) => { setSec(x); window.scrollTo({ top: 0 }) }
+  const [params, setParams] = useSearchParams()
+  const sec = params.get('tab')
+  const openSec = (x) => { setParams(x ? { tab: x } : {}); window.scrollTo({ top: 0 }) }
   const [adv, setAdv] = useState(undefined)
   const [ads, setAds] = useState([])
   const [creating, setCreating] = useState(false)
