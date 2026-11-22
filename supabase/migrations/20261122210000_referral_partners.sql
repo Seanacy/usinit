@@ -1,0 +1,8 @@
+-- Applied via MCP: referral_partners, alcohol_words_allow_drink, redeem_referral_search_path
+-- advertisers: address, category, lat/lng/geo (Census lookup via pg_net, cron 'adv-geo'), referrals_on
+-- referral_offers / referral_partners / referral_claims (RPC-only; admin RLS)
+-- Fee: referral_fee(payout) = greatest(50, 20% of payout), paid ON TOP by the receiving business from its ad balance.
+-- RPCs: set_business_location, save_referral_offer, referral_suggestions (5 mi), request_referral_partner,
+--   respond_referral_partner (yes/no/end), my_referrals, get_referral, claim_referral, get_referral_claim, redeem_referral (store PIN).
+-- Payout: referrer gets payout in plug_host_ledger kind 'referral' (cash out as Earnings); fee to platform_ledger 'referral_fee'.
+-- tonight_has_alcohol: plain "drink(s)" allowed now (coffee shops); added alcohol/boozy.

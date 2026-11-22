@@ -1,7 +1,7 @@
 import { supabase, SITE_URL } from './supabase'
 
 // Same alcohol word check as the database (paid perks can't mention alcohol).
-export const ALCOHOL_RE = /\b(beers?|wines?|cocktails?|shots?|margaritas?|mimosas?|booze|liquor|vodka|tequila|whiske?y|rum|gin|sangria|pints?|pitchers?|seltzers?|cider|ipa|lagers?|ales?|drinks?|happy ?hour|bottomless|martinis?|bloody mar(y|ys)|mules?|brews?|bar ?rail|spirits?|hamm'?s|bud ?light|coors|miller)\b/i
+export const ALCOHOL_RE = /\b(beers?|wines?|cocktails?|shots?|margaritas?|mimosas?|booze|liquor|vodka|tequila|whiske?y|rum|gin|sangria|pints?|pitchers?|seltzers?|cider|ipa|lagers?|ales?|happy ?hour|bottomless|martinis?|bloody mar(y|ys)|mules?|brews?|bar ?rail|well drinks?|spirits?|hamm'?s|bud ?light|coors|miller|alcohol|boozy)\b/i
 export const hasAlcohol = (t) => ALCOHOL_RE.test(t || '')
 
 export const placeLink = (id, from) => `${SITE_URL}/tonight?place=${id}${from ? `&from=${from}` : ''}`

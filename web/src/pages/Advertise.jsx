@@ -11,6 +11,7 @@ import { describeRadius } from '../components/MapPicker'
 import { Notice, Spinner } from '../components/Layout'
 import TonightBiz from '../components/TonightBiz'
 import TrialReport from '../components/TrialReport'
+import { ReferralPanel } from '../components/Referrals'
 import SpotlightPanel from '../components/SpotlightPanel'
 import { getRef } from '../lib/ref'
 
@@ -437,7 +438,7 @@ export default function Advertise() {
                 <button className="btn-black py-2" onClick={startBizEdit}>Edit</button>
               </div>
               <h2 className="h2 pt-2">Your money</h2>
-              <p className="muted -mt-2 text-sm"><b>Ad balance</b> is money you put in to pay for scans. <b>Earnings</b> is money you made from bookings and The Plug, and you can cash it out.</p>
+              <p className="muted -mt-2 text-sm"><b>Ad balance</b> is money you put in to pay for scans. <b>Earnings</b> is money you made from bookings, The Plug and Referral Partners, and you can cash it out.</p>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-3">
                   <div className="card"><p className="muted text-sm">Ad balance (pays for scans)</p><p className="text-3xl font-extrabold">{money(adv.balance_cents)}</p><p className="muted text-xs">≈ {Math.floor(adv.balance_cents / price)} scans · {ads.reduce((a, x) => a + x.views, 0)} scans so far · {ads.reduce((a, x) => a + x.clicks, 0)} button taps</p></div>
@@ -455,6 +456,7 @@ export default function Advertise() {
               <PlugPanel adv={adv} ads={ads} reloadAds={load} />
               <CouponPanel adv={adv} />
               <TonightBiz adv={adv} />
+              <ReferralPanel adv={adv} />
               <h2 className="h2 pt-2">Ads and zones</h2>
               <div className="card flex flex-wrap items-center justify-between gap-2">
                 <span><b>Your zones:</b> {zoneCount}<span className="muted block text-sm">The areas where your ads show, with live scan counts.</span></span>
