@@ -237,7 +237,17 @@ export function BusinessShares() {
   const [q, setQ] = useState('')
   const [more, setMore] = useState(false)
   const [pick, setPick] = useState(null)
-  useEffect(() => { supabase.rpc('business_booking_shares').then(({ data }) => setD(data || null)) }, [])
+  const [near, setNear] = useState(true)
+  const [addr, setAddr] = useState('')
+  const [addrErr, setAddrErr] = useState(null)
+  const loadShares = () => supabase.rpc('business_booking_shares').then(({ data }) => { setD(data || null); setAddr(data?.address || '') })
+  useEffect(() => { loadShares() }, [])
+  async function saveAddr() {
+    setAddrErr(null)
+    const { error } = await supabase.rpc('set_business_address', { p_address: addr })
+    if (error) return setAddrErr(error.message)
+    loadShares()
+  }
   if (!d || !d.code) return null
   if (printing) return (
     <div>
@@ -250,15 +260,50 @@ export function BusinessShares() {
       <h2 className="h2">The Plug: carry other businesses' codes</h2>
       <p className="muted text-sm">Post another local business's code at your place (like a nail tech's code at your booth). When someone books through it, you earn their cut from the deposit as soon as the customer pays it. Your share code: <b>{d.code}</b></p>
       {d.pages.length === 0 && <p className="muted text-sm">No other businesses are open for sharing yet.</p>}
+      {d.pages.length > 0 && (
+        <div className="grid grid-cols-2 gap-2">
+          <button type="button" onClick={() => setNear(true)} className={`rounded-xl border-2 py-3 font-bold ${near ? 'border-orange bg-orange/15' : 'border-neutral-300 dark:border-neutral-600'}`}>📍 Near me</button>
+          <button type="button" onClick={() => setNear(false)} className={`rounded-xl border-2 py-3 font-bold ${!near ? 'border-orange bg-orange/15' : 'border-neutral-300 dark:border-neutral-600'}`}>All businesses</button>
+        </div>
+      )}
+      {d.pages.length > 0 && near && !d.has_spot && (
+        <div className="space-y-2 rounded-xl border-2 border-orange p-3">
+          {d.address ? (
+            <><p className="font-bold">Finding your spot on the map…</p>
+              <p className="muted text-sm">This takes up to 10 minutes after you save your address. Come back soon. If it never shows up, check the address below for typos.</p></>
+          ) : (
+            <><p className="font-bold">Where is your shop?</p>
+              <p className="muted text-sm">Type your address once. Then we show the closest businesses first. Other shops never see your exact address.</p></>
+          )}
+          <input className="input" placeholder="123 Main St, Minneapolis, MN 55406" value={addr} onChange={(e) => setAddr(e.target.value)} />
+          {addrErr && <Notice kind="error">{addrErr}</Notice>}
+          <button type="button" className="btn-orange w-full py-3" onClick={saveAddr}>Save my address</button>
+        </div>
+      )}
       {d.pages.length > 0 && (() => {
-        const sorted = [...d.pages].sort((x, y) => x.title.localeCompare(y.title))
+        const far = (m) => m == null ? 'Distance unknown' : m < 120 ? '🚶 Next door' : m < 1609 ? `🚶 ${Math.round(m / 80)} min walk` : `${(m / 1609).toFixed(1)} mi away`
+        const sorted = near && d.has_spot
+          ? [...d.pages].sort((x, y) => (x.dist_m ?? 1e9) - (y.dist_m ?? 1e9))
+          : [...d.pages].sort((x, y) => x.title.localeCompare(y.title))
         const t = q.trim().toLowerCase()
         const hits = t ? sorted.filter((r) => `${r.title} ${r.area || ''}`.toLowerCase().includes(t)) : sorted
         const r = d.pages.find((x) => x.slug === pick)
         const link = r && bookingUrl(r.slug, d.code)
         return <>
+          {near && d.has_spot && !r && !q.trim() && (
+            <div className="space-y-2">
+              <p className="text-sm font-bold">Closest to you</p>
+              {sorted.slice(0, 10).map((x) => (
+                <button key={x.slug} type="button" className="flex w-full items-center justify-between rounded-xl border border-neutral-200 p-3 text-left dark:border-neutral-700"
+                  onClick={() => { setPick(x.slug); setQ(x.title) }}>
+                  <span><b>{x.title}</b>{x.category ? <span className="muted text-sm"> · {x.category}</span> : null}<br /><span className="text-sm">You earn {money(x.cut_cents)} per booking</span></span>
+                  <span className="text-sm font-bold">{far(x.dist_m)}</span>
+                </button>
+              ))}
+            </div>
+          )}
           <div className="relative">
-            <label className="label">Type a business name</label>
+            <label className="label">{near && d.has_spot ? 'Or type a business name' : 'Type a business name'}</label>
             <input className="input" placeholder="Start typing, like Test Nails" value={q} onFocus={() => setMore(true)} onBlur={() => setTimeout(() => setMore(false), 150)}
               onChange={(e) => { setQ(e.target.value); setPick(null); setMore(true) }} />
             {more && !r && (
@@ -267,7 +312,7 @@ export function BusinessShares() {
                 {hits.map((x) => (
                   <button key={x.slug} type="button" className="block w-full px-3 py-2 text-left hover:bg-neutral-100 dark:hover:bg-neutral-800"
                     onMouseDown={(e) => e.preventDefault()} onClick={() => { setPick(x.slug); setQ(x.title); setMore(false) }}>
-                    <span className="font-bold">{x.title}</span>{x.area ? <span className="muted text-sm"> · {x.area}</span> : null}
+                    <span className="font-bold">{x.title}</span>{x.area ? <span className="muted text-sm"> · {x.area}</span> : null}{d.has_spot && x.dist_m != null ? <span className="text-sm"> · {far(x.dist_m)}</span> : null}
                   </button>
                 ))}
               </div>
@@ -275,7 +320,7 @@ export function BusinessShares() {
           </div>
           {r && (
             <div className="space-y-1 rounded-xl border border-neutral-200 p-3 dark:border-neutral-700">
-              <p className="font-bold">{r.title}{r.area ? <span className="muted text-sm font-normal"> · {r.area}</span> : null}</p>
+              <p className="font-bold">{r.title}{r.area ? <span className="muted text-sm font-normal"> · {r.area}</span> : null}{d.has_spot && r.dist_m != null ? <span className="text-sm font-normal"> · {far(r.dist_m)}</span> : null}</p>
               <p className="text-sm">You earn {money(r.cut_cents)} per booking · {r.referred} booking{r.referred === 1 ? '' : 's'} sent · {money(r.earned_cents)} earned</p>
               <p className="break-all text-xs">{link}</p>
               <div className="flex flex-wrap gap-2"><Copy text={link} /><button className="btn-black py-2" onClick={() => setPrinting(r)}>Print their code</button></div>

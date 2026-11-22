@@ -1,0 +1,1 @@
+-- applied via MCP: plug_business_near_me (business_booking_shares adds has_spot, address, dist_m, category)
