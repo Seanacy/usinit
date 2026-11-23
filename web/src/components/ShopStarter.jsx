@@ -291,23 +291,50 @@ export function AdminShopStarters() {
   )
 }
 
+// Print sizes. Smaller sizes fit several copies on one sheet with cut lines.
+const SIZES = [
+  { k: 'full', label: 'Full page', sub: '8.5 × 11 in · 1 per sheet', w: '7.6in', n: 1, cols: 1, title: 'text-4xl', qr: '7in' },
+  { k: 'half', label: 'Half page', sub: '5.5 × 8.5 in · 2 per sheet', w: '7.6in', n: 2, cols: 1, title: 'text-2xl', qr: '3.6in' },
+  { k: 'card', label: 'Counter card', sub: '4 × 5 in · 4 per sheet', w: '3.75in', n: 4, cols: 2, title: 'text-lg', qr: '3in' },
+  { k: 'mini', label: 'Mini', sub: '2.5 × 3 in · 9 per sheet', w: '2.45in', n: 9, cols: 3, title: 'text-sm', qr: '2in' },
+]
+
 function ShopSheet({ x, onBack }) {
   const url = `${SHOP_BASE}/shop/${x.code}`
   const [qr, setQr] = useState(null)
+  const [size, setSize] = useState('full')
   useEffect(() => { QRCode.toDataURL(url, { width: 1200, margin: 1, errorCorrectionLevel: 'M' }).then(setQr) }, [url])
   if (!qr) return <Spinner />
+  const z = SIZES.find((t) => t.k === size)
+  const foot = x.label ? `New shop? The first scan sets up your account. · Shop ${x.label} · ${x.code}` : `Deals from shops we trust · ${x.code}`
+  const one = (i) => (
+    <div key={i} className={`flex flex-col items-center justify-center bg-white p-2 text-center text-black ${z.n > 1 ? 'border border-dashed border-neutral-400' : ''}`} style={{ width: z.w, breakInside: 'avoid' }}>
+      <img src="/logo-print-bw.svg" alt="Us In It" style={{ width: z.n > 2 ? '45%' : '33%' }} />
+      <p className={`mt-1 font-black ${z.title}`}>Scan for deals nearby.</p>
+      <img src={qr} alt={`QR code for ${url}`} style={{ width: z.qr }} className="mt-1" />
+      {z.k !== 'mini' && <p className="mt-1 text-xs">{foot}</p>}
+    </div>
+  )
   return (
     <div>
-      <div className="no-print mb-4 grid grid-cols-2 gap-2">
-        <button type="button" className="btn-outline py-3" onClick={onBack}>← Back</button>
-        <button type="button" className="btn-orange py-3" onClick={() => window.print()}>Print</button>
+      <div className="no-print mb-4 space-y-3">
+        <p className="font-bold">Pick a size</p>
+        <div className="grid grid-cols-2 gap-2">
+          {SIZES.map((t) => (
+            <button key={t.k} type="button" onClick={() => setSize(t.k)} className={`rounded-xl border-2 p-3 text-left ${size === t.k ? 'border-orange bg-orange/15' : 'border-neutral-300 dark:border-neutral-600'}`}>
+              <span className="block font-extrabold">{t.label}</span><span className="text-sm">{t.sub}</span>
+            </button>
+          ))}
+        </div>
+        {z.n > 1 && <p className="text-sm">Cut along the dashed lines.</p>}
+        <div className="grid grid-cols-2 gap-2">
+          <button type="button" className="btn-outline py-3" onClick={onBack}>← Back</button>
+          <button type="button" className="btn-orange py-3" onClick={() => window.print()}>Print</button>
+        </div>
       </div>
       <style>{'@page { size: letter; margin: 0.4in }'}</style>
-      <div className="mx-auto flex max-w-[7.7in] flex-col items-center bg-white p-4 text-center text-black">
-        <img src="/logo-print-bw.svg" alt="Us In It" className="w-1/3" />
-        <p className="mt-2 text-4xl font-black">Scan for deals nearby.</p>
-        <img src={qr} alt={`QR code for ${url}`} className="mt-3 w-full" />
-        <p className="mt-2 text-sm">{x.label ? `New shop? The first scan sets up your account. · Shop ${x.label} · ${x.code}` : `Deals from shops we trust · ${x.code}`}</p>
+      <div className="mx-auto grid justify-center gap-0" style={{ gridTemplateColumns: `repeat(${z.cols}, ${z.w})` }}>
+        {Array.from({ length: z.n }, (_, i) => one(i))}
       </div>
     </div>
   )
