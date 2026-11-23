@@ -28,6 +28,8 @@ export function ShopPage() {
   const [done, setDone] = useState(null)
   const [pwDone, setPwDone] = useState(false)
   const [pw, setPw] = useState({ a: '', b: '' })
+  const [pinDone, setPinDone] = useState(false)
+  const [pin, setPin] = useState({ a: '', b: '' })
   const [wait, setWait] = useState(0)
   const load = () => supabase.rpc('shop_counter', { p_code: code }).then(({ data }) => setS(data || { status: 'none' }))
   useEffect(() => { load() }, [code]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -39,7 +41,7 @@ export function ShopPage() {
     if (!(s.status === 'reserved' || (s.status === 'claimed' && s.is_me))) return
     supabase.rpc('finish_biz_starter', { p_code: code }).then(({ data, error }) => {
       if (error) { if (s.status === 'reserved') { if (['Log in first.', 'Tap the link in your email first.'].includes(error.message)) setNote(true); else setErr(error.message) } return }
-      setDone(data); setPwDone(!!session.user?.user_metadata?.pw_set)
+      setDone(data); setPwDone(!!session.user?.user_metadata?.pw_set); setPinDone(!!data?.has_pin)
       try { localStorage.removeItem(KEY) } catch { /* off */ }
     })
   }, [session, s]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -76,6 +78,16 @@ export function ShopPage() {
     if (!email) return setErr('Ask Us In It to free this code so you can start again.')
     try { await sendLink(email); setSent(email) } catch (e2) { setErr(e2.message) }
   }
+  async function savePin(e) {
+    e.preventDefault(); setErr(null)
+    if (!/^[0-9]{4}$/.test(pin.a)) return setErr('Your PIN must be 4 numbers.')
+    if (pin.a !== pin.b) return setErr('The two PINs don’t match. Type them again.')
+    setBusy(true)
+    const { error } = await supabase.rpc('set_redeem_pin', { p_pin: pin.a })
+    setBusy(false)
+    if (error) return setErr(error.message)
+    setPinDone(true); window.scrollTo({ top: 0 })
+  }
   async function savePw(e) {
     e.preventDefault(); setErr(null)
     if (pw.a.length < 8) return setErr('Your password needs at least 8 characters.')
@@ -96,7 +108,7 @@ export function ShopPage() {
       <h1 className="h1 text-center">{done.business} is on Us In It!</h1>
       <p className="text-center text-lg">Your business account is approved and The Plug is turned on.</p>
       <div className="card space-y-3">
-        <p className="text-xl font-extrabold">Last step: make a password</p>
+        <p className="text-xl font-extrabold">Make a password</p>
         <p>You need it to log back in.</p>
         <label className="block"><span className="label">Password (8 or more letters or numbers)</span>
           <input className="input text-lg" type="password" autoComplete="new-password" value={pw.a} onChange={(e) => setPw({ ...pw, a: e.target.value })} /></label>
@@ -108,11 +120,27 @@ export function ShopPage() {
     </form>
   )
 
+  if (done && !pinDone) return (
+    <form onSubmit={savePin} className="mx-auto max-w-md space-y-4 px-4 py-10">
+      <p className="text-center text-lg font-bold">✅ Password saved.</p>
+      <div className="card space-y-3">
+        <p className="text-xl font-extrabold">Last step: make your 4-digit store PIN</p>
+        <p>When a customer shows a deal from another shop’s QR code, your cashier types this PIN to confirm the sale. Share it only with your staff.</p>
+        <label className="block"><span className="label">Store PIN (4 numbers)</span>
+          <input className="input text-center text-3xl tracking-[0.5em]" type="password" inputMode="numeric" maxLength={4} autoComplete="off" value={pin.a} onChange={(e) => setPin({ ...pin, a: e.target.value.replace(/[^0-9]/g, '') })} /></label>
+        <label className="block"><span className="label">Type it again</span>
+          <input className="input text-center text-3xl tracking-[0.5em]" type="password" inputMode="numeric" maxLength={4} autoComplete="off" value={pin.b} onChange={(e) => setPin({ ...pin, b: e.target.value.replace(/[^0-9]/g, '') })} /></label>
+        {err && <Notice kind="error">{err}</Notice>}
+        <button type="submit" className="btn-orange w-full py-4 text-lg" disabled={busy}>{busy ? 'Saving…' : 'Save my PIN'}</button>
+      </div>
+    </form>
+  )
+
   if (done) return (
     <div className="mx-auto max-w-md space-y-4 px-4 py-10">
-      <p className="text-center text-lg font-bold">✅ Password saved. You’re all set.</p>
+      <p className="text-center text-lg font-bold">✅ Password and store PIN saved. You’re all set.</p>
       <CounterSignCard code={code} />
-      <Notice>Made a deal? It turns on after you add at least $10 of ad money and set your 4-digit store PIN (Coupons on your business page).</Notice>
+      <Notice>Made a deal? It turns on once you have at least $10 of ad money. Add it now or later.</Notice>
       <Link to="/partners" className="btn-orange block w-full py-4 text-center text-lg">🔌 Find shops to partner with</Link>
       <Link to="/advertise?tab=money" className="btn-black block w-full py-4 text-center text-lg">💵 Add ad money (optional)</Link>
       <Link to="/advertise" className="btn-outline block w-full py-3 text-center">Go to my business page</Link>

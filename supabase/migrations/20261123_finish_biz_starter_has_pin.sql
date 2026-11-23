@@ -1,0 +1,1 @@
+-- applied via MCP: finish_biz_starter_has_pin
