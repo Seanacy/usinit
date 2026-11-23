@@ -34,9 +34,16 @@ export function ClaimPage() {
 
   useEffect(() => { if (s?.status === 'none' || (s?.status === 'claimed' && !done)) nav(`/s/${code}`, { replace: true }) }, [s]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  const [wait, setWait] = useState(0)
+  useEffect(() => { if (wait <= 0) return; const t = setTimeout(() => setWait(wait - 1), 1000); return () => clearTimeout(t) }, [wait])
   async function sendLink(email) {
     const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: `${window.location.origin}/claim/${code}`, shouldCreateUser: true } })
-    if (error) throw error
+    if (error) {
+      const m = /after (\d+) seconds?/.exec(error.message || '')
+      if (m) { setWait(Number(m[1])); throw new Error('We just sent you an email. Check your inbox (and your Spam folder) first.') }
+      throw error
+    }
+    setWait(60)
   }
 
   async function claim(e) {
@@ -87,7 +94,7 @@ export function ClaimPage() {
       </ol>
       <p>Then this code is yours. Nobody else can claim it while you finish.</p>
       {err && <Notice kind="error">{err}</Notice>}
-      <button type="button" className="btn-outline w-full py-3" onClick={resend}>Send the email again</button>
+      <button type="button" className="btn-outline w-full py-3" onClick={resend} disabled={wait > 0}>{wait > 0 ? `Send again in ${wait} seconds` : 'Send the email again'}</button>
       <p className="muted text-sm">Not your email? Ask the person who gave you this sheet.</p>
     </div>
   )
