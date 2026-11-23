@@ -13,7 +13,7 @@ import { hasAlcohol } from '../lib/tonight'
 export const fee = (cents) => Math.max(50, Math.round(cents * 0.2))
 export const refUrl = (code) => `${SITE_URL}/r/${code}`
 
-const GROUPS = {
+export const GROUPS = {
   Auto: ['Oil change', 'Tires', 'Auto repair', 'Car wash / detailing', 'Auto parts'],
   Beauty: ['Nails', 'Lashes', 'Brows', 'Hair salon', 'Barber', 'Braids', 'Spa / massage'],
   Food: ['Coffee', 'Bakery', 'Restaurant', 'Food truck', 'Grocery'],
@@ -22,7 +22,7 @@ const GROUPS = {
   Health: ['Gym / fitness', 'Nutrition', 'Yoga', 'Pharmacy'],
   Other: ['Other'],
 }
-const groupOf = (cat) => Object.keys(GROUPS).find((g) => GROUPS[g].includes(cat)) || 'Other'
+export const groupOf = (cat) => Object.keys(GROUPS).find((g) => GROUPS[g].includes(cat)) || 'Other'
 
 const walk = (m) => (m == null ? '' : m < 120 ? '🚶 Next door' : `🚶 ${Math.max(1, Math.round(m / 80))} min walk`)
 const PAYS = [200, 500, 1000]

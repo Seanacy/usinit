@@ -1,0 +1,1 @@
+-- applied via MCP: biz_starter_accounts (biz_starter_codes, admin_make/free/list, shop_counter, reserve_biz_starter, finish_biz_starter)

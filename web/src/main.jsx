@@ -10,6 +10,7 @@ import Give from './pages/Give'
 import Tonight from './pages/Tonight'
 import TonightPrint from './pages/TonightPrint'
 import { ClaimPage } from './components/Starter'
+import { ShopPage } from './components/ShopStarter'
 import { ReferralOffer, ReferralClaim, ReferralPrint, PartnersPage } from './components/Referrals'
 import CouponPage, { MyCoupons } from './pages/Coupon'
 import { PlugScan } from './pages/Plug'
@@ -76,6 +77,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/" element={<Home />} />
           <Route path="/s/:code" element={<Scan />} />
           <Route path="/claim/:code" element={<ClaimPage />} />
+          <Route path="/shop/:code" element={<ShopPage />} />
           <Route path="/p/:code" element={<Profile />} />
           <Route path="/n/:code" element={<PlugScan />} />
           <Route path="/b/:slug" element={<BookingPage />} />
