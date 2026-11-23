@@ -23,7 +23,7 @@ function Question({ x, value, onChange }) {
 
 function ProfileForm({ session, existing, onSaved }) {
   const [f, setF] = useState({
-    first_name: existing?.first_name || '', story: existing?.story || '', general_area: existing?.general_area || '',
+    first_name: existing?.private_name || existing?.first_name || '', story: existing?.story || '', general_area: existing?.general_area || '',
     photo_url: existing?.photo_url || '', listed_in_directory: existing?.listed_in_directory || false, allow_champions: existing?.allow_champions || false, digital_only: existing?.digital_only || false, housing_unstable: existing?.housing_unstable || false,
     answers: existing?.answers || {},
   })
@@ -263,6 +263,37 @@ function QRStylePicker({ h, reload }) {
   )
 }
 
+// Only the holder sees this box. Name and phone are never shown publicly unless they turn the name on.
+function MyPrivateInfo() {
+  const [p, setP] = useState(null)
+  const [phone, setPhone] = useState('')
+  const [editPhone, setEditPhone] = useState(false)
+  const load = () => supabase.rpc('my_holder_private').then(({ data }) => { setP(data || null); setPhone(data?.phone || '') })
+  useEffect(() => { load() }, [])
+  if (!p) return null
+  const nice = (n) => (n && n.length === 10 ? `(${n.slice(0, 3)}) ${n.slice(3, 6)}-${n.slice(6)}` : n)
+  async function savePhone() { await supabase.rpc('set_my_phone', { p_phone: phone }); setEditPhone(false); load() }
+  return (
+    <div className="card space-y-2">
+      <h1 className="text-3xl font-extrabold">Hi, {p.name} 👋</h1>
+      <p className="muted text-sm">🔒 Only you can see this box.</p>
+      <p><b>Name:</b> {p.name}</p>
+      {editPhone ? (
+        <div className="flex gap-2">
+          <input className="input flex-1" type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone number" />
+          <button type="button" className="btn-orange px-4" onClick={savePhone}>Save</button>
+        </div>
+      ) : (
+        <p><b>Phone:</b> {p.phone ? nice(p.phone) : 'none'} <button type="button" className="text-sm font-bold underline" onClick={() => setEditPhone(true)}>{p.phone ? 'Change' : 'Add'}</button></p>
+      )}
+      <label className="flex items-start gap-3 pt-1">
+        <input type="checkbox" className="mt-1 h-5 w-5 accent-[#FF6A00]" checked={p.show_name} onChange={async (e) => { await supabase.rpc('set_show_name', { p_on: e.target.checked }); load() }} />
+        <span>Show my first name on my public page <span className="muted block text-sm">{p.show_name ? `People see “${p.name}.”` : 'People see “Holder” instead of your name.'} Your phone number is never shown.</span></span>
+      </label>
+    </div>
+  )
+}
+
 function Dashboard({ d, session, reload }) {
   const h = d.holder
   const [edit, setEdit] = useState(false)
@@ -287,6 +318,7 @@ function Dashboard({ d, session, reload }) {
   const pct = Math.min(100, Math.round((d.count_today / d.goal) * 100))
   return (
     <div className="space-y-4">
+      <MyPrivateInfo />
       {big && qr && (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-white p-6" onClick={() => setBig(false)}>
           <img src={qr} alt="Your QR code, big" className="w-full max-w-md" />

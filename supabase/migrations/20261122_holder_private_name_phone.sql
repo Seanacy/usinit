@@ -1,0 +1,1 @@
+-- applied via MCP: holder_private_name_phone (private_name, show_name, holder_name_guard trigger, phone stripped from get_public_holder, my_holder_private/set_show_name/set_my_phone)

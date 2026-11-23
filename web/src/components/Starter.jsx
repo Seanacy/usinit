@@ -129,7 +129,8 @@ export function ClaimPage() {
       <h1 className="h1">Claim this code</h1>
       <p className="text-lg">Once it’s yours, every scan of this sign pays you.</p>
       <label className="block"><span className="label">Your first name *</span>
-        <input className="input text-lg" maxLength={40} autoComplete="given-name" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></label>
+        <input className="input text-lg" maxLength={40} autoComplete="given-name" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} />
+        <span className="muted text-sm">Private. Only you see it, unless you choose to show it later.</span></label>
       <label className="block"><span className="label">Your email *</span>
         <input className="input text-lg" type="email" inputMode="email" autoComplete="email" autoCapitalize="none" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} />
         <span className="muted text-sm">We send a link here. You must tap it to finish.</span></label>
