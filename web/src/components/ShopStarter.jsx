@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import QRCode from 'qrcode'
-import { money, supabase, useSession, SITE_URL } from '../lib/supabase'
+import { money, supabase, useSession, SITE_URL, IS_FINAL_DOMAIN } from '../lib/supabase'
 import { Notice, Spinner } from './Layout'
 import { GROUPS, fee, PlugMoneyBox } from './Referrals'
 
@@ -10,6 +10,8 @@ import { GROUPS, fee, PlugMoneyBox } from './Referrals'
 // After that, the same sheet is the shop's counter sign: it lists the partner deals the shop carries.
 
 const KEY = 'usinit_shop_claim'
+// Same address as the printed sheets, so the QR on screen matches the paper exactly.
+const SHOP_BASE = IS_FINAL_DOMAIN ? 'https://usinit.com' : SITE_URL
 const PAYS = [200, 500, 1000]
 const walk = (m) => (m == null ? '' : m < 120 ? '🚶 Next door' : m < 1609 ? `🚶 ${Math.max(1, Math.round(m / 80))} min walk` : `${(m / 1609).toFixed(1)} mi away`)
 
@@ -206,7 +208,7 @@ export function ShopPage() {
 
 // The shop's own counter sign: the same QR as the paper they scanned. Shown after setup, with a print button.
 export function CounterSignCard({ code }) {
-  const url = `${SITE_URL}/shop/${code}`
+  const url = `${SHOP_BASE}/shop/${code}`
   const [qr, setQr] = useState(null)
   const [printing, setPrinting] = useState(false)
   useEffect(() => { QRCode.toDataURL(url, { width: 900, margin: 1, errorCorrectionLevel: 'M' }).then(setQr) }, [url])
@@ -290,7 +292,7 @@ export function AdminShopStarters() {
 }
 
 function ShopSheet({ x, onBack }) {
-  const url = `${SITE_URL}/shop/${x.code}`
+  const url = `${SHOP_BASE}/shop/${x.code}`
   const [qr, setQr] = useState(null)
   useEffect(() => { QRCode.toDataURL(url, { width: 1200, margin: 1, errorCorrectionLevel: 'M' }).then(setQr) }, [url])
   if (!qr) return <Spinner />
