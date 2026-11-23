@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { deviceId, money, supabase, useSession, IS_FINAL_DOMAIN, SITE_URL } from '../lib/supabase'
 import { Notice, Spinner } from './Layout'
+import { CounterSignCard } from './ShopStarter'
 import { useQR, Verified, BookingSign } from './Printables'
 import { bookingUrl } from '../pages/Booking'
 import { hasAlcohol } from '../lib/tonight'
@@ -58,6 +59,8 @@ export function PartnersPage() {
   const [d, setD] = useState(undefined)
   const [sugs, setSugs] = useState([])
   const [book, setBook] = useState({ code: null, pages: [] })
+  const [shopCode, setShopCode] = useState(null)
+  useEffect(() => { supabase.rpc('my_shop_code').then(({ data }) => setShopCode(data || null)) }, [])
   const [tab, setTab] = useState('find')
   const [msg, setMsg] = useState(null)
   const [setup, setSetup] = useState(false)
@@ -105,6 +108,7 @@ export function PartnersPage() {
           <p className="text-center text-sm">📍 {d.me.address} · {d.me.category} · <button className="underline" onClick={() => setSetup(true)}>Change</button></p>
         </>
       )}
+      {shopCode && <CounterSignCard code={shopCode} />}
       <Link to="/advertise?tab=plug" className="block text-center text-sm underline">Are you a nonprofit? The Plug for Nonprofits →</Link>
       <Link to="/advertise" className="btn-outline block w-full text-center">← Back</Link>
     </div>

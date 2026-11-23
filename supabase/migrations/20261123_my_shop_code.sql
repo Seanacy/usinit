@@ -1,0 +1,1 @@
+-- applied via MCP: my_shop_code

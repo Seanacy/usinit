@@ -109,10 +109,7 @@ export function ShopPage() {
   if (done) return (
     <div className="mx-auto max-w-md space-y-4 px-4 py-10">
       <p className="text-center text-lg font-bold">✅ Password saved. You’re all set.</p>
-      <div className="card space-y-2">
-        <p className="text-xl font-extrabold">🪧 This sheet is your counter sign</p>
-        <p>Put it by your register. When customers scan it, they see deals from shops you partner with. When they use one, you get paid.</p>
-      </div>
+      <CounterSignCard code={code} />
       <Notice>Made a deal? It turns on after you add at least $10 of ad money and set your 4-digit store PIN (Coupons on your business page).</Notice>
       <Link to="/partners" className="btn-orange block w-full py-4 text-center text-lg">🔌 Find shops to partner with</Link>
       <Link to="/advertise?tab=money" className="btn-black block w-full py-4 text-center text-lg">💵 Add ad money (optional)</Link>
@@ -207,6 +204,23 @@ export function ShopPage() {
   )
 }
 
+// The shop's own counter sign: the same QR as the paper they scanned. Shown after setup, with a print button.
+export function CounterSignCard({ code }) {
+  const url = `${SITE_URL}/shop/${code}`
+  const [qr, setQr] = useState(null)
+  const [printing, setPrinting] = useState(false)
+  useEffect(() => { QRCode.toDataURL(url, { width: 900, margin: 1, errorCorrectionLevel: 'M' }).then(setQr) }, [url])
+  if (printing) return <ShopSheet x={{ code, label: '' }} onBack={() => setPrinting(false)} />
+  return (
+    <div className="card space-y-3 text-center">
+      <p className="text-xl font-extrabold">🪧 Your counter sign</p>
+      <p>This is the same QR code as the paper you scanned. Put that paper by your register. When customers scan it, they see deals from shops you partner with. When they use one, you get paid.</p>
+      {qr && <img src={qr} alt="Your counter sign QR code" className="mx-auto w-2/3 rounded-xl border" />}
+      <button type="button" className="btn-black w-full py-3" onClick={() => setPrinting(true)}>🖨️ Print a new copy</button>
+    </div>
+  )
+}
+
 // What customers see when they scan a claimed shop's counter sign.
 function Counter({ s }) {
   return (
@@ -291,7 +305,7 @@ function ShopSheet({ x, onBack }) {
         <img src="/logo-print-bw.svg" alt="Us In It" className="w-1/3" />
         <p className="mt-2 text-4xl font-black">Scan for deals nearby.</p>
         <img src={qr} alt={`QR code for ${url}`} className="mt-3 w-full" />
-        <p className="mt-2 text-sm">New shop? The first scan sets up your account. · Shop {x.label} · {x.code}</p>
+        <p className="mt-2 text-sm">{x.label ? `New shop? The first scan sets up your account. · Shop ${x.label} · ${x.code}` : `Deals from shops we trust · ${x.code}`}</p>
       </div>
     </div>
   )
