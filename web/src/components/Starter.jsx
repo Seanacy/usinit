@@ -25,14 +25,26 @@ export function ClaimPage() {
 
   // After the email link logs them in, finish the claim.
   useEffect(() => {
-    if (!session || !s || s.status !== 'reserved' || done) return
+    if (!session || !s || !['reserved', 'claimed'].includes(s.status) || done) return
     supabase.rpc('finish_starter_claim', { p_code: code }).then(({ data, error }) => {
-      if (error) setErr(error.message)
-      else { setDone(data); try { localStorage.removeItem(KEY) } catch { /* off */ } }
+      if (error) { if (s.status === 'claimed') nav(`/s/${code}`, { replace: true }); else setErr(error.message) }
+      else { setDone(data); setPwDone(!!session.user?.user_metadata?.pw_set); try { localStorage.removeItem(KEY) } catch { /* off */ } }
     })
   }, [session, s]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => { if (s?.status === 'none' || (s?.status === 'claimed' && !done)) nav(`/s/${code}`, { replace: true }) }, [s]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (s?.status === 'none' || (s?.status === 'claimed' && !done && session === null)) nav(`/s/${code}`, { replace: true }) }, [s, session]) // eslint-disable-line react-hooks/exhaustive-deps
+  const [pwDone, setPwDone] = useState(false)
+  const [pw, setPw] = useState({ a: '', b: '' })
+  async function savePw(e) {
+    e.preventDefault(); setErr(null)
+    if (pw.a.length < 8) return setErr('Your password needs at least 8 characters.')
+    if (pw.a !== pw.b) return setErr('The two passwords don’t match. Type them again.')
+    setBusy(true)
+    const { error } = await supabase.auth.updateUser({ password: pw.a, data: { pw_set: true } })
+    setBusy(false)
+    if (error) return setErr(error.message)
+    setPwDone(true); window.scrollTo({ top: 0 })
+  }
 
   const [wait, setWait] = useState(0)
   useEffect(() => { if (wait <= 0) return; const t = setTimeout(() => setWait(wait - 1), 1000); return () => clearTimeout(t) }, [wait])
@@ -69,17 +81,30 @@ export function ClaimPage() {
 
   if (!s || session === undefined) return <Spinner />
 
-  if (done) return (
-    <div className="mx-auto max-w-md space-y-4 px-4 py-10 text-center">
-      <p className="text-5xl">🎉</p>
-      <h1 className="h1">This code is yours!</h1>
-      <p className="text-lg">You are holder <b>#{done.code}</b>. Every scan of your sign pays you.</p>
-      <Notice>Make a password so you can log back in later. Go to your account, then tap “Forgot your password?” if it asks.</Notice>
-      <Link to="/holder" className="btn-orange block w-full py-4 text-lg">Go to my account</Link>
-      <div className="text-left">
-        <p className="mb-2 font-bold">Optional: have an ID and a debit card or bank account? Set up direct pay now. No ID? Skip this. Cash App or Venmo works.</p>
-        <StripePayouts kind="holder" title="Get paid to a debit card or bank" />
+  if (done && !pwDone) return (
+    <form onSubmit={savePw} className="mx-auto max-w-md space-y-4 px-4 py-10">
+      <p className="text-center text-5xl">🎉</p>
+      <h1 className="h1 text-center">This code is yours!</h1>
+      <p className="text-center text-lg">You are holder <b>#{done.code}</b>. Every scan of your sign pays you.</p>
+      <div className="card space-y-3">
+        <p className="text-xl font-extrabold">Last step: make a password</p>
+        <p>You need it to log back in and see your money.</p>
+        <label className="block"><span className="label">Password (8 or more letters or numbers)</span>
+          <input className="input text-lg" type="password" autoComplete="new-password" value={pw.a} onChange={(e) => setPw({ ...pw, a: e.target.value })} /></label>
+        <label className="block"><span className="label">Type it again</span>
+          <input className="input text-lg" type="password" autoComplete="new-password" value={pw.b} onChange={(e) => setPw({ ...pw, b: e.target.value })} /></label>
+        {err && <Notice kind="error">{err}</Notice>}
+        <button type="submit" className="btn-orange w-full py-4 text-lg" disabled={busy}>{busy ? 'Saving…' : 'Save my password'}</button>
       </div>
+    </form>
+  )
+
+  if (done) return (
+    <div className="mx-auto max-w-md space-y-4 px-4 py-10">
+      <p className="text-center text-lg font-bold">✅ Password saved. You’re all set, holder #{done.code}.</p>
+      <p className="font-bold">Optional: have an ID and a debit card or bank account? Set up direct pay now. No ID? Skip this. Cash App or Venmo works.</p>
+      <StripePayouts kind="holder" title="Get paid to a debit card or bank" />
+      <Link to="/holder" className="btn-black block w-full py-4 text-center text-lg">Skip for now. Go to my account</Link>
     </div>
   )
 
