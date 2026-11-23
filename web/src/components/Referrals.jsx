@@ -36,6 +36,7 @@ export function PlugMoneyBox() {
         <li><b>You carry another shop’s QR code:</b> you <b>earn</b> money. You never pay for this.</li>
         <li><b>Another shop sends you a customer:</b> you <b>pay</b> the reward you choose, plus a 20% Us In It fee (at least 50¢). Example: a $5 reward costs you $6.</li>
         <li>You only pay when that customer <b>actually buys</b> (your cashier types your store PIN). It comes from ad money you add first.</li>
+        <li>Your deal can only be <b>on</b> when you have at least <b>$10</b> of ad money and a <b>store PIN</b> set.</li>
       </ul>
     </div>
   )
@@ -308,6 +309,23 @@ function DealTab({ me, offer, onDone }) {
   }
   if (!me.approved) return <Notice>You can make your deal once we approve your business.</Notice>
   const low = offer && me.balance_cents < offer.payout_cents + offer.fee_cents
+  const hasMoney = me.balance_cents >= 1000
+  const ready = hasMoney && me.has_pin
+  async function turn(on) {
+    setErr(null)
+    const { error } = await supabase.rpc('set_referral_offer_active', { p_on: on })
+    if (error) return setErr(error.message)
+    onDone()
+  }
+  const Checklist = () => (
+    <div className="space-y-2 rounded-xl border-2 border-orange p-3">
+      <p className="font-bold">To turn your deal on, you need both:</p>
+      <p>{hasMoney ? '✅' : '⬜'} At least $10 of ad money <span className="muted text-sm">(you have {money(me.balance_cents)})</span>
+        {!hasMoney && <> · <Link to="/advertise?tab=money" className="font-bold underline">Add money</Link></>}</p>
+      <p>{me.has_pin ? '✅' : '⬜'} Your 4-digit store PIN
+        {!me.has_pin && <> · <Link to="/advertise?tab=coupons" className="font-bold underline">Set my PIN</Link></>}</p>
+    </div>
+  )
   if (!edit && offer) {
     return (
       <div className="card space-y-3">
@@ -316,9 +334,12 @@ function DealTab({ me, offer, onDone }) {
         {offer.terms && <p className="muted">{offer.terms}</p>}
         <p className="text-lg">Each time a shop sends you a customer who buys, you pay <b>{money(offer.payout_cents + offer.fee_cents)}</b>.</p>
         <p className="muted text-sm">That’s {money(offer.payout_cents)} to the shop + {money(offer.fee_cents)} to Us In It. It comes out of your ad balance.</p>
-        <p className="font-bold">{offer.active ? '✅ Deal is on' : '⏸️ Deal is off'}</p>
-        {low && <Notice kind="error">Your balance is too low, so your deal is paused. Add money on your business page.</Notice>}
-        {!me.has_pin && <Notice kind="error">Set your 4-digit store PIN on your business page (Coupons box). Your staff need it.</Notice>}
+        <p className="text-lg font-bold">{offer.active ? '✅ Deal is on' : '⏸️ Deal is off'}</p>
+        {offer.active && low && <Notice kind="error">Your balance is too low, so your deal is paused. Add money on your business page.</Notice>}
+        {!offer.active && !ready && <Checklist />}
+        {!offer.active && ready && <button type="button" className="btn-orange w-full py-4 text-lg" onClick={() => turn(true)}>Turn my deal on</button>}
+        {offer.active && <button type="button" className="btn-outline w-full py-3" onClick={() => turn(false)}>Turn my deal off</button>}
+        {err && <Notice kind="error">{err}</Notice>}
         <button type="button" className="btn-black w-full py-4 text-lg" onClick={() => setEdit(true)}>Change my deal</button>
       </div>
     )
@@ -341,7 +362,9 @@ function DealTab({ me, offer, onDone }) {
       <label className="block"><span className="font-bold">Any rules? (you can skip this)</span>
         <input className="input mt-1" maxLength={200} placeholder="Spend $50 or more. One per customer." value={f.terms} onChange={(e) => setF({ ...f, terms: e.target.value })} />
       </label>
-      {offer && <label className="flex items-center gap-2 text-lg"><input type="checkbox" className="h-6 w-6" checked={f.active} onChange={(e) => setF({ ...f, active: e.target.checked })} /> Deal is on</label>}
+      {ready
+        ? <label className="flex items-center gap-2 text-lg"><input type="checkbox" className="h-6 w-6" checked={f.active} onChange={(e) => setF({ ...f, active: e.target.checked })} /> Deal is on</label>
+        : <><p className="font-bold">Your deal will be saved as off.</p><Checklist /></>}
       {err && <Notice kind="error">{err}</Notice>}
       <button type="button" className="btn-orange w-full py-4 text-lg" onClick={save}>Save my deal</button>
       {offer && <button type="button" className="w-full underline" onClick={() => setEdit(false)}>Cancel</button>}

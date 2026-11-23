@@ -1,0 +1,1 @@
+-- applied via MCP: plug_deal_on_requires_money_and_pin (referral_offer_ready, referral_offer_guard trigger, set_referral_offer_active)

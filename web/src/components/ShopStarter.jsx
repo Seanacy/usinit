@@ -111,6 +111,7 @@ export function ShopPage() {
         <p className="text-xl font-extrabold">🪧 This sheet is your counter sign</p>
         <p>Put it by your register. When customers scan it, they see deals from shops you partner with. When they use one, you get paid.</p>
       </div>
+      <Notice>Made a deal? It turns on after you add at least $10 of ad money and set your 4-digit store PIN (Coupons on your business page).</Notice>
       <Link to="/partners" className="btn-orange block w-full py-4 text-center text-lg">🔌 Find shops to partner with</Link>
       <Link to="/advertise?tab=money" className="btn-black block w-full py-4 text-center text-lg">💵 Add ad money (optional)</Link>
       <Link to="/advertise" className="btn-outline block w-full py-3 text-center">Go to my business page</Link>
@@ -186,7 +187,8 @@ export function ShopPage() {
               <button type="button" onClick={() => setF({ ...f, pay: 'other' })} className={`rounded-xl border-2 py-3 font-bold ${f.pay === 'other' ? 'border-orange bg-orange text-ink' : 'border-neutral-300'}`}>Other</button>
             </div>
             {f.pay === 'other' && <input className="input text-lg" inputMode="decimal" placeholder="Amount in dollars, like 7.50" value={f.other} onChange={(e) => setF({ ...f, other: e.target.value.replace(/[^0-9.]/g, '') })} />}
-            {cents >= 100 && <p className="rounded-xl bg-neutral-100 p-3 dark:bg-neutral-800">You pay <b>{money(cents + fee(cents))}</b> only when a sent customer buys: {money(cents)} to the shop + {money(fee(cents))} to Us In It. It comes from your ad money, which you can add later.</p>}
+            {cents >= 100 && <p className="rounded-xl bg-neutral-100 p-3 dark:bg-neutral-800">You pay <b>{money(cents + fee(cents))}</b> only when a sent customer buys: {money(cents)} to the shop + {money(fee(cents))} to Us In It. It comes from your ad money.</p>}
+            {cents >= 100 && <p className="font-bold">Your deal stays off until you add at least $10 of ad money and set your 4-digit store PIN.</p>}
             <label className="block"><span className="label">Any rules? (optional)</span>
               <input className="input" maxLength={200} placeholder="Spend $50 or more. One per customer." value={f.terms} onChange={(e) => setF({ ...f, terms: e.target.value })} /></label>
           </>
