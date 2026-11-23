@@ -1,3 +1,4 @@
+import { AdminStarters } from '../components/Starter'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { homeFor, money, supabase, useSession } from '../lib/supabase'
@@ -19,7 +20,7 @@ import AdminTonight from '../components/AdminTonight'
 import TrialReport from '../components/TrialReport'
 import { Notice, Spinner } from '../components/Layout'
 
-const TABS = ['Overview', 'Messages', 'Ambassadors', 'Holders', 'Champions', 'Creators', 'Posts', 'Updates', 'Zones', 'Ads', 'Spotlights', 'Tonight', 'Gift Tree', 'Nonprofits', 'Workplaces', 'Schools', 'Fund', 'House messages', 'Openers', 'Payouts', 'Scans', 'Location data', 'Supporters', 'Settings']
+const TABS = ['Overview', 'Messages', 'Ambassadors', 'Holders', 'Starters', 'Champions', 'Creators', 'Posts', 'Updates', 'Zones', 'Ads', 'Spotlights', 'Tonight', 'Gift Tree', 'Nonprofits', 'Workplaces', 'Schools', 'Fund', 'House messages', 'Openers', 'Payouts', 'Scans', 'Location data', 'Supporters', 'Settings']
 const when = (t) => new Date(t).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
 
 function useTable(table, order = 'created_at', deps = []) {
@@ -634,7 +635,7 @@ export default function Admin() {
       </div>
     </div>
   )
-  const C = { Overview, Messages: AdminMessages, Ambassadors: AdminAmbassadors, Holders, Champions: AdminChampions, Creators: AdminCreators, Posts: AdminPosts, Updates, Zones, Ads, Spotlights: AdminSpotlights, Tonight: AdminTonight, 'Gift Tree': AdminGiftTree, Nonprofits, Workplaces: AdminWorkplaces, Schools: AdminSchools, Fund, 'House messages': HouseMessages, Openers, Payouts, Scans, 'Location data': LocationData, Supporters, Settings }[tab]
+  const C = { Overview, Messages: AdminMessages, Ambassadors: AdminAmbassadors, Holders, Starters: AdminStarters, Champions: AdminChampions, Creators: AdminCreators, Posts: AdminPosts, Updates, Zones, Ads, Spotlights: AdminSpotlights, Tonight: AdminTonight, 'Gift Tree': AdminGiftTree, Nonprofits, Workplaces: AdminWorkplaces, Schools: AdminSchools, Fund, 'House messages': HouseMessages, Openers, Payouts, Scans, 'Location data': LocationData, Supporters, Settings }[tab]
   return (
     <div className="mx-auto max-w-5xl px-4 py-6">
       <div className="no-print mb-5 flex gap-2 overflow-x-auto pb-1">

@@ -1,7 +1,7 @@
 import { LaunchGiveBox } from '../components/LaunchGive'
 import { CouponOffer } from './Coupon'
 import { useEffect, useRef, useState } from 'react'
-import { useParams, useSearchParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { deviceId, money, startCheckout, supabase, useStats, withCardFee } from '../lib/supabase'
 import { recordScan } from '../lib/impact'
 import { CampaignCard } from './Schools'
@@ -140,11 +140,16 @@ export default function Scan() {
   const [wait, setWait] = useState(5)
   const [panel, setPanel] = useState(null)
   const [holder, setHolder] = useState(null)
+  const navTo = useNavigate()
   const started = useRef(false)
 
   useEffect(() => {
-    supabase.rpc('get_public_holder', { p_code: code }).then(({ data }) => setHolder(data || false))
-  }, [code])
+    supabase.rpc('get_public_holder', { p_code: code }).then(({ data }) => {
+      setHolder(data || false)
+      // A starter code that nobody has claimed yet opens the claim page.
+      if (!data) supabase.rpc('get_starter', { p_code: code }).then(({ data: st }) => { if (st && ['open', 'reserved'].includes(st.status)) navTo(`/claim/${code}`, { replace: true }) })
+    })
+  }, [code]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function go() {
     if (started.current) return

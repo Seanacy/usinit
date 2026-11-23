@@ -1,0 +1,1 @@
+-- applied via MCP: starter_accounts (starter_codes table, admin_make_starters/admin_starters/admin_free_starter, get_starter, reserve_starter, finish_starter_claim; approve_holder skips starter codes)
