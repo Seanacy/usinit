@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import QRCode from 'qrcode'
 import { money, supabase, useSession, SITE_URL } from '../lib/supabase'
 import { Notice, Spinner } from './Layout'
-import { GROUPS, fee } from './Referrals'
+import { GROUPS, fee, PlugMoneyBox } from './Referrals'
 
 // Starter business accounts: a pre-printed sheet. The shop owner scans it, signs up and sets up
 // The Plug in one go (approved right away, since only Us In It hands these out).
@@ -140,6 +140,7 @@ export function ShopPage() {
         <h1 className="h1">Set up your shop</h1>
         <p className="text-lg">One page. Your business account and The Plug, done together.</p>
       </div>
+      <PlugMoneyBox />
       <div className="card space-y-3">
         <p className="text-xl font-extrabold">1. Your business</p>
         <label className="block"><span className="label">Business name *</span>

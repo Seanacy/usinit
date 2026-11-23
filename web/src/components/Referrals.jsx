@@ -27,6 +27,20 @@ export const groupOf = (cat) => Object.keys(GROUPS).find((g) => GROUPS[g].includ
 const walk = (m) => (m == null ? '' : m < 120 ? '🚶 Next door' : `🚶 ${Math.max(1, Math.round(m / 80))} min walk`)
 const PAYS = [200, 500, 1000]
 
+// Shown up front on The Plug pages: who pays and who earns.
+export function PlugMoneyBox() {
+  return (
+    <div className="rounded-2xl border-2 border-orange p-4">
+      <p className="text-lg font-extrabold">💵 How the money works</p>
+      <ul className="mt-2 space-y-2">
+        <li><b>You carry another shop’s QR code:</b> you <b>earn</b> money. You never pay for this.</li>
+        <li><b>Another shop sends you a customer:</b> you <b>pay</b> the reward you choose, plus a 20% Us In It fee (at least 50¢). Example: a $5 reward costs you $6.</li>
+        <li>You only pay when that customer <b>actually buys</b> (your cashier types your store PIN). It comes from ad money you add first.</li>
+      </ul>
+    </div>
+  )
+}
+
 // Small card on the Advertise page that opens the Partners page.
 export function ReferralPanel() {
   return (
@@ -70,6 +84,7 @@ export function PartnersPage() {
         <h1 className="h1">🔌 The Plug</h1>
         <p className="text-lg">Carry other shops' QR codes. <b>Get paid when they bring them customers.</b></p>
       </div>
+      <PlugMoneyBox />
       {!d.me.approved && <Notice>We’re still checking your business. You can set up now. It turns on when we approve you.</Notice>}
       {(needSpot || setup) ? <SpotStep me={d.me} onDone={() => { setSetup(false); load() }} /> : (
         <>
