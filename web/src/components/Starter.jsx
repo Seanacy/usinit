@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { supabase, useSession, SITE_URL } from '../lib/supabase'
 import { Notice, Spinner } from './Layout'
 import Printables from './Printables'
+import StripePayouts from './StripePayouts'
 
 // Starter accounts: QR codes printed ahead of time. The first person to scan one claims it
 // with their name + a verified email. Phone and payout info are optional.
@@ -68,6 +69,10 @@ export function ClaimPage() {
       <p className="text-lg">You are holder <b>#{done.code}</b>. Every scan of your sign pays you.</p>
       <Notice>Make a password so you can log back in later. Go to your account, then tap “Forgot your password?” if it asks.</Notice>
       <Link to="/holder" className="btn-orange block w-full py-4 text-lg">Go to my account</Link>
+      <div className="text-left">
+        <p className="mb-2 font-bold">Optional: have an ID and a debit card or bank account? Set up direct pay now. No ID? Skip this. Cash App or Venmo works.</p>
+        <StripePayouts kind="holder" title="Get paid to a debit card or bank" />
+      </div>
     </div>
   )
 
