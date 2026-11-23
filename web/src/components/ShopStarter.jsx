@@ -239,8 +239,10 @@ export function CounterSignCard({ code }) {
   const url = `${SHOP_BASE}/shop/${code}`
   const [qr, setQr] = useState(null)
   const [printing, setPrinting] = useState(false)
+  const [business, setBusiness] = useState('')
   useEffect(() => { QRCode.toDataURL(url, { width: 900, margin: 1, errorCorrectionLevel: 'M' }).then(setQr) }, [url])
-  if (printing) return <ShopSheet x={{ code, label: '' }} start={printing} onBack={() => setPrinting(false)} />
+  useEffect(() => { supabase.rpc('shop_counter', { p_code: code }).then(({ data }) => setBusiness(data?.business || '')) }, [code])
+  if (printing) return <ShopSheet x={{ code, label: '', business }} start={printing} onBack={() => setPrinting(false)} />
   return (
     <div className="card space-y-3 text-center">
       <p className="text-xl font-extrabold">🪧 Your counter sign</p>
@@ -343,11 +345,12 @@ function ShopSheet({ x, onBack, start }) {
   useEffect(() => { if (start && qr) { const t = setTimeout(() => window.print(), 400); return () => clearTimeout(t) } }, [qr]) // eslint-disable-line react-hooks/exhaustive-deps
   if (!qr) return <Spinner />
   const z = SIZES.find((t) => t.k === size)
-  const foot = x.label ? `New shop? The first scan sets up your account. · Shop ${x.label} · ${x.code}` : `Deals from shops we trust · ${x.code}`
+  const foot = x.label ? `New shop? The first scan sets up your account. · Shop ${x.label} · ${x.code}` : `${x.business ? `${x.business} · ` : ''}Us In It · ${x.code}`
   const one = (i) => (
     <div key={i} className={`flex flex-col items-center justify-center bg-white p-2 text-center text-black ${z.n > 1 ? 'border border-dashed border-neutral-400' : ''}`} style={{ width: z.w, breakInside: 'avoid' }}>
-      <img src="/logo-print-bw.svg" alt="Us In It" style={{ width: z.n > 2 ? '45%' : '33%' }} />
-      <p className={`mt-1 font-black ${z.title}`}>Scan for deals nearby.</p>
+      {x.business && <p className={`font-black leading-tight ${z.title}`}>{x.business}</p>}
+      <p className={`mt-1 font-black ${x.business ? 'text-base' : z.title}`}>{x.business ? 'Scan for deals from shops nearby.' : 'Scan for deals nearby.'}</p>
+      <img src="/logo-print-bw.svg" alt="Us In It" className="mt-1" style={{ width: z.n > 2 ? '30%' : '18%' }} />
       <img src={qr} alt={`QR code for ${url}`} style={{ width: z.qr }} className="mt-1" />
       {z.k !== 'mini' && <p className="mt-1 text-xs">{foot}</p>}
     </div>
