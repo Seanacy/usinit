@@ -212,13 +212,20 @@ export function CounterSignCard({ code }) {
   const [qr, setQr] = useState(null)
   const [printing, setPrinting] = useState(false)
   useEffect(() => { QRCode.toDataURL(url, { width: 900, margin: 1, errorCorrectionLevel: 'M' }).then(setQr) }, [url])
-  if (printing) return <ShopSheet x={{ code, label: '' }} onBack={() => setPrinting(false)} />
+  if (printing) return <ShopSheet x={{ code, label: '' }} start={printing} onBack={() => setPrinting(false)} />
   return (
     <div className="card space-y-3 text-center">
       <p className="text-xl font-extrabold">🪧 Your counter sign</p>
       <p>This is the same QR code as the paper you scanned. Put that paper by your register. When customers scan it, they see deals from shops you partner with. When they use one, you get paid.</p>
       {qr && <img src={qr} alt="Your counter sign QR code" className="mx-auto w-2/3 rounded-xl border" />}
-      <button type="button" className="btn-black w-full py-3" onClick={() => setPrinting(true)}>🖨️ Print a new copy</button>
+      <p className="font-bold">🖨️ Print a new copy. Pick a size:</p>
+      <div className="grid grid-cols-2 gap-2 text-left">
+        {SIZES.map((t) => (
+          <button key={t.k} type="button" onClick={() => setPrinting(t.k)} className="rounded-xl border-2 border-neutral-300 p-3 dark:border-neutral-600">
+            <span className="block font-extrabold">{t.label}</span><span className="text-sm">{t.sub}</span>
+          </button>
+        ))}
+      </div>
     </div>
   )
 }
@@ -299,11 +306,13 @@ const SIZES = [
   { k: 'mini', label: 'Mini', sub: '2.5 × 3 in · 9 per sheet', w: '2.45in', n: 9, cols: 3, title: 'text-sm', qr: '2in' },
 ]
 
-function ShopSheet({ x, onBack }) {
+function ShopSheet({ x, onBack, start }) {
   const url = `${SHOP_BASE}/shop/${x.code}`
   const [qr, setQr] = useState(null)
-  const [size, setSize] = useState('full')
+  const [size, setSize] = useState(start || 'full')
   useEffect(() => { QRCode.toDataURL(url, { width: 1200, margin: 1, errorCorrectionLevel: 'M' }).then(setQr) }, [url])
+  // Picked a size on the counter sign card: open the print window right away.
+  useEffect(() => { if (start && qr) { const t = setTimeout(() => window.print(), 400); return () => clearTimeout(t) } }, [qr]) // eslint-disable-line react-hooks/exhaustive-deps
   if (!qr) return <Spinner />
   const z = SIZES.find((t) => t.k === size)
   const foot = x.label ? `New shop? The first scan sets up your account. · Shop ${x.label} · ${x.code}` : `Deals from shops we trust · ${x.code}`
