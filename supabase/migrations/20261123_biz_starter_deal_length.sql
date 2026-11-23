@@ -1,0 +1,1 @@
+-- applied via MCP: biz_starter_deal_length

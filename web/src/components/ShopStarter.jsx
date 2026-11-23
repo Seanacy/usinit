@@ -56,6 +56,7 @@ export function ShopPage() {
     e.preventDefault(); setErr(null); setBusy(true)
     const email = f.email.trim().toLowerCase()
     const hasDeal = f.discount.trim().length > 0
+    if (hasDeal && f.discount.trim().length < 3) { setBusy(false); return setErr('Write a little more about the deal, like "$6 off".') }
     const { error } = await supabase.rpc('reserve_biz_starter', {
       p_code: code, p_business: f.business, p_contact: f.contact, p_email: email, p_phone: f.phone,
       p_address: f.address, p_category: f.category, p_discount: hasDeal ? f.discount : null, p_terms: hasDeal ? f.terms : null,
