@@ -39,7 +39,7 @@ export default function Give() {
         <p className="mt-3 text-lg">Every {money(give)} is split two ways:</p>
         <ul className="mt-2 space-y-2 text-lg">
           <li>💸 <b>{money(toHolder)}</b> goes straight to the holder you pick</li>
-          <li>🚀 <b>{money(toFund)}</b> goes to the Community Fund, toward our launch goal, so holders get paid for every scan</li>
+          <li>🚀 <b>{money(toFund)}</b> goes to the Community Fund, toward our beta goal, so holders get paid for every scan</li>
         </ul>
       </div>
 

@@ -79,7 +79,7 @@ export function AmbassadorsDirectory() {
       <p className="muted mt-2">The people helping Us In It grow: finding supporters, businesses, and holders, and spreading the word.</p>
       <div className="mt-4 flex flex-wrap gap-3">
         <Link to="/ambassador" className="btn-orange">Become an Ambassador</Link>
-        <Link to="/launch" className="btn-outline">See the launch goal</Link>
+        <Link to="/launch" className="btn-outline">See the beta goal</Link>
       </div>
       {prog && <p className="mt-4 rounded-xl bg-orange/15 p-3 text-sm"><b>Monthly goal bars (only Ambassadors see these):</b> 👥 bring 1 new Ambassador · 💚 bring in 1 supporter, business, gift, or holder · 🔗 your link gets used every week.</p>}
       <input className="input mt-6" placeholder="Search Ambassadors by name" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search Ambassadors" />
@@ -303,7 +303,7 @@ function readyMessages(name, code) {
 
 People going through hard times carry a QR code. When you scan it, a local business message shows up, and the person holding the code gets paid. Not a handout. A paycheck.
 
-Before businesses come on board, we need neighbors to fund the first scans. The launch goal is $5,000.
+We're in beta. Before businesses come on board, we need neighbors to fund the first scans.
 
 You can help two ways:
 💛 Give once or weekly (as little as $5 a week)
@@ -316,7 +316,7 @@ For-Profit, For People.
     { title: 'Text or DM to people you know', where: 'Texts, Messenger, Instagram DMs', text:
 `Hey [name], I'm helping launch something called Us In It.
 
-People going through hard times carry a QR code. Every time someone scans it, they get paid. Local businesses will pay for the scans, but to get started we're raising $5,000 so the first scans pay right away.
+People going through hard times carry a QR code. Every time someone scans it, they get paid. Local businesses will pay for the scans. We're in beta, so neighbors are funding the first scans so they pay right away.
 
 Would you help? Even $2 pays for 4 scans. Weekly starts at $5.
 
@@ -476,7 +476,7 @@ export function Launch() {
   useEffect(() => { supabase.rpc('launch_board').then(({ data }) => setB(data)) }, [])
   return (
     <div className="mx-auto max-w-2xl space-y-4 px-4 py-8">
-      <h1 className="h1">Launch goal</h1>
+      <h1 className="h1">Beta goal</h1>
       <GoalTracker stats={stats} />
       <div className="flex flex-wrap gap-3">
         <Link to="/support" className="btn-orange">Support the launch</Link>

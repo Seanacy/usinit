@@ -10,8 +10,10 @@ export function GoalTracker({ stats, compact }) {
   return (
     <div className={compact ? '' : 'card'}>
       <p className="font-bold">
-        We've raised {money(raised)} of our {money(goal)} launch goal
-        {stats.supporters ? ` from ${stats.supporters} supporter${stats.supporters === 1 ? '' : 's'}` : ''}.
+        Beta goal: {money(goal)} pays for our first {Math.floor(goal / (stats.price_per_scan_cents || 50)).toLocaleString()} scans.
+      </p>
+      <p className="text-sm">
+        {money(raised)} raised so far{stats.supporters ? ` from ${stats.supporters} supporter${stats.supporters === 1 ? '' : 's'}` : ''}.
       </p>
       <div className="mt-2 h-3 w-full overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-700" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
         <div className="h-3 rounded-full bg-orange" style={{ width: `${pct}%` }} />

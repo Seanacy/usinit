@@ -34,10 +34,10 @@ export default function Fund() {
     <div className="mx-auto max-w-xl px-4 py-8">
       <FundTabs />
       <h1 className="h1">Community Fund</h1>
-      <p className="muted mt-2">The Community Fund pays people on our streets for scans when no paid messages are running. It keeps holders earning while local businesses come on board.</p>
+      <p className="muted mt-2">We’re in beta. The Community Fund pays our first holders for scans while local businesses come on board.</p>
       <div className="mt-5 grid grid-cols-2 gap-3">
         <div className="card"><p className="muted text-sm">In the fund now</p><p className="text-2xl font-extrabold">{stats ? money(stats.fund_balance_cents) : '…'}</p><p className="muted text-xs">Powers about {stats ? Math.floor(stats.fund_balance_cents / price).toLocaleString() : '…'} scans</p></div>
-        <div className="card"><p className="muted text-sm">Paid to holders</p><p className="text-2xl font-extrabold">{stats ? money(stats.paid_to_holders_cents) : '…'}</p><p className="muted text-xs">{stats ? stats.scans_funded.toLocaleString() : '…'} scans funded by neighbors</p></div>
+        <div className="card"><p className="muted text-sm">Paid to holders</p><p className="text-2xl font-extrabold">{stats ? money(stats.paid_to_holders_cents) : '…'}</p><p className="muted text-xs">{stats ? `${stats.scans_funded.toLocaleString()} ${stats.scans_funded === 1 ? 'scan' : 'scans'}` : '…'} funded by neighbors</p></div>
       </div>
       <div className="mt-4"><GoalTracker stats={stats} /></div>
       <p className="mt-4 font-bold">Every scan costs {money(price)}: {money(share)} goes to the holder, {money(price - share)} keeps Us In It running.</p>

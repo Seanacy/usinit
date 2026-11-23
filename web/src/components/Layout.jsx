@@ -91,7 +91,7 @@ export default function Layout() {
     <div className="flex min-h-screen flex-col">
       <header className="no-print sticky top-0 z-40 bg-ink">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-          <Link to="/" aria-label="Us In It home"><Logo className="h-9 sm:h-10" /></Link>
+          <Link to="/" aria-label="Us In It home, beta" className="flex items-center gap-2"><Logo className="h-9 sm:h-10" /><span className="rounded-md bg-orange px-1.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-ink">Beta</span></Link>
           <nav className="hidden items-center gap-1 whitespace-nowrap md:flex">
             <NavLink to="/support" className={link}>Support</NavLink>
             <NavLink to="/gifttree" className={link}>Gift Tree 🎄</NavLink>
