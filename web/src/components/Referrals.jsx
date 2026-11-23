@@ -408,7 +408,31 @@ export function ReferralOffer() {
       {o.open
         ? <button className="btn-orange w-full py-4 text-lg" onClick={claim} disabled={busy}>{busy ? 'Saving…' : 'Get my discount'}</button>
         : <Notice>This deal is paused right now. Try again later.</Notice>}
+      {o.open && <GiftButton dealCode={code} discount={o.discount} business={o.business} />}
       <p className="muted text-center text-xs">Good for {o.claim_days} days after you tap. Powered by Us In It.</p>
+    </div>
+  )
+}
+
+// "Gift this coupon?" — shares the DEAL link, so the friend gets their own coupon and the sender keeps theirs.
+function GiftButton({ dealCode, discount, business }) {
+  const [msg, setMsg] = useState(null)
+  if (!dealCode) return null
+  const url = refUrl(dealCode)
+  async function share() {
+    setMsg(null)
+    const text = `🎁 A gift for you: ${discount} at ${business}. Tap to get your coupon:`
+    try {
+      if (navigator.share) { await navigator.share({ title: 'A coupon for you', text, url }); return }
+      await navigator.clipboard.writeText(`${text} ${url}`); setMsg('Link copied. Paste it in a text to your friend.')
+    } catch { /* closed the share menu */ }
+  }
+  return (
+    <div className="card space-y-2 text-center">
+      <p className="text-lg font-extrabold">🎁 Gift this coupon?</p>
+      <p className="text-sm">Know someone who’d love this? Send it. Your friend gets their own coupon, and you keep yours.</p>
+      <button type="button" className="btn-orange w-full py-3 text-lg" onClick={share}>📤 Share with a friend</button>
+      {msg && <p className="text-sm font-bold">{msg}</p>}
     </div>
   )
 }
@@ -461,6 +485,7 @@ export function ReferralClaim() {
           {!c.has_pin && <p className="muted text-xs">This business hasn’t set its store PIN yet.</p>}
         </div>
       )}
+      {!dead && <GiftButton dealCode={c.deal_code} discount={c.text} business={c.business} />}
       <p className="text-center text-sm"><Link to="/coupons" className="underline">My saved coupons</Link></p>
     </div>
   )

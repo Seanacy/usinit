@@ -1,0 +1,1 @@
+-- applied via MCP: referral_claim_share_code (get_referral_claim adds deal_code)
