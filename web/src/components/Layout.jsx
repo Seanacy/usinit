@@ -158,6 +158,7 @@ export function Spinner({ label = 'Loading' }) {
 export function Notice({ kind = 'info', children }) {
   const cls = kind === 'error' ? 'border-red-300 bg-red-50 text-red-800 dark:bg-red-950 dark:text-red-200'
     : kind === 'ok' ? 'border-green-300 bg-green-50 text-green-800 dark:bg-green-950 dark:text-green-200'
+    : kind === 'note' ? 'border-blue-300 bg-blue-50 text-blue-900 dark:bg-blue-950 dark:text-blue-100'
     : 'border-orange/40 bg-orange/10 text-ink dark:text-white'
   return <div className={`rounded-xl border px-4 py-3 text-sm ${cls}`}>{children}</div>
 }

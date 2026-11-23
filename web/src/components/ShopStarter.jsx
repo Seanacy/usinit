@@ -20,6 +20,7 @@ export function ShopPage() {
   const [s, setS] = useState(null)
   const [f, setF] = useState({ business: '', contact: '', email: '', phone: '', address: '', group: '', category: '', discount: '', terms: '', pay: 500, other: '', agree: false })
   const [err, setErr] = useState(null)
+  const [note, setNote] = useState(false)
   const [busy, setBusy] = useState(false)
   const [sent, setSent] = useState(false)
   const [done, setDone] = useState(null)
@@ -35,7 +36,7 @@ export function ShopPage() {
     if (!session || !s || done) return
     if (!(s.status === 'reserved' || (s.status === 'claimed' && s.is_me))) return
     supabase.rpc('finish_biz_starter', { p_code: code }).then(({ data, error }) => {
-      if (error) { if (s.status === 'reserved') setErr(error.message); return }
+      if (error) { if (s.status === 'reserved') { if (['Log in first.', 'Tap the link in your email first.'].includes(error.message)) setNote(true); else setErr(error.message) } return }
       setDone(data); setPwDone(!!session.user?.user_metadata?.pw_set)
       try { localStorage.removeItem(KEY) } catch { /* off */ }
     })
@@ -131,6 +132,7 @@ export function ShopPage() {
         <li>Tap the link inside it.</li>
       </ol>
       <p>Nobody else can claim this code while you finish.</p>
+      {note && <Notice kind="note">📧 Please check your email and tap the link to verify. Then you can finish here.</Notice>}
       {err && <Notice kind="error">{err}</Notice>}
       <button type="button" className="btn-outline w-full py-3" onClick={resend} disabled={wait > 0}>{wait > 0 ? `Send again in ${wait} seconds` : 'Send the email again'}</button>
     </div>

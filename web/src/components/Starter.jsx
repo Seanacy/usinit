@@ -17,6 +17,7 @@ export function ClaimPage() {
   const [s, setS] = useState(null)
   const [f, setF] = useState({ name: '', email: '', phone: '', pay: '', handle: '', agree: false })
   const [err, setErr] = useState(null)
+  const [note, setNote] = useState(false)
   const [busy, setBusy] = useState(false)
   const [sent, setSent] = useState(false)
   const [done, setDone] = useState(null)
@@ -27,7 +28,7 @@ export function ClaimPage() {
   useEffect(() => {
     if (!session || !s || !['reserved', 'claimed'].includes(s.status) || done) return
     supabase.rpc('finish_starter_claim', { p_code: code }).then(({ data, error }) => {
-      if (error) { if (s.status === 'claimed') nav(`/s/${code}`, { replace: true }); else setErr(error.message) }
+      if (error) { if (s.status === 'claimed') nav(`/s/${code}`, { replace: true }); else if (['Log in first.', 'Tap the link in your email first.'].includes(error.message)) setNote(true); else setErr(error.message) }
       else { setDone(data); setPwDone(!!session.user?.user_metadata?.pw_set); try { localStorage.removeItem(KEY) } catch { /* off */ } }
     })
   }, [session, s]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -118,6 +119,7 @@ export function ClaimPage() {
         <li>Tap the link inside it.</li>
       </ol>
       <p>Then this code is yours. Nobody else can claim it while you finish.</p>
+      {note && <Notice kind="note">📧 Please check your email and tap the link to verify. Then you can finish here.</Notice>}
       {err && <Notice kind="error">{err}</Notice>}
       <button type="button" className="btn-outline w-full py-3" onClick={resend} disabled={wait > 0}>{wait > 0 ? `Send again in ${wait} seconds` : 'Send the email again'}</button>
       <p className="muted text-sm">Not your email? Ask the person who gave you this sheet.</p>
