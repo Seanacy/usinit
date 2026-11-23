@@ -10,6 +10,11 @@ import { GROUPS, fee, PlugMoneyBox } from './Referrals'
 // After that, the same sheet is the shop's counter sign: it lists the partner deals the shop carries.
 
 const KEY = 'usinit_shop_claim'
+// Shop colors for printed counter signs. The QR code and the Us In It logo always stay black.
+const COLORS = [['#111111', 'Black'], ['#E11D74', 'Pink'], ['#1D4ED8', 'Blue'], ['#DC2626', 'Red'], ['#15803D', 'Green'], ['#EA580C', 'Orange'], ['#7E22CE', 'Purple']]
+const COLOR_LINES = [['name', 'Shop name'], ['scan', '“Scan for deals” line'], ['foot', 'Small bottom words']]
+const BLACKS = { name: '#111111', scan: '#111111', foot: '#111111' }
+const loadColors = (code) => { try { return { ...BLACKS, ...JSON.parse(localStorage.getItem(`usinit_sign_colors_${code}`) || '{}') } } catch { return BLACKS } }
 // Same address as the printed sheets, so the QR on screen matches the paper exactly.
 const SHOP_BASE = IS_FINAL_DOMAIN ? 'https://usinit.com' : SITE_URL
 const PAYS = [200, 500, 1000]
@@ -242,12 +247,37 @@ export function CounterSignCard({ code }) {
   const [business, setBusiness] = useState('')
   useEffect(() => { QRCode.toDataURL(url, { width: 900, margin: 1, errorCorrectionLevel: 'M' }).then(setQr) }, [url])
   useEffect(() => { supabase.rpc('shop_counter', { p_code: code }).then(({ data }) => setBusiness(data?.business || '')) }, [code])
-  if (printing) return <ShopSheet x={{ code, label: '', business }} start={printing} onBack={() => setPrinting(false)} />
+  const [colors, setColors] = useState(() => loadColors(code))
+  const [editing, setEditing] = useState(false)
+  const pick = (line, c) => { const n = { ...colors, [line]: c }; setColors(n); try { localStorage.setItem(`usinit_sign_colors_${code}`, JSON.stringify(n)) } catch { /* off */ } }
+  if (printing) return <ShopSheet x={{ code, label: '', business, colors }} start={printing} onBack={() => setPrinting(false)} />
   return (
     <div className="card space-y-3 text-center">
       <p className="text-xl font-extrabold">🪧 Your counter sign</p>
       <p>This is the same QR code as the paper you scanned. Put that paper by your register. When customers scan it, they see deals from shops you partner with. When they use one, you get paid.</p>
-      {qr && <img src={qr} alt="Your counter sign QR code" className="mx-auto w-2/3 rounded-xl border" />}
+      <div className="rounded-xl border bg-white p-3 text-black">
+        {business && <p className="text-2xl font-black leading-tight" style={{ color: colors.name }}>{business}</p>}
+        <p className="font-black" style={{ color: colors.scan }}>Scan for deals from shops nearby.</p>
+        {qr && <img src={qr} alt="Your counter sign QR code" className="mx-auto mt-2 w-2/3" />}
+        <p className="mt-1 text-xs" style={{ color: colors.foot }}>{business ? `${business} · ` : ''}Us In It · {code}</p>
+      </div>
+      <button type="button" className="text-sm font-bold underline" onClick={() => setEditing(!editing)}>{editing ? 'Done adding colors' : '🎨 Edit to add your shop colors'}</button>
+      {editing && (
+        <div className="space-y-2 rounded-xl bg-neutral-100 p-3 text-left dark:bg-neutral-800">
+          {COLOR_LINES.map(([line, label]) => (
+            <div key={line}>
+              <p className="text-sm font-bold">{label}</p>
+              <div className="mt-1 flex flex-wrap gap-2">
+                {COLORS.map(([c, n]) => (
+                  <button key={c} type="button" aria-label={`${label}: ${n}`} title={n} onClick={() => pick(line, c)}
+                    className={`h-8 w-8 rounded-full border-2 ${colors[line] === c ? 'border-orange ring-2 ring-orange' : 'border-white'}`} style={{ background: c }} />
+                ))}
+              </div>
+            </div>
+          ))}
+          <p className="muted text-xs">The QR code stays black so it always scans. Colors only show on a color printer.</p>
+        </div>
+      )}
       <p className="font-bold">🖨️ Print a new copy. Pick a size:</p>
       <div className="grid grid-cols-2 gap-2 text-left">
         {SIZES.map((t) => (
@@ -348,11 +378,11 @@ function ShopSheet({ x, onBack, start }) {
   const foot = x.label ? `New shop? The first scan sets up your account. · Shop ${x.label} · ${x.code}` : `${x.business ? `${x.business} · ` : ''}Us In It · ${x.code}`
   const one = (i) => (
     <div key={i} className={`flex flex-col items-center justify-center bg-white p-2 text-center text-black ${z.n > 1 ? 'border border-dashed border-neutral-400' : ''}`} style={{ width: z.w, breakInside: 'avoid' }}>
-      {x.business && <p className={`font-black leading-tight ${z.title}`}>{x.business}</p>}
-      <p className={`mt-1 font-black ${x.business ? 'text-base' : z.title}`}>{x.business ? 'Scan for deals from shops nearby.' : 'Scan for deals nearby.'}</p>
+      {x.business && <p className={`font-black leading-tight ${z.title}`} style={{ color: x.colors?.name }}>{x.business}</p>}
+      <p className={`mt-1 font-black ${x.business ? 'text-base' : z.title}`} style={{ color: x.colors?.scan }}>{x.business ? 'Scan for deals from shops nearby.' : 'Scan for deals nearby.'}</p>
       <img src="/logo-print-bw.svg" alt="Us In It" className="mt-1" style={{ width: z.n > 2 ? '30%' : '18%' }} />
       <img src={qr} alt={`QR code for ${url}`} style={{ width: z.qr }} className="mt-1" />
-      {z.k !== 'mini' && <p className="mt-1 text-xs">{foot}</p>}
+      {z.k !== 'mini' && <p className="mt-1 text-xs" style={{ color: x.colors?.foot }}>{foot}</p>}
     </div>
   )
   return (
@@ -372,7 +402,7 @@ function ShopSheet({ x, onBack, start }) {
           <button type="button" className="btn-orange py-3" onClick={() => window.print()}>Print</button>
         </div>
       </div>
-      <style>{'@page { size: letter; margin: 0.4in }'}</style>
+      <style>{'@page { size: letter; margin: 0.4in } * { -webkit-print-color-adjust: exact; print-color-adjust: exact }'}</style>
       <div className="mx-auto grid justify-center gap-0" style={{ gridTemplateColumns: `repeat(${z.cols}, ${z.w})` }}>
         {Array.from({ length: z.n }, (_, i) => one(i))}
       </div>
