@@ -88,9 +88,10 @@ export default function HolderCashout() {
           ) : (
             <>
               <label className="block">
-                <span className="text-sm font-bold">Your {appName} {method === 'venmo' ? 'username' : '$cashtag'}</span>
+                <span className="text-sm font-bold">Which {appName} should we send it to?</span>
+                <span className="muted block text-xs">It can be yours, or someone you trust.</span>
                 <input className="input mt-1" autoCapitalize="none" autoCorrect="off" spellCheck="false"
-                  placeholder={method === 'venmo' ? '@Your-Name' : '$YourName'} value={handle}
+                  placeholder={method === 'venmo' ? '@venmo-username' : '$cashtag'} value={handle}
                   onChange={(e) => setHandle(e.target.value.replace(/\s/g, ''))} />
               </label>
               <p className="muted text-xs">Check it twice. Money sent to the wrong {method === 'venmo' ? 'username' : '$cashtag'} can't be brought back.</p>

@@ -143,7 +143,11 @@ export function ClaimPage() {
             <button key={l} type="button" onClick={() => setF({ ...f, pay: k })} className={`rounded-xl border-2 py-3 font-bold ${f.pay === k ? 'border-orange bg-orange text-ink' : 'border-neutral-300 dark:border-neutral-600'}`}>{l}</button>
           ))}
         </div>
-        {f.pay && <input className="input mt-2 text-lg" autoCapitalize="none" placeholder={f.pay === 'cashapp' ? '$cashtag' : 'Venmo username'} value={f.handle} onChange={(e) => setF({ ...f, handle: e.target.value })} />}
+        {f.pay && <>
+          <p className="mt-2 text-sm font-bold">Which {f.pay === 'cashapp' ? 'Cash App' : 'Venmo'} should we send it to?</p>
+          <p className="muted text-sm">It can be yours, or someone you trust.</p>
+          <input className="input mt-1 text-lg" autoCapitalize="none" placeholder={f.pay === 'cashapp' ? '$cashtag' : '@venmo-username'} value={f.handle} onChange={(e) => setF({ ...f, handle: e.target.value })} />
+        </>}
         <p className="muted mt-1 text-sm">You can also set up a debit card later in your account.</p>
       </div>
       <label className="flex items-start gap-3 text-lg">
