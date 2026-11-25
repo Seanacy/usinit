@@ -391,6 +391,12 @@ export default function Advertise() {
     <div className="mx-auto max-w-2xl px-4 py-8">
       <h1 className="h1">{adv ? 'My business' : 'Advertise with Us In It'}</h1>
       {!adv && <p className="muted mt-2">Draw the zone around your business. Pay {money(price)} only for real scans by real people standing in your zone. No bidding, same price for everyone.</p>}
+      {!adv && price < 60 && (
+        <div className="mt-3 rounded-xl border-2 border-orange bg-orange/10 p-3">
+          <p className="font-extrabold">Every scan costs {money(price)}. The average Facebook click costs 60¢.</p>
+          <p className="muted mt-1 text-xs">Facebook average from WordStream by LocaliQ, Facebook Ads Benchmarks 2026 (traffic campaigns).</p>
+        </div>
+      )}
       {(session === null || adv === null) && (
         <Link to="/spotlight" className="group mt-5 flex flex-col gap-3 rounded-2xl border-2 border-orange bg-orange/10 p-4 shadow-sm transition hover:-translate-y-0.5 hover:bg-orange/20 hover:shadow-md sm:flex-row sm:items-center">
           <div className="flex-1">
