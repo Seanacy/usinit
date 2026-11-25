@@ -334,6 +334,8 @@ People going through hard times carry a QR code. When someone scans it, your mes
 
 $50 = 100 scans. That means 100 local people see your business, and $40 of it goes straight to people working our streets.
 
+Every scan costs 50¢. The average Facebook click costs 60¢.
+
 You pick your area, so your message only shows near you. You can see your scans live on your own page.
 
 Would you be one of the first 100 businesses? It takes about 5 minutes to sign up:
