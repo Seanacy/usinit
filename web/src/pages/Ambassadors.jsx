@@ -334,7 +334,7 @@ People going through hard times carry a QR code. When someone scans it, your mes
 
 $50 = 100 scans. That means 100 local people see your business, and $40 of it goes straight to people working our streets.
 
-Real people, already out, already nearby. Your ad reaches people who are already out and ready to stop in.
+Your ad reaches real people who are already outside, nearby and ready to stop in!
 
 Every scan costs 50¢. The average Facebook click costs 60¢.
 

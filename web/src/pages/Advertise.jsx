@@ -393,8 +393,7 @@ export default function Advertise() {
       {!adv && <p className="muted mt-2">Draw the zone around your business. Pay {money(price)} only for real scans by real people standing in your zone. No bidding, same price for everyone.</p>}
       {!adv && (
         <div className="mt-3 rounded-xl border-2 border-orange bg-orange/10 p-3">
-          <p className="text-lg font-extrabold">Real people, already out, already nearby.</p>
-          <p className="mt-1">Your ad reaches people who are already out and ready to stop in.</p>
+          <p className="text-lg font-extrabold">Your ad reaches real people who are already outside, nearby and ready to stop in!</p>
           {price < 60 && <>
             <p className="mt-2 font-extrabold">Every scan costs {money(price)}. The average Facebook click costs 60¢.</p>
             <p className="muted mt-1 text-xs">Facebook average from WordStream by LocaliQ, Facebook Ads Benchmarks 2026 (traffic campaigns).</p>
