@@ -364,6 +364,7 @@ export default function Advertise() {
   const [biz, setBiz] = useState({ business_name: '', contact_name: '', phone: '' })
   const [err, setErr] = useState(null)
   const price = stats?.price_per_scan_cents || 50
+  const share = stats?.holder_share_cents || 40
 
   async function load() {
     const { data } = await supabase.from('advertisers').select('*').maybeSingle()
@@ -395,7 +396,8 @@ export default function Advertise() {
         <div className="mt-3 rounded-xl border-2 border-orange bg-orange/10 p-3">
           <p className="text-lg font-extrabold">Your ad reaches real people who are already outside, nearby and ready to stop in!</p>
           {price < 60 && <>
-            <p className="mt-2 font-extrabold">Every scan costs {money(price)}. The average Facebook click costs 60¢.</p>
+            <p className="mt-2 font-extrabold">Every scan costs {price}¢. The average Facebook click costs 60¢.</p>
+            <p className="mt-1">{share}¢ of every scan goes to the person holding the code.</p>
             <p className="muted mt-1 text-xs">Facebook average from WordStream by LocaliQ, Facebook Ads Benchmarks 2026 (traffic campaigns).</p>
           </>}
         </div>

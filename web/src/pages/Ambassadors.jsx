@@ -336,7 +336,7 @@ $50 = 100 scans. That means 100 local people see your business, and $40 of it go
 
 Your ad reaches real people who are already outside, nearby and ready to stop in!
 
-Every scan costs 50¢. The average Facebook click costs 60¢.
+Every scan costs 50¢. The average Facebook click costs 60¢. 40¢ of every scan goes to the person holding the code.
 
 You pick your area, so your message only shows near you. You can see your scans live on your own page.
 
