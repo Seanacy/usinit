@@ -22,6 +22,7 @@ export default function Give() {
     if (c.length < 3) return setErr('Type the holder number from their sign, like 5473.')
     const { data } = await supabase.rpc('get_public_holder', { p_code: c })
     if (!data) return setErr("We couldn't find that number. Check the sign and try again.")
+    if (data.give_hidden) return setErr(`${data.first_name} isn't taking $3 gifts right now. You can give to the Community Fund instead.`)
     setHolder({ ...data, code: c })
   }
   async function startGive() {

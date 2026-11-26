@@ -74,6 +74,28 @@ function NeedsYou({ goTo }) {
   )
 }
 
+function GiveOnlySwitch() {
+  const [on, setOn] = useState(null)
+  const [busy, setBusy] = useState(false)
+  const load = () => supabase.from('settings').select('value').eq('key', 'scan_give_only').maybeSingle().then(({ data }) => setOn(data?.value === true))
+  useEffect(() => { load() }, [])
+  async function flip() {
+    setBusy(true)
+    await supabase.from('settings').update({ value: !on, updated_at: new Date().toISOString() }).eq('key', 'scan_give_only')
+    setBusy(false); load()
+  }
+  if (on === null) return null
+  return (
+    <div className={`card flex flex-wrap items-center justify-between gap-3 border-2 ${on ? 'border-orange bg-orange/10' : ''}`}>
+      <div>
+        <p className="font-extrabold">Give $3 only: {on ? 'ON' : 'OFF'}</p>
+        <p className="muted text-sm">{on ? 'Every scan shows only the $3 ask ($2 to the holder, $1 to the Community Fund). No ads, no scan pay.' : 'Scans work normally: ads, scan pay, and the Give $3 button.'} Holders set to "Always" or "Never" in Edit ignore this switch.</p>
+      </div>
+      <button className={on ? 'btn-black' : 'btn-orange'} onClick={flip} disabled={busy}>{on ? 'Turn off' : 'Turn on'}</button>
+    </div>
+  )
+}
+
 function Overview({ goTo }) {
   const [o, setO] = useState(null)
   useEffect(() => { supabase.rpc('admin_overview').then(({ data }) => setO(data)) }, [])
@@ -81,6 +103,7 @@ function Overview({ goTo }) {
   return (
     <div className="space-y-4">
       <NeedsYou goTo={goTo} />
+      <GiveOnlySwitch />
       {!o ? <Spinner /> : <>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {box('Community Fund', money(o.fund_balance_cents))}
@@ -97,7 +120,7 @@ function Overview({ goTo }) {
 }
 
 function HolderEdit({ h, onDone }) {
-  const [f, setF] = useState({ first_name: h.first_name || '', story: h.story || '', general_area: h.general_area || '', photo_url: h.photo_url || '', daily_goal: h.daily_goal ?? '', listed_in_directory: h.listed_in_directory, allow_champions: h.allow_champions })
+  const [f, setF] = useState({ first_name: h.first_name || '', story: h.story || '', general_area: h.general_area || '', photo_url: h.photo_url || '', daily_goal: h.daily_goal ?? '', listed_in_directory: h.listed_in_directory, allow_champions: h.allow_champions, give_mode: h.give_mode || 'follow' })
   const [err, setErr] = useState(null)
   const set = (k) => (e) => setF({ ...f, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value })
   async function save() {
@@ -117,6 +140,13 @@ function HolderEdit({ h, onDone }) {
       {f.photo_url && <div className="flex items-center gap-3"><img src={f.photo_url} alt="" className="h-16 w-16 rounded-full object-cover" /><button className="btn-outline py-2" onClick={() => setF({ ...f, photo_url: '' })}>Remove photo</button></div>}
       <label className="flex items-center gap-3"><input type="checkbox" className="h-5 w-5 accent-[#FF6A00]" checked={f.listed_in_directory} onChange={set('listed_in_directory')} />Listed in public directory</label>
       <label className="flex items-center gap-3"><input type="checkbox" className="h-5 w-5 accent-[#FF6A00]" checked={f.allow_champions} onChange={set('allow_champions')} />Allows Champions</label>
+      <label className="block text-sm font-bold">What scans show for {h.first_name || 'this holder'}
+        <select className="input" value={f.give_mode} onChange={set('give_mode')}>
+          <option value="follow">Follow the main switch</option>
+          <option value="always">Always Give $3 only (no ads, no scan pay)</option>
+          <option value="never">Never show Give $3 (ads only)</option>
+        </select>
+      </label>
       {err && <Notice kind="error">{err}</Notice>}
       <div className="flex gap-2"><button className="btn-outline flex-1" onClick={onDone}>Cancel</button><button className="btn-orange flex-1" onClick={save}>Save changes</button></div>
     </div>
@@ -149,6 +179,8 @@ function Holders() {
             <p className="mt-1 text-sm">
               {h.housing_unstable ? <span className="pill bg-orange/20 text-neutral-900 dark:text-white">Says homeless / no stable housing</span> : <span className="muted">Didn't say homeless</span>}
               {' · '}Location pool: <b>{h.in_location_pool ? 'On' : 'Off'}</b>
+              {h.give_mode === 'always' && <>{' · '}<b>Always Give $3 only</b></>}
+              {h.give_mode === 'never' && <>{' · '}<b>Never shows Give $3</b></>}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">

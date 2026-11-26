@@ -118,7 +118,7 @@ export function ProfileCard({ code }) {
       )}
       {h.sponsors?.length > 0 && <p className="mt-4 text-sm"><span className="font-bold">Supported by:</span> {h.sponsors.map((x) => x.name).join(', ')}</p>}
       <SupportButtons h={h} code={code} onChange={(r) => setH({ ...h, ...r })} onReload={load} />
-      <div className="mt-4"><LaunchGiveBox code={code} firstName={h.first_name} settings={stats?.settings} compact /></div>
+      {!h.give_hidden && <div className="mt-4"><LaunchGiveBox code={code} firstName={h.first_name} settings={stats?.settings} compact /></div>}
       <Updates list={h.updates} name={h.first_name} />
     </div>
   )

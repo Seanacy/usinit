@@ -184,6 +184,21 @@ export default function Scan() {
     return <div className="mx-auto max-w-md px-4 py-16 text-center"><h1 className="h2">We couldn't find that code.</h1><p className="muted mt-2">Check the number on the sign and try again.</p></div>
   }
 
+  // "Give $3 only" mode (Admin main switch or this holder's own setting): just the $3 ask. No ad, no scan pay.
+  if (holder?.give_only) {
+    const gname = holder.first_name || 'this holder'
+    return (
+      <div className="mx-auto max-w-md px-4 py-6 text-center">
+        {holder.photo_url && <img src={holder.photo_url} alt="" className="mx-auto mb-4 h-24 w-24 rounded-full object-cover" />}
+        <p className="font-bold text-orange">{gname}'s Us In It code</p>
+        <h1 className="h1 mt-1">Help {gname} today.</h1>
+        <div className="text-left"><LaunchGiveBox code={code} firstName={gname} settings={stats?.settings} /></div>
+        <p className="muted mt-4 text-xs">Us In It is a business, not a charity. Gifts are not tax-deductible.</p>
+        <p className="muted mt-6 text-xs">Do not use your phone while driving.</p>
+      </div>
+    )
+  }
+
   return (
     <div className="mx-auto max-w-md px-4 py-6">
       {step === 'intro' && (
@@ -247,8 +262,8 @@ export default function Scan() {
               <div className="mt-4 space-y-3">
                 <button className="btn-orange w-full py-4 text-lg" onClick={() => { tap('tip'); setPanel(panel === 'tip' ? null : 'tip') }}>Tip {name}</button>
                 {panel === 'tip' && <TipPanel code={code} firstName={name} scanId={res?.scan_id} stats={stats} />}
-                <button className="btn-outline w-full border-orange py-4 text-lg" onClick={() => { tap('give3'); setPanel(panel === 'give3' ? null : 'give3') }}>Give $3 · $2 to {name}</button>
-                {panel === 'give3' && <LaunchGiveBox code={code} firstName={name} scanId={res?.scan_id} settings={stats?.settings} />}
+                {!holder?.give_hidden && <button className="btn-outline w-full border-orange py-4 text-lg" onClick={() => { tap('give3'); setPanel(panel === 'give3' ? null : 'give3') }}>Give $3 · $2 to {name}</button>}
+                {panel === 'give3' && !holder?.give_hidden &&<LaunchGiveBox code={code} firstName={name} scanId={res?.scan_id} settings={stats?.settings} />}
                 <button className="btn-black w-full py-4 text-lg" onClick={() => { tap('meet'); setPanel('meet') }}>Meet {name}</button>
                 <button className="btn-outline w-full py-4 text-lg" onClick={() => { tap('support'); setPanel('support') }}>Support Us In It</button>
                 <a href="/fund" className="block text-center text-sm font-bold underline">Or give once to the Community Fund</a>
