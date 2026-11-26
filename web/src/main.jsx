@@ -19,7 +19,7 @@ import WorkplacePage from './pages/Workplace'
 import ChampionPage, { Directory } from './pages/Champion'
 import { AmbassadorsDirectory, AmbassadorProfile, MyAmbassador, Launch } from './pages/Ambassadors'
 import { KindnessPage, SchoolPage } from './pages/Schools'
-import CreatorPage, { DigitalScan } from './pages/Digital'
+import CreatorPage, { CreatorGive, DigitalScan } from './pages/Digital'
 import Support from './pages/Support'
 import SupportQR from './pages/SupportQR'
 import SupportPrint from './pages/SupportPrint'
@@ -90,6 +90,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           <Route path="/champion" element={<ChampionPage />} />
           <Route path="/school/:slug" element={<SchoolPage />} />
           <Route path="/d/:code" element={<DigitalScan />} />
+          <Route path="/g/:code" element={<CreatorGive />} />
           <Route path="/creator" element={<CreatorPage />} />
           <Route path="/kindness/:slug" element={<KindnessPage />} />
           <Route path="/support" element={<Support />} />

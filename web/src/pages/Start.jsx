@@ -12,7 +12,7 @@ const ROLES = [
     box: { title: 'Business or nonprofit sign up', intro: 'Create an account to set up your ads or nonprofit messages.' } },
   { key: 'champion', title: "I'm a Champion", text: "I want to print a holder's code and get scans for them at school, at work, at church, or online.", path: '/champion',
     box: { title: 'Champion sign up', intro: 'Make a free account. Then pick a holder and print your Champion code.' } },
-  { key: 'creator', title: "I'm a content creator", text: 'I want a code on my videos or livestreams so viewers can support me, and I can share holders\' codes too.', path: '/creator',
+  { key: 'creator', title: "I'm a content creator", text: 'I want a code on my videos or livestreams so viewers can support me, and I can share holders\' codes too. I can also earn $1 per gift with a gift code.', path: '/creator',
     box: { title: 'Creator sign up', intro: 'Make a free account, then send your creator profile for approval.' } },
   { key: 'ambassador', title: "I'm an Ambassador", text: 'I want to help Us In It grow by bringing in supporters, businesses, and holders. Free and unpaid, and I get credit for everything I bring in.', path: '/ambassador',
     box: { title: 'Ambassador sign up', intro: "Make a free account. Next you'll pick your Ambassador name and get your links." } },

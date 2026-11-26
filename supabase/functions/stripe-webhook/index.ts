@@ -64,6 +64,15 @@ Deno.serve(async (req) => {
           if (toFund > 0) await db.from("community_fund_transactions").insert({ amount_cents: toFund, source: "public_gift", gross_cents: toFund, fee_cents: 0, platform_cents: 0, donor_name: name, stripe_ref: obj.id });
           if (m.ref) await db.rpc("amb_credit_gift", { p_ref: m.ref, p_cents: base, p_source: obj.id });
         }
+      } else if (m.kind === "creator_gift") {
+        // Creator gift code: payer covered the card fee. Creator gets their set share; the rest goes to the Community Fund.
+        const base = Number(m.base_cents), toCreator = Math.min(base, Number(m.creator_cents)), toFund = base - toCreator;
+        const { data: g, error } = await db.from("creator_gifts").insert({ creator_id: m.creator_id, stripe_session_id: obj.id, gross_cents: gross, base_cents: base, creator_cents: toCreator, fund_cents: toFund, donor_name: name }).select("id").single();
+        if (error && !dup(error)) throw error;
+        if (!dup(error) && g) {
+          if (toCreator > 0) await db.from("creator_ledger").insert({ creator_id: m.creator_id, amount_cents: toCreator, kind: "gift", ref_id: g.id });
+          if (toFund > 0) await db.from("community_fund_transactions").insert({ amount_cents: toFund, source: "public_gift", gross_cents: toFund, fee_cents: 0, platform_cents: 0, donor_name: name, stripe_ref: obj.id, note: "creator gift code" });
+        }
       } else if (m.kind === "gift") {
         const onTop = m.fee_on_top === "1";
         const net = onTop ? Number(m.base_cents) : gross - stripeFee(gross);
