@@ -106,3 +106,10 @@ begin
     having count(distinct e.day) >= public.setting_int('crowd_flag_days')) x), '[]'::jsonb);
 end $$;
 grant execute on function public.admin_crowders() to authenticated;
+
+-- Public Champion rules numbers for the Champion page
+create or replace function public.champion_rules() returns jsonb
+language sql stable security definer set search_path = public as $$
+  select jsonb_build_object('ft', public.setting_int('champ_circle_ft'), 'max', public.setting_int('champ_circle_max'), 'hrs', public.setting_int('champ_cooldown_hours'));
+$$;
+grant execute on function public.champion_rules() to anon, authenticated;

@@ -57,6 +57,26 @@ export function Directory() {
 }
 
 // ================= Champion page: /champion =================
+function ChampionRules() {
+  const [r, setR] = useState({ ft: 200, max: 2, hrs: 24 })
+  useEffect(() => {
+    supabase.rpc('champion_rules').then(({ data }) => { if (data?.ft) setR(data) })
+  }, [])
+  return (
+    <div className="card space-y-2">
+      <h2 className="h2">Champion rules</h2>
+      <ul className="list-disc space-y-1 pl-5 text-sm">
+        <li><b>{r.max} paid scans per spot.</b> Each Champion code can earn the holder money from {r.max} scans per spot every {r.hrs} hours. A spot is about {r.ft} feet across, around half a city block.</li>
+        <li><b>Move to keep earning.</b> After {r.max} paid scans, share your code somewhere new, like another class, another event, or another part of the building.</li>
+        <li><b>Business ads pay for Champion scans.</b> Only ads that allow Champion scans pay. The Community Fund doesn't pay for Champion scans.</li>
+        <li><b>Inside an Us In It zone only.</b> Scans outside a zone don't earn.</li>
+        <li><b>Champions are never paid.</b> All the money goes to the holder.</li>
+        <li><b>No fake scans.</b> Don't scan your own code or pressure anyone to scan.</li>
+      </ul>
+    </div>
+  )
+}
+
 function SignupForm({ onDone }) {
   const [f, setF] = useState({ name: '', phone: '', notify: 'email', minor: false, parent_name: '', parent_email: '', terms: false })
   const [err, setErr] = useState(null)
@@ -149,6 +169,7 @@ export default function ChampionPage() {
   if (!session) return (
     <div className="px-4 py-8">
       <AuthBox title="Become a Champion" intro="Make a free account. Then print a holder's code and get scans for them at school, at work, or online." redirectPath={`/champion${preset ? `?holder=${preset}` : ''}`} role="champion" />
+      <div className="mx-auto mt-5 max-w-xl"><ChampionRules /></div>
     </div>
   )
   if (d === undefined) return <Spinner />
@@ -191,6 +212,7 @@ export default function ChampionPage() {
           })}
         </>
       )}
+      <ChampionRules />
     </div>
   )
 }
