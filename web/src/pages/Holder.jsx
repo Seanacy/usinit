@@ -294,6 +294,24 @@ function MyPrivateInfo() {
   )
 }
 
+function BusySpotNudge() {
+  const [crowded, setCrowded] = useState(false)
+  useEffect(() => {
+    const check = () => supabase.rpc('my_crowd_status').then(({ data }) => setCrowded(!!data?.crowded))
+    check()
+    const t = setInterval(check, 60000)
+    return () => clearInterval(t)
+  }, [])
+  if (!crowded) return null
+  return (
+    <div className="card border-2 border-orange">
+      <p className="text-lg font-extrabold">Busy spot</p>
+      <p className="mt-1">Another holder is close by. Move about half a block and you'll likely get more scans.</p>
+      <p className="muted mt-1 text-sm">You still get paid for every scan here.</p>
+    </div>
+  )
+}
+
 function Dashboard({ d, session, reload }) {
   const h = d.holder
   const [edit, setEdit] = useState(false)
@@ -318,6 +336,7 @@ function Dashboard({ d, session, reload }) {
   const pct = Math.min(100, Math.round((d.count_today / d.goal) * 100))
   return (
     <div className="space-y-4">
+      <BusySpotNudge />
       <MyPrivateInfo />
       {big && qr && (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-white p-6" onClick={() => setBig(false)}>

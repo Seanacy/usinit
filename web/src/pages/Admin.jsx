@@ -96,6 +96,21 @@ function GiveOnlySwitch() {
   )
 }
 
+function RepeatCrowders() {
+  const [rows, setRows] = useState([])
+  useEffect(() => { supabase.rpc('admin_crowders').then(({ data }) => setRows(data || [])) }, [])
+  if (!rows.length) return null
+  return (
+    <div className="card border-2 border-orange">
+      <p className="font-extrabold">Holders who keep crowding others</p>
+      <p className="muted text-sm">They moved in within 20 ft of another holder on 3+ days in the last 2 weeks. Nobody lost pay. You decide what to do.</p>
+      <ul className="mt-2 divide-y divide-neutral-200 dark:divide-neutral-700">
+        {rows.map((r) => <li key={r.id} className="flex justify-between py-2 text-sm"><span>{r.first_name} #{r.holder_code}</span><span className="font-bold">{r.days} days · last {r.last_day}</span></li>)}
+      </ul>
+    </div>
+  )
+}
+
 function Overview({ goTo }) {
   const [o, setO] = useState(null)
   useEffect(() => { supabase.rpc('admin_overview').then(({ data }) => setO(data)) }, [])
@@ -104,6 +119,7 @@ function Overview({ goTo }) {
     <div className="space-y-4">
       <NeedsYou goTo={goTo} />
       <GiveOnlySwitch />
+      <RepeatCrowders />
       {!o ? <Spinner /> : <>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {box('Community Fund', money(o.fund_balance_cents))}
